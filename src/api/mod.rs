@@ -215,6 +215,7 @@ where
             let context = request.state();
             let future = Query::from_request(&request, &Default::default())
                 .map(|query: Query<Q>| query.into_inner())
+                .or_else(|e| map_error(e))
                 .and_then(|query| handler(context, query).map_err(From::from))
                 // .and_then(|value| Ok(HttpResponse::Ok().json(value)))
                 .and_then(|value| Ok(map_ok(value, &request)))
@@ -291,7 +292,7 @@ where
     E: Into<actix_web::error::Error> + fmt::Display,
 {
     // @TODO(*): Regex ini mungkin perlu dibuat lazy_static?
-    let re = Regex::new(r"missing field `(.*?)` at").unwrap();
+    let re = Regex::new(r"missing field `(.*?)`").unwrap();
     let err_desc = format!("{}", e);
     let mut iter = re.captures_iter(&err_desc);
     if let Some(field) = iter.next() {
@@ -301,7 +302,7 @@ where
         ))))
     } else {
         Err(actix_web::Error::from(Error::InvalidParameter(
-            "Invalid json".to_owned(),
+            "Invalid parameter data".to_owned(),
         )))
     }
 }
