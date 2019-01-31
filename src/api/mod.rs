@@ -290,63 +290,6 @@ where
     }
 }
 
-// /// Function Handler
-// pub struct FuncHandler<F> {
-//     inner: F,
-//     // _query: PhantomData<Q>,
-//     // _resp: PhantomData<R>,
-//     // _z: PhantomData<Z>,
-// }
-
-// /// Function handler
-// impl<T, Q, R, Z> FuncHandler<T, Q, R, Z>
-// where
-//     T: for<'r> Fn(&'r AppState, Q) -> R + 'static + Clone,
-//     Q: Into<QueryForm<Z>>,
-// {
-//     /// Get function handler
-//     fn get(&self) -> &T {
-//         &self.inner
-//     }
-// }
-
-// type Func1<Q, R> = fn(&AppState, Q) -> R;
-
-// type Func2<Q, R> = fn(&AppState, Q, &HttpRequest) -> R;
-
-// // impl<Q, R> From<Func2<Q, R>> for FuncHandler<Func2<Q, R>>
-// // where
-// //     Q: DeserializeOwned + 'static,
-// // {
-// //     fn from(f: Func2<Q, R>) -> Self {
-// //         FuncHandler {
-// //             inner: f,
-// //             // _query: PhantomData,
-// //             // _resp: PhantomData,
-// //         }
-// //     }
-// // }
-
-// impl<Q, R> From<Func1<Q, R>> for FuncHandler<Func1<Q, R>> {
-//     fn from(f: Func1<Q, R>) -> Self {
-//         FuncHandler {
-//             inner: f,
-//             // _query: PhantomData,
-//             // _resp: PhantomData,
-//         }
-//     }
-// }
-
-// impl<Q, R> From<Func2<Q, R>> for FuncHandler<Func2<Q, R>> {
-//     fn from(f: Func2<Q, R>) -> Self {
-//         FuncHandler {
-//             inner: f,
-//             // _query: PhantomData,
-//             // _resp: PhantomData,
-//         }
-//     }
-// }
-
 /// Scope API
 #[derive(Default, Clone)]
 pub struct ServiceApiScope {
