@@ -11,6 +11,8 @@ mod error;
 mod with;
 
 pub use self::with::Result;
+pub use self::error::Error;
+
 use self::with::{Immutable, ImmutableReq, Mutable, MutableReq, NamedWith, With};
 
 use crate::db;
@@ -307,8 +309,6 @@ where
 //         &self.inner
 //     }
 // }
-
-use self::error::Error;
 
 // type Func1<Q, R> = fn(&AppState, Q) -> R;
 
