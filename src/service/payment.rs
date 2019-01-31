@@ -5,7 +5,6 @@ use crate::prelude::*;
 
 use serde::Serialize;
 
-
 #[derive(Debug, Serialize, Deserialize)]
 struct TopupQuery {
     pub amount: Option<f64>,
@@ -14,7 +13,6 @@ struct TopupQuery {
 /// Core basis service payment
 pub struct PaymentService {}
 
-
 impl PaymentService {
     #[doc(hidden)]
     pub fn new() -> Box<Self> {
@@ -22,8 +20,9 @@ impl PaymentService {
     }
 
     /// Rest API endpoint for topup
-    fn topup(state: &AppState, query: TopupQuery) -> api::Result<TopupQuery> {
+    fn topup(state: &AppState, query: TopupQuery) -> api::Result<()> {
         trace!("topup account: {:?}", query);
+        Err(api::Error::CustomError("Ada masalah bro".to_string(), 555))?;
         Ok(())
     }
 }

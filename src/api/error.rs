@@ -4,7 +4,10 @@
 
 //! The set of errors for the API module.
 
+use actix_web::http::StatusCode;
 use serde::Serialize;
+
+use crate::api::ApiResult;
 
 use failure;
 use std::io;
@@ -33,6 +36,14 @@ pub enum Error {
     /// Internal server error. This type can return any internal server error to the user.
     #[fail(display = "Internal server error: {}", _0)]
     InternalError(failure::Error),
+
+    /// Error yang muncul apabila user menginputkan parameter yang tidak sesuai
+    #[fail(display = "Invalid parameter: {}", _0)]
+    InvalidParameter(String),
+
+    /// Error yang bisa digunakan untuk menampilkan kode dan deskripsi secara custom.
+    #[fail(display = "error code {}: {}", _1, _0)]
+    CustomError(String, i32),
 
     /// Unauthorized error. This error occurs when the request lacks valid
     /// authentication credentials.
@@ -69,7 +80,8 @@ impl ResponseError for Error {
     fn error_response(&self) -> HttpResponse {
         match self {
             Error::BadRequest(err) => {
-                HttpResponse::BadRequest().json(ApiErrorJson::new(err.to_owned()))
+                // HttpResponse::BadRequest().json(ApiErrorJson::new(err.to_owned()))
+                HttpResponse::BadRequest().json(ApiResult::error(400, "Bad request".to_owned()))
             }
             Error::InternalError(err) => {
                 HttpResponse::InternalServerError().json(ApiErrorJson::new(err.to_string()))
@@ -83,6 +95,11 @@ impl ResponseError for Error {
             Error::NotFound(err) => {
                 HttpResponse::NotFound().json(ApiErrorJson::new(err.to_string()))
             }
+            Error::InvalidParameter(d) => {
+                HttpResponse::BadRequest().json(ApiResult::error(5, d.to_owned()))
+            }
+            Error::CustomError(d, code) => HttpResponse::build(StatusCode::from_u16(406).unwrap())
+                .json(ApiResult::error(*code, d.to_owned())),
             Error::Unauthorized => HttpResponse::Unauthorized().finish(),
         }
     }

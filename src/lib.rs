@@ -30,6 +30,8 @@ pub mod web;
 
 /// Common use (prelude) exports.
 pub mod prelude {
-    pub use super::service::{Service, PaymentService};
-    pub use super::api::{self, AppState, ApiAggregator, ApiBuilder, ApiAccess, ServiceApiBuilder, ServiceApiScope};
+    pub use super::api::{
+        self, ApiAccess, ApiAggregator, ApiBuilder, AppState, ServiceApiBuilder, ServiceApiScope,
+    };
+    pub use super::service::{PaymentService, Service};
 }

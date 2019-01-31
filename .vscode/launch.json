@@ -25,11 +25,11 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'web'",
+            "name": "Debug executable 'restapi'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=web",
+                    "--bin=restapi",
                     "--package=payment"
                 ],
                 "filter": {

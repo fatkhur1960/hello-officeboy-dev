@@ -1,7 +1,8 @@
-//! Module yang berkaitan dengan kebutuhan API
+//! Module inti yang berkaitan dengan kebutuhan pembuatan rest API.
 
 use actix_web::{
-    actix::System, server, AsyncResponder, FromRequest, HttpMessage, HttpResponse, Query,
+    actix::System, http::header, server, AsyncResponder, FromRequest, HttpMessage, HttpResponse,
+    Query,
 };
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
@@ -20,7 +21,8 @@ use crate::service::Service;
 
 use std::{collections::BTreeMap, convert::From, env, fmt, marker::PhantomData, sync::Arc};
 
-/// Jenis API access, kita bagikan menjadi 2 macam:
+/// Jenis penanda akses API, kita bagikan menjadi 2 macam:
+///
 ///     1. Public
 ///     2. Private
 ///
@@ -30,10 +32,10 @@ use std::{collections::BTreeMap, convert::From, env, fmt, marker::PhantomData, s
 /// sehingga perlu dilakukan settingan firewall oleh system administrator
 /// agar port untuk private API hanya boleh diakses dari jaringan internal.
 pub enum ApiAccess {
-    /// Akses publik
+    /// Penanda untuk akses publik
     Public,
 
-    /// Akses privat
+    /// Penanda untuk akses privat
     Private,
 }
 
@@ -59,6 +61,31 @@ where
 {
     fn from(d: T) -> Self {
         QueryForm { inner: d }
+    }
+}
+
+#[derive(Serialize)]
+pub(crate) struct ApiResult {
+    code: i32,
+    status: String,
+    description: String,
+}
+
+impl ApiResult {
+    pub fn new(code: i32, status: String, description: String) -> Self {
+        ApiResult {
+            code,
+            status,
+            description,
+        }
+    }
+
+    pub fn success() -> Self {
+        Self::new(0, "success".to_owned(), "".to_owned())
+    }
+
+    pub fn error(code: i32, description: String) -> Self {
+        Self::new(code, "error".to_owned(), description)
     }
 }
 
@@ -188,7 +215,8 @@ where
             let future = Query::from_request(&request, &Default::default())
                 .map(|query: Query<Q>| query.into_inner())
                 .and_then(|query| handler(context, query).map_err(From::from))
-                .and_then(|value| Ok(HttpResponse::Ok().json(value)))
+                // .and_then(|value| Ok(HttpResponse::Ok().json(value)))
+                .and_then(|value| Ok(map_ok(value, &request)))
                 .into_future();
             Box::new(future)
         };
@@ -216,7 +244,8 @@ where
             let future = Query::from_request(&request, &Default::default())
                 .map(|query: Query<Q>| query.into_inner())
                 .and_then(|query| handler(context, query, &request).map_err(From::from))
-                .and_then(|value| Ok(HttpResponse::Ok().json(value)))
+                // .and_then(|value| Ok(HttpResponse::Ok().json(value)))
+                .and_then(|value| Ok(map_ok(value, &request)))
                 .into_future();
             Box::new(future)
         };
@@ -229,11 +258,35 @@ where
     }
 }
 
+// Me-mapping pengembalian `Ok(())` menjadi format [ApiResult].
+#[inline]
+fn map_ok<I: Serialize>(value: I, request: &HttpRequest) -> HttpResponse {
+    let headers = request.headers();
+    match serde_json::to_string(&value) {
+        Ok(body) => {
+            let contains = headers.contains_key(header::CONTENT_TYPE);
+
+            if !contains {
+                HttpResponse::Ok()
+                    .header(header::CONTENT_TYPE, "application/json")
+                    .body(body)
+            } else {
+                if body == "null" {
+                    HttpResponse::Ok().json(ApiResult::success())
+                } else {
+                    HttpResponse::Ok().body(body)
+                }
+            }
+        }
+        Err(e) => panic!("cannot serialize response"),
+    }
+}
+
 impl<Q, I, F> From<NamedWith<Q, I, Result<I>, F, Mutable>> for RequestHandler
 where
     F: for<'r> Fn(&'r AppState, Q) -> Result<I> + 'static + Send + Sync + Clone,
     Q: DeserializeOwned + 'static,
-    I: Serialize + 'static,
+    I: Serialize + PartialEq + 'static,
 {
     fn from(f: NamedWith<Q, I, Result<I>, F, Mutable>) -> Self {
         let handler = f.inner.handler;
@@ -245,7 +298,7 @@ where
                 .from_err()
                 .and_then(move |query: Q| {
                     handler(&context, query)
-                        .map(|value| HttpResponse::Ok().json(value))
+                        .map(|v| map_ok(v, &request))
                         .map_err(From::from)
                 })
                 .responder()
@@ -275,9 +328,10 @@ where
                 .json()
                 .from_err()
                 .and_then(move |query: Q| {
-                    handler(&context, query, &request)
-                        .map(|value| HttpResponse::Ok().json(value))
-                        .map_err(From::from)
+                    let rv = handler(&context, query, &request)
+                        .map(|v| map_ok(v, &request))
+                        .map_err(From::from);
+                    rv
                 })
                 .responder()
         };
