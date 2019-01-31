@@ -7,6 +7,7 @@ use actix_web::{
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use futures::future::{Future, IntoFuture};
+use regex::Regex;
 
 mod error;
 mod with;
@@ -243,6 +244,7 @@ where
             let context = request.state();
             let future = Query::from_request(&request, &Default::default())
                 .map(|query: Query<Q>| query.into_inner())
+                .or_else(|e| map_error(e))
                 .and_then(|query| handler(context, query, &request).map_err(From::from))
                 // .and_then(|value| Ok(HttpResponse::Ok().json(value)))
                 .and_then(|value| Ok(map_ok(value, &request)))
@@ -282,6 +284,28 @@ fn map_ok<I: Serialize>(value: I, request: &HttpRequest) -> HttpResponse {
     }
 }
 
+// Me-mapping pengembalian error ketika parsing query agar bisa ditampilkan ke client.
+#[inline]
+fn map_error<I: DeserializeOwned + 'static, E>(e: E) -> ::std::result::Result<I, actix_web::Error>
+where
+    E: Into<actix_web::error::Error> + fmt::Display,
+{
+    // @TODO(*): Regex ini mungkin perlu dibuat lazy_static?
+    let re = Regex::new(r"missing field `(.*?)` at").unwrap();
+    let err_desc = format!("{}", e);
+    let mut iter = re.captures_iter(&err_desc);
+    if let Some(field) = iter.next() {
+        Err(actix_web::Error::from(Error::InvalidParameter(format!(
+            "No `{}` parameter",
+            &field[1]
+        ))))
+    } else {
+        Err(actix_web::Error::from(Error::InvalidParameter(
+            "Invalid json".to_owned(),
+        )))
+    }
+}
+
 impl<Q, I, F> From<NamedWith<Q, I, Result<I>, F, Mutable>> for RequestHandler
 where
     F: for<'r> Fn(&'r AppState, Q) -> Result<I> + 'static + Send + Sync + Clone,
@@ -295,7 +319,8 @@ where
             let context = request.state().clone();
             request
                 .json()
-                .from_err()
+                // .from_err()
+                .or_else(|e| map_error(e))
                 .and_then(move |query: Q| {
                     handler(&context, query)
                         .map(|v| map_ok(v, &request))
@@ -326,7 +351,7 @@ where
 
             request
                 .json()
-                .from_err()
+                .or_else(|e| map_error(e))
                 .and_then(move |query: Q| {
                     let rv = handler(&context, query, &request)
                         .map(|v| map_ok(v, &request))
