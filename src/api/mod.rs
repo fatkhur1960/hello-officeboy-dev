@@ -25,7 +25,8 @@ use std::{collections::BTreeMap, convert::From, env, fmt, marker::PhantomData, s
 /// Public adalah apabila kita ingin akses API-nya boleh digunakan oleh publik.
 /// Sementara Private adalah apabila kita ingin akses API-nya hanya untuk internal,
 /// nantinya masing-masing akses ini di-serve pada port yang berbeda
-/// sehingga dari sisi system admin nanti yang memisahkan menggunakan firewal.
+/// sehingga perlu dilakukan settingan firewall oleh system administrator
+/// agar port untuk private API hanya boleh diakses dari jaringan internal.
 pub enum ApiAccess {
     /// Akses publik
     Public,
@@ -504,7 +505,7 @@ impl ServiceApiBuilder {
 }
 
 /// API Aggregator digunakan untuk meng-aggregate requirements untuk keperluan
-/// serving API-nya.
+/// serving rest API-nya.
 #[derive(Clone)]
 pub struct ApiAggregator {
     inner: BTreeMap<String, ServiceApiBuilder>,
@@ -547,7 +548,12 @@ impl ApiAggregator {
         scope
     }
 
-    /// Digunakan untuk meng-extend scope dengan endpoint yang kita inginkan.
+    /// Untuk meng-extend scope dengan endpoint yang kita inginkan.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `access` - API access kind.
+    /// * `scope` - Actix scope instance.
     pub fn extend(&self, access: ApiAccess, scope: Scope) -> Scope {
         match access {
             ApiAccess::Public => {
@@ -577,7 +583,9 @@ impl ApiAggregator {
     }
 }
 
-/// Ini adalah state/context yang akan selalu bisa diakses dari handler.
+/// State/context yang akan selalu bisa diakses dari handler
+/// state ini berisi beberapa object yang mungkin sering digunakan
+/// seperti DB connection.
 #[derive(Clone)]
 pub struct AppState {
     // db: PgConnection,
