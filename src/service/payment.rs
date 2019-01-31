@@ -92,7 +92,7 @@ impl PaymentService {
     /// Rest API endpoint untuk mendapatkan informasi balance pada akun.
     fn balance(state: &AppState, query: BalanceQuery) -> api::Result<AccountInfo> {
         // @TODO(*): Code here
-        Ok(AccountInfo::new("123", 0.0f64))
+        Ok(AccountInfo::new(&query.account, 0.0f64))
     }
 }
 
