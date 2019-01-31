@@ -92,8 +92,11 @@ impl PublicApi {
             .endpoint_req("v1/info", Self::info_req)
             .endpoint_req_mut("v1/update", Self::update)
             .resource(|scope| {
-                scope.resource("v1/coba", |r| r.method(Method::GET).h(Self::resource_test))
-                    .resource("v1/coba2/{userid}/{username}", |r| r.method(Method::GET).with(Self::user_path))
+                scope
+                    .resource("v1/coba", |r| r.method(Method::GET).h(Self::resource_test))
+                    .resource("v1/coba2/{userid}/{username}", |r| {
+                        r.method(Method::GET).with(Self::user_path)
+                    })
             });
 
         // .endpoint("v1/user/{number}/{name}", Self::user_path);

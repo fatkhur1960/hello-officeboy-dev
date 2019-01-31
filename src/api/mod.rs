@@ -529,25 +529,26 @@ impl ApiAggregator {
         Self { inner }
     }
 
-    /// Digunakan untuk meng-extend scope dengan endpoint yang kita inginkan.
-    pub fn extend(&self, access: ApiAccess, mut scope: Scope) -> Scope {
-
-        #[inline]
-        fn bind<'a, F>(items: F, mut scope:Scope) -> Scope 
-        where F: ::std::iter::IntoIterator<Item=(&'a str, &'a ServiceApiScope)> {
-            for item in items {
-                scope = scope.nested(&item.0, move |scope| {
-                    let mut scope = item.1.actix_backend.wire(scope);
-                    let ress = item.1.resources.iter();
-                    for ref res in ress {
-                        scope = res(scope)
-                    }
-                    scope
-                });
-            }
-            scope
+    #[inline]
+    fn bind<'a, F>(items: F, mut scope: Scope) -> Scope
+    where
+        F: ::std::iter::IntoIterator<Item = (&'a str, &'a ServiceApiScope)>,
+    {
+        for item in items {
+            scope = scope.nested(&item.0, move |scope| {
+                let mut scope = item.1.actix_backend.wire(scope);
+                let ress = item.1.resources.iter();
+                for ref res in ress {
+                    scope = res(scope)
+                }
+                scope
+            });
         }
+        scope
+    }
 
+    /// Digunakan untuk meng-extend scope dengan endpoint yang kita inginkan.
+    pub fn extend(&self, access: ApiAccess, scope: Scope) -> Scope {
         match access {
             ApiAccess::Public => {
                 let items = self
@@ -555,7 +556,7 @@ impl ApiAggregator {
                     .iter()
                     .map(|(name, builder)| (name.as_ref(), &builder.public_scope));
 
-                bind(items, scope)
+                Self::bind(items, scope)
             }
             ApiAccess::Private => {
                 let items = self
@@ -563,7 +564,7 @@ impl ApiAggregator {
                     .iter()
                     .map(|(name, builder)| (name.as_ref(), &builder.private_scope));
 
-                bind(items, scope)
+                Self::bind(items, scope)
             }
         }
     }
