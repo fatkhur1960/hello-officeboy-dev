@@ -27,3 +27,9 @@ pub mod api;
 mod db;
 pub mod service;
 pub mod web;
+
+/// Common use (prelude) exports.
+pub mod prelude {
+    pub use super::service::{Service, PaymentService};
+    pub use super::api::{self, AppState, ApiAggregator, ApiBuilder, ApiAccess, ServiceApiBuilder, ServiceApiScope};
+}

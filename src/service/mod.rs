@@ -1,6 +1,10 @@
 //! Modular & extendable Service interface
 
-use crate::api::{self, ServiceApiBuilder, AppState};
+mod payment;
+
+pub use payment::PaymentService;
+
+use crate::api::{self, AppState, ServiceApiBuilder};
 use actix_web::{http::Method, App, AsyncResponder, Error, Path, Result};
 
 ///! Base service interface
@@ -12,7 +16,6 @@ pub trait Service {
     /// Method untuk wiring API.
     fn wire_api(&self, builder: &mut ServiceApiBuilder);
 }
-
 
 /// Service contoh, kamu bisa mencontoh bagaimana caranya membuat service
 /// dengan melihat kode [ExampleService] ini.
@@ -67,4 +70,3 @@ impl PublicApi {
             });
     }
 }
-

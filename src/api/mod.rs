@@ -10,8 +10,8 @@ use futures::future::{Future, IntoFuture};
 mod error;
 mod with;
 
-pub use self::with::Result;
 pub use self::error::Error;
+pub use self::with::Result;
 
 use self::with::{Immutable, ImmutableReq, Mutable, MutableReq, NamedWith, With};
 
@@ -492,9 +492,9 @@ impl ApiAggregator {
     }
 
     /// Untuk meng-extend scope dengan endpoint yang kita inginkan.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `access` - API access kind.
     /// * `scope` - Actix scope instance.
     pub fn extend(&self, access: ApiAccess, scope: Scope) -> Scope {
