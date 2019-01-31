@@ -1,6 +1,8 @@
 //! Module yang berkaitan dengan kebutuhan API
 
-use actix_web::{AsyncResponder, FromRequest, HttpMessage, HttpResponse, Query, Scope, server, actix::System};
+use actix_web::{
+    actix::System, server, AsyncResponder, FromRequest, HttpMessage, HttpResponse, Query,
+};
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use futures::future::{Future, IntoFuture};
@@ -110,6 +112,8 @@ pub type HttpRequest = actix_web::HttpRequest<AppState>;
 pub type RawHandler = dyn Fn(HttpRequest) -> FutureResponse + 'static + Send + Sync;
 /// Type alias for the `actix-web::App` with the `AppState`.
 pub type App = actix_web::App<AppState>;
+/// Type alias for actix `Scope` with `AppState`.
+pub type Scope = actix_web::Scope<AppState>;
 /// Type alias for the `actix-web::App` configuration.
 pub type AppConfig = Arc<dyn Fn(App) -> App + 'static + Send + Sync>;
 
@@ -230,29 +234,18 @@ where
 {
     fn from(f: NamedWith<Q, I, Result<I>, F, Mutable>) -> Self {
         let handler = f.inner.handler;
-        // let index = move |request: HttpRequest| -> FutureResponse {
-        //     let handler = handler.clone();
-        //     let context = request.state().clone();
-        //     // let req2 = request.clone();
-        //     request
-        //         .json()
-        //         .from_err()
-        //         .and_then(move |query: Q| {
-        //             handler(&context, query, &req2)
-        //                 .map(|value| HttpResponse::Ok().json(value))
-        //                 .map_err(From::from)
-        //         })
-        //         .responder()
-        // };
-
         let index = move |request: HttpRequest| -> FutureResponse {
-            let context = request.state();
-            let future = Query::from_request(&request, &Default::default())
-                .map(|query: Query<Q>| query.into_inner())
-                .and_then(|query| handler(context, query).map_err(From::from))
-                .and_then(|value| Ok(HttpResponse::Ok().json(value)))
-                .into_future();
-            Box::new(future)
+            let handler = handler.clone();
+            let context = request.state().clone();
+            request
+                .json()
+                .from_err()
+                .and_then(move |query: Q| {
+                    handler(&context, query)
+                        .map(|value| HttpResponse::Ok().json(value))
+                        .map_err(From::from)
+                })
+                .responder()
         };
 
         Self {
@@ -271,29 +264,19 @@ where
 {
     fn from(f: NamedWith<Q, I, Result<I>, F, MutableReq>) -> Self {
         let handler = f.inner.handler;
-        // let index = move |request: HttpRequest| -> FutureResponse {
-        //     let handler = handler.clone();
-        //     let context = request.state().clone();
-        //     // let req2 = request.clone();
-        //     request
-        //         .json()
-        //         .from_err()
-        //         .and_then(move |query: Q| {
-        //             handler(&context, query, &req2)
-        //                 .map(|value| HttpResponse::Ok().json(value))
-        //                 .map_err(From::from)
-        //         })
-        //         .responder()
-        // };
-
         let index = move |request: HttpRequest| -> FutureResponse {
-            let context = request.state();
-            let future = Query::from_request(&request, &Default::default())
-                .map(|query: Query<Q>| query.into_inner())
-                .and_then(|query| handler(context, query, &request).map_err(From::from))
-                .and_then(|value| Ok(HttpResponse::Ok().json(value)))
-                .into_future();
-            Box::new(future)
+            let handler = handler.clone();
+            let context = request.state().clone();
+
+            request
+                .json()
+                .from_err()
+                .and_then(move |query: Q| {
+                    handler(&context, query, &request)
+                        .map(|value| HttpResponse::Ok().json(value))
+                        .map_err(From::from)
+                })
+                .responder()
         };
 
         Self {
@@ -304,13 +287,13 @@ where
     }
 }
 
-/// Function Handler
-pub struct FuncHandler<F> {
-    inner: F,
-    // _query: PhantomData<Q>,
-    // _resp: PhantomData<R>,
-    // _z: PhantomData<Z>,
-}
+// /// Function Handler
+// pub struct FuncHandler<F> {
+//     inner: F,
+//     // _query: PhantomData<Q>,
+//     // _resp: PhantomData<R>,
+//     // _z: PhantomData<Z>,
+// }
 
 // /// Function handler
 // impl<T, Q, R, Z> FuncHandler<T, Q, R, Z>
@@ -326,14 +309,34 @@ pub struct FuncHandler<F> {
 
 use self::error::Error;
 
-type Func1<Q, R> = fn(&AppState, Q) -> R;
+// type Func1<Q, R> = fn(&AppState, Q) -> R;
 
-type Func2<Q, R> = fn(&AppState, Q, &HttpRequest) -> R;
+// type Func2<Q, R> = fn(&AppState, Q, &HttpRequest) -> R;
 
-// impl<Q, R> From<Func2<Q, R>> for FuncHandler<Func2<Q, R>>
-// where
-//     Q: DeserializeOwned + 'static,
-// {
+// // impl<Q, R> From<Func2<Q, R>> for FuncHandler<Func2<Q, R>>
+// // where
+// //     Q: DeserializeOwned + 'static,
+// // {
+// //     fn from(f: Func2<Q, R>) -> Self {
+// //         FuncHandler {
+// //             inner: f,
+// //             // _query: PhantomData,
+// //             // _resp: PhantomData,
+// //         }
+// //     }
+// // }
+
+// impl<Q, R> From<Func1<Q, R>> for FuncHandler<Func1<Q, R>> {
+//     fn from(f: Func1<Q, R>) -> Self {
+//         FuncHandler {
+//             inner: f,
+//             // _query: PhantomData,
+//             // _resp: PhantomData,
+//         }
+//     }
+// }
+
+// impl<Q, R> From<Func2<Q, R>> for FuncHandler<Func2<Q, R>> {
 //     fn from(f: Func2<Q, R>) -> Self {
 //         FuncHandler {
 //             inner: f,
@@ -343,30 +346,11 @@ type Func2<Q, R> = fn(&AppState, Q, &HttpRequest) -> R;
 //     }
 // }
 
-impl<Q, R> From<Func1<Q, R>> for FuncHandler<Func1<Q, R>> {
-    fn from(f: Func1<Q, R>) -> Self {
-        FuncHandler {
-            inner: f,
-            // _query: PhantomData,
-            // _resp: PhantomData,
-        }
-    }
-}
-
-impl<Q, R> From<Func2<Q, R>> for FuncHandler<Func2<Q, R>> {
-    fn from(f: Func2<Q, R>) -> Self {
-        FuncHandler {
-            inner: f,
-            // _query: PhantomData,
-            // _resp: PhantomData,
-        }
-    }
-}
-
 /// Scope API
 #[derive(Default, Clone)]
 pub struct ServiceApiScope {
     pub(crate) actix_backend: ApiBuilder,
+    pub(crate) resources: Vec<Arc<Box<Fn(Scope) -> Scope + Sync + Send + 'static>>>,
 }
 
 impl ServiceApiScope {
@@ -475,6 +459,17 @@ impl ServiceApiScope {
         self
     }
 
+    /// Add raw Actix web resource
+    pub fn resource<'a, F>(&mut self, f: F) -> &mut Self
+    where
+        F: Fn(Scope) -> Scope + Sync + Send + 'static,
+    {
+        {
+            self.resources.push(Arc::new(Box::new(f)));
+        }
+        self
+    }
+
     /// Returns a mutable reference to the underlying web backend.
     pub fn web_backend(&mut self) -> &mut ApiBuilder {
         &mut self.actix_backend
@@ -535,7 +530,24 @@ impl ApiAggregator {
     }
 
     /// Digunakan untuk meng-extend scope dengan endpoint yang kita inginkan.
-    pub fn extend(&self, access: ApiAccess, mut scope: Scope<AppState>) -> Scope<AppState> {
+    pub fn extend(&self, access: ApiAccess, mut scope: Scope) -> Scope {
+
+        #[inline]
+        fn bind<'a, F>(items: F, mut scope:Scope) -> Scope 
+        where F: ::std::iter::IntoIterator<Item=(&'a str, &'a ServiceApiScope)> {
+            for item in items {
+                scope = scope.nested(&item.0, move |scope| {
+                    let mut scope = item.1.actix_backend.wire(scope);
+                    let ress = item.1.resources.iter();
+                    for ref res in ress {
+                        scope = res(scope)
+                    }
+                    scope
+                });
+            }
+            scope
+        }
+
         match access {
             ApiAccess::Public => {
                 let items = self
@@ -543,11 +555,7 @@ impl ApiAggregator {
                     .iter()
                     .map(|(name, builder)| (name.as_ref(), &builder.public_scope));
 
-                for item in items {
-                    scope = scope.nested(&item.0, move |scope| item.1.actix_backend.wire(scope));
-                }
-
-                scope
+                bind(items, scope)
             }
             ApiAccess::Private => {
                 let items = self
@@ -555,11 +563,7 @@ impl ApiAggregator {
                     .iter()
                     .map(|(name, builder)| (name.as_ref(), &builder.private_scope));
 
-                for item in items {
-                    scope = scope.nested(&item.0, move |scope| item.1.actix_backend.wire(scope));
-                }
-
-                scope
+                bind(items, scope)
             }
         }
     }
@@ -573,6 +577,7 @@ impl ApiAggregator {
 }
 
 /// Ini adalah state/context yang akan selalu bisa diakses dari handler.
+#[derive(Clone)]
 pub struct AppState {
     // db: PgConnection,
 }
@@ -580,7 +585,7 @@ pub struct AppState {
 impl AppState {
     #[doc(hidden)]
     pub fn new() -> AppState {
-        let db_url = env::var("DATABASE_URL").expect("no DATABASE_URL env var");
+        // let db_url = env::var("DATABASE_URL").expect("no DATABASE_URL env var");
         AppState {
             // db: db::connect(&db_url),
         }
@@ -590,16 +595,16 @@ impl AppState {
 pub(crate) fn create_app(agg: &ApiAggregator, access: ApiAccess) -> App {
     let state = AppState::new();
     let mut app = App::with_state(state);
-    app = app.scope("api", |scope: Scope<AppState>| agg.extend(access, scope));
+    app = app.scope("api", |scope: Scope| agg.extend(access, scope));
     // app = app.resource("/test", |r| r.f(|r| "test aja"));
     app
 }
 
 /// Start API server
-pub fn start(agg: &ApiAggregator) {
+pub fn start(agg: ApiAggregator) {
     let system = System::new("http-server");
-    let agg = agg.clone();
-    server::new(move || create_app(&agg, ApiAccess::Public).finish())
+    // let agg = agg.clone();
+    server::new(move || create_app(&agg, ApiAccess::Public))
         .bind("127.0.0.1:8081")
         .unwrap()
         .run();

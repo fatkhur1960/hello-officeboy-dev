@@ -103,10 +103,6 @@ impl<Q, I, R, F, K> NamedWith<Q, I, R, F, K> {
 //     }
 // }
 
-use super::FuncHandler;
-
-use super::Func2;
-
 impl<Q, I, F> From<F> for With<Q, I, Result<I>, F>
 where
     // F: for<'r> Fn(&'r AppState, Q) -> Result<I>,

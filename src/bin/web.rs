@@ -2,8 +2,12 @@
 
 extern crate payment;
 
+#[macro_use]
+extern crate log;
+extern crate env_logger;
+
 use actix_web::server::HttpServer;
-use actix_web::*;
+use actix_web::{http::Method, App, AsyncResponder, Error, Path, Result};
 use futures::{
     future::{ok, result, Future, FutureResult},
     stream::once,
@@ -21,7 +25,7 @@ struct LocalAppState {
     counter: Cell<usize>,
 }
 
-fn index(req: &HttpRequest<LocalAppState>) -> String {
+fn index(req: &actix_web::HttpRequest<LocalAppState>) -> String {
     let count = req.state().counter.get() + 1;
     req.state().counter.set(count);
 
@@ -29,17 +33,20 @@ fn index(req: &HttpRequest<LocalAppState>) -> String {
 }
 
 fn index_async(
-    req: &HttpRequest<LocalAppState>,
-) -> Box<Future<Item = HttpResponse, Error = Error>> {
+    req: &actix_web::HttpRequest<LocalAppState>,
+) -> Box<Future<Item = actix_web::HttpResponse, Error = Error>> {
     let count = req.state().counter.get() + 1;
     req.state().counter.set(count);
-    result(Ok(HttpResponse::Ok()
+    result(Ok(actix_web::HttpResponse::Ok()
         .content_type("text/html")
         .body(format!("<h1>request counter: {}</h1>", count))))
     .responder()
 }
 
-fn user_path(req: &HttpRequest<LocalAppState>, info: Path<(u32, String)>) -> Result<String> {
+fn user_path(
+    req: &actix_web::HttpRequest<LocalAppState>,
+    info: Path<(u32, String)>,
+) -> Result<String> {
     Ok(format!("Welcome {}! {}", info.1, info.0))
 }
 
@@ -69,36 +76,48 @@ impl PublicApi {
         Ok("".to_owned())
     }
 
-    fn user_path(state: &AppState, info: Path<(u32, String)>) -> ApiResult<String> {
+    fn user_path(info: Path<(u32, String)>) -> ApiResult<String> {
         Ok(format!("Welcome {}! {}", info.1, info.0))
     }
 
+    fn resource_test(req: &api::HttpRequest) -> Result<String> {
+        Ok("resource_test".to_owned())
+    }
+
     pub fn wire(builder: &mut ServiceApiBuilder) {
+        trace!("wiring API...");
         builder
             .public_scope()
-            .endpoint("v1/info", Self::info)
+            // .endpoint("v1/info", Self::info)
             .endpoint_req("v1/info", Self::info_req)
-            .endpoint_req_mut("v2/update", Self::update);
+            .endpoint_req_mut("v1/update", Self::update)
+            .resource(|scope| {
+                scope.resource("v1/coba", |r| r.method(Method::GET).h(Self::resource_test))
+                    .resource("v1/coba2/{userid}/{username}", |r| r.method(Method::GET).with(Self::user_path))
+            });
 
         // .endpoint("v1/user/{number}/{name}", Self::user_path);
     }
 }
 
 fn main() {
+    env_logger::init();
+
+    trace!("starting up...");
+
     let my_service = Box::new(MyService);
 
-    let agg = ApiAggregator::new(vec![my_service]);
+    // let agg = ;
 
     // let api_handlers =
 
-
-    api::start(&agg);
+    api::start(ApiAggregator::new(vec![my_service]));
 
     // server::new(|| {
-    //     App::with_state(LocalAppState {
-    //         counter: Cell::new(0),
-    //     })
-    //     .resource("/index.html", |r| r.f(index))
+    // App::with_state(LocalAppState {
+    //     counter: Cell::new(0),
+    // })
+    // .resource("/index.html", |r| r.f(index));
     //     .resource("/index_async.html", |r| r.f(index_async))
     //     // .resource("/user/{userid}/{name}.html", |r| {
     //     //     r.method(http::Method::GET).with(user_path)
