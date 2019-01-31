@@ -2,7 +2,7 @@
 
 mod payment;
 
-pub use payment::PaymentService;
+pub use self::payment::PaymentService;
 
 use crate::api::{self, AppState, ServiceApiBuilder};
 use actix_web::{http::Method, App, AsyncResponder, Error, Path, Result};
@@ -61,7 +61,7 @@ impl PublicApi {
             .endpoint("v1/info", Self::info)
             .endpoint_req("v1/info_req", Self::info_req)
             .endpoint_req_mut("v1/update", Self::update)
-            .resource(|scope| {
+            .with_scope(|scope| {
                 scope
                     .resource("v1/coba", |r| r.method(Method::GET).h(Self::resource_test))
                     .resource("v1/coba2/{userid}/{username}", |r| {

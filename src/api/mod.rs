@@ -24,8 +24,8 @@ use std::{collections::BTreeMap, convert::From, env, fmt, marker::PhantomData, s
 
 /// Jenis penanda akses API, kita bagikan menjadi 2 macam:
 ///
-///     1. Public
-///     2. Private
+/// * Public
+/// * Private
 ///
 /// Public adalah apabila kita ingin akses API-nya boleh digunakan oleh publik.
 /// Sementara Private adalah apabila kita ingin akses API-nya hanya untuk internal,
@@ -483,8 +483,31 @@ impl ServiceApiScope {
         self
     }
 
-    /// Add raw Actix web resource
-    pub fn resource<'a, F>(&mut self, f: F) -> &mut Self
+    /// Mendaftarkan raw actix web handler. Berguna apabila kamu ingin
+    /// menambahkan handler dengan spesifikasi kompleks yang hanya bisa
+    /// dilakukan di level actix.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use actix_web::{http::Method, Path};
+    /// use payment::api::{self, ServiceApiBuilder};
+    ///
+    /// let mut builder = ServiceApiBuilder::new();
+    ///
+    /// fn user_path(info: Path<(u32, String)>) -> api::Result<String> {
+    ///    Ok(format!("Welcome {}! {}", info.1, info.0))
+    /// }
+    ///
+    /// builder
+    ///     .public_scope()
+    ///     .with_scope(|scope| {
+    ///         scope.resource("v1/coba2/{userid}/{username}", |r| {
+    ///               r.method(Method::GET).with(user_path)
+    ///         })
+    ///     });
+    /// ```
+    pub fn with_scope<'a, F>(&mut self, f: F) -> &mut Self
     where
         F: Fn(Scope) -> Scope + Sync + Send + 'static,
     {
