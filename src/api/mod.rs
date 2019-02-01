@@ -695,9 +695,8 @@ impl ServiceApiConfig {
 
 use std::sync::mpsc;
 
-/// Start API server
+/// Start API server berdasarkan konfigurasi yang ada.
 pub fn start(agg: ApiAggregator, config: ServiceApiConfig) {
-
     let (system_tx, system_rx) = mpsc::channel();
     let (api_runtime_tx, api_runtime_rx) = mpsc::channel();
 
