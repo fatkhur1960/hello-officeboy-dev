@@ -29,6 +29,12 @@ struct Transfer {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+struct CreateAccount {
+    pub full_name: String,
+    pub nik: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 struct TxQuery<T>
 where
     T: Serialize,
@@ -94,6 +100,12 @@ impl PaymentService {
         // @TODO(*): Code here
         Ok(AccountInfo::new(&query.account, 0.0f64))
     }
+
+    /// Rest API endpoint untuk membuat akun baru.
+    fn create_account(state: &AppState, query: TxQuery<CreateAccount>) -> api::Result<()> {
+        // @TODO(*): Code here
+        Ok(())
+    }
 }
 
 impl Service for PaymentService {
@@ -108,5 +120,9 @@ impl Service for PaymentService {
             .endpoint_mut("v1/transfer", Self::transfer)
             .endpoint_mut("v1/debit", Self::debit)
             .endpoint("v1/balance", Self::balance);
+
+        builder
+            .private_scope()
+            .endpoint_mut("v1/create_account", Self::create_account);
     }
 }

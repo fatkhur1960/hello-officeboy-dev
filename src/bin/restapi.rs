@@ -13,5 +13,10 @@ fn main() {
 
     let service = PaymentService::new();
 
-    api::start(ApiAggregator::new(vec![service]));
+    let config = ServiceApiConfig::new(vec![
+        ApiServer::new(ApiAccess::Public, "127.0.0.1:8081".to_string()),
+        ApiServer::new(ApiAccess::Private, "127.0.0.1:8082".to_string()),
+    ]);
+
+    api::start(ApiAggregator::new(vec![service]), config);
 }

@@ -1,8 +1,10 @@
 //! Module inti yang berkaitan dengan kebutuhan pembuatan rest API.
 
 use actix_web::{
-    actix::System, http::header, server, AsyncResponder, FromRequest, HttpMessage, HttpResponse,
-    Query,
+    actix::System,
+    http::header,
+    server::{self, HttpServer},
+    AsyncResponder, FromRequest, HttpMessage, HttpResponse, Query,
 };
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
@@ -20,7 +22,7 @@ use self::with::{Immutable, ImmutableReq, Mutable, MutableReq, NamedWith, With};
 use crate::db;
 use crate::service::Service;
 
-use std::{collections::BTreeMap, convert::From, env, fmt, marker::PhantomData, sync::Arc};
+use std::{collections::BTreeMap, convert::From, env, fmt, marker::PhantomData, sync::Arc, thread};
 
 /// Jenis penanda akses API, kita bagikan menjadi 2 macam:
 ///
@@ -32,6 +34,7 @@ use std::{collections::BTreeMap, convert::From, env, fmt, marker::PhantomData, s
 /// nantinya masing-masing akses ini di-serve pada port yang berbeda
 /// sehingga perlu dilakukan settingan firewall oleh system administrator
 /// agar port untuk private API hanya boleh diakses dari jaringan internal.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ApiAccess {
     /// Penanda untuk akses publik
     Public,
@@ -655,12 +658,103 @@ pub(crate) fn create_app(agg: &ApiAggregator, access: ApiAccess) -> App {
     app
 }
 
+/// Stelan untuk server API yang akan dijalankan
+/// ini memungkinkan kita menjalankan server untuk setiap akses pada listen address yang berbeda.
+/// Sebagai contoh rest API untuk public ada di port 8000 dan untuk private ada di 9000.
+#[derive(Clone)]
+pub struct ApiServer {
+    /// Akses untuk API ini.
+    pub access: ApiAccess,
+
+    /// Listen address untuk API ini.
+    pub listen_address: String,
+}
+
+impl ApiServer {
+    #[doc(hidden)]
+    pub fn new(access: ApiAccess, listen_address: String) -> Self {
+        Self {
+            access,
+            listen_address,
+        }
+    }
+}
+
+/// Konfigurasi untuk servis API
+pub struct ServiceApiConfig {
+    /// Daftar server API yang akan dijalankan.
+    pub api_servers: Vec<ApiServer>,
+}
+
+impl ServiceApiConfig {
+    #[doc(hidden)]
+    pub fn new(api_servers: Vec<ApiServer>) -> Self {
+        ServiceApiConfig { api_servers }
+    }
+}
+
+use std::sync::mpsc;
+
 /// Start API server
-pub fn start(agg: ApiAggregator) {
-    let system = System::new("http-server");
-    // let agg = agg.clone();
-    server::new(move || create_app(&agg, ApiAccess::Public))
-        .bind("127.0.0.1:8081")
-        .unwrap()
-        .run();
+pub fn start(agg: ApiAggregator, config: ServiceApiConfig) {
+
+    let (system_tx, system_rx) = mpsc::channel();
+    let (api_runtime_tx, api_runtime_rx) = mpsc::channel();
+
+    let api_servers = config.api_servers.clone();
+
+    let system_thread = thread::spawn(move || -> ::std::result::Result<(), failure::Error> {
+        let system = System::new("http-server");
+
+        let api_handlers = api_servers.iter().map(|api_server| {
+            let access = api_server.access;
+            let listen_address = api_server.listen_address.clone();
+            let agg = agg.clone();
+
+            println!("{} rest API serving at {}", access, listen_address);
+            HttpServer::new(move || create_app(&agg, access))
+                .bind(listen_address)
+                .map(|server| server.start())
+        });
+
+        system_tx.send(System::current())?;
+        for handler in api_handlers {
+            api_runtime_tx.send(handler?)?;
+        }
+
+        trace!("starting server...");
+
+        // Starts actix-web runtime.
+        let code = system.run();
+
+        trace!("Actix runtime finished with code {}", code);
+        ensure!(
+            code == 0,
+            "Actix runtime finished with the non zero error code: {}",
+            code
+        );
+
+        Ok(())
+    });
+
+    let api_servers = config.api_servers.clone();
+
+    // Receives addresses of runtime items.
+    let system = system_rx
+        .recv()
+        .map_err(|_| format_err!("Unable to receive actix system handle"));
+
+    // // stop all server gracefully
+    // for api_server in api_servers {
+    //     let handler = api_runtime_rx.recv();
+    //     handler.unwrap()
+    //         .send(server::StopServer { graceful: true })
+    //         .wait()
+    //         .expect("Cannot stop server").unwrap();
+    // }
+
+    // system.unwrap().stop();
+    let _ = system_thread.join().unwrap();
+
+    println!("done.");
 }

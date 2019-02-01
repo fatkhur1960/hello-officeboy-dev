@@ -13,10 +13,7 @@ use futures::{
     stream::once,
 };
 
-use payment::api::{
-    self, ApiAccess, ApiAggregator, AppState, Result as ApiResult, ServiceApiBackend,
-    ServiceApiBuilder,
-};
+use payment::prelude::*;
 use payment::service;
 
 use std::{cell::Cell, thread::sleep, time::Duration};
@@ -57,7 +54,12 @@ fn main() {
 
     let service = Box::new(service::ExampleService);
 
-    api::start(ApiAggregator::new(vec![service]));
+    let config = ServiceApiConfig::new(vec![
+        ApiServer::new(ApiAccess::Public, "127.0.0.1:8081".to_string()),
+        ApiServer::new(ApiAccess::Private, "127.0.0.1:8082".to_string()),
+    ]);
+
+    api::start(ApiAggregator::new(vec![service]), config);
 
     // server::new(|| {
     // App::with_state(LocalAppState {
