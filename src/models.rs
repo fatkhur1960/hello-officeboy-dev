@@ -1,9 +1,10 @@
 //! Definisi struct untuk model-model yang ada di dalam database.
 
 use chrono::NaiveDateTime;
+use serde::Serialize;
 
-/// Bentuk model `Account` di dalam database.
-#[derive(Queryable)]
+/// Bentuk model akun di dalam database.
+#[derive(Queryable, Serialize, PartialEq)]
 pub struct Account {
     /// ID dari akun.
     pub id: i64,

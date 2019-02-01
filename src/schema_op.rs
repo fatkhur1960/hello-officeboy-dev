@@ -76,23 +76,31 @@ impl<'a> Schema<'a> {
         use crate::schema::accounts;
         use crate::schema::register_accounts;
 
-        let reg_acc: RegisterAccount = register_accounts::dsl::register_accounts
-            .find(id)
-            .first(self.db)
-            .map_err(error_mapper)?;
+        self.db.build_transaction().read_write().run(|| {
+            let reg_acc: RegisterAccount = register_accounts::dsl::register_accounts
+                .find(id)
+                .first(self.db)
+                .map_err(error_mapper)?;
 
-        let new_account = NewAccount {
-            full_name: &reg_acc.full_name,
-            balance: initial_balance,
-            email: &reg_acc.full_name,
-            phone_num: &reg_acc.phone_num,
-            active: true,
-            register_time: Utc::now().naive_utc(),
-        };
+            let new_account = NewAccount {
+                full_name: &reg_acc.full_name,
+                balance: initial_balance,
+                email: &reg_acc.full_name,
+                phone_num: &reg_acc.phone_num,
+                active: true,
+                register_time: Utc::now().naive_utc(),
+            };
 
-        diesel::insert_into(accounts::table)
-            .values(&new_account)
-            .get_result(self.db)
-            .map_err(error_mapper)
+            let account = diesel::insert_into(accounts::table)
+                .values(&new_account)
+                .get_result(self.db)
+                .map_err(error_mapper)?;
+
+            // delete reference in registered accounts table
+            diesel::delete(register_accounts::dsl::register_accounts.find(id)).execute(self.db)?;
+
+            Ok(account)
+        })
+
     }
 }

@@ -4,6 +4,7 @@ use actix_web::HttpResponse;
 use serde::Serialize;
 
 use crate::api;
+use crate::models;
 use crate::prelude::*;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -121,28 +122,26 @@ impl PaymentService {
     }
 
     /// Rest API endpoint untuk mendaftarkan akun baru.
-    fn register_account(state: &AppState, query: TxQuery<CreateAccount>) -> api::Result<()> {
+    fn register_account(state: &AppState, query: TxQuery<CreateAccount>) -> api::Result<ID> {
         let schema = Schema::new(state.db());
 
-        schema.register_account(
-            &query.body.full_name,
-            &query.body.email,
-            &query.body.phone_num,
-        )?;
-
-        Ok(())
+        schema
+            .register_account(
+                &query.body.full_name,
+                &query.body.email,
+                &query.body.phone_num,
+            )
+            .map_err(From::from)
     }
 
     /// Mengaktifkan user yang telah teregister
     api_endpoint!(
         activate_account,
         ActivateAccount,
-        (),
-        (|schema, query| {
-            schema
-                .activate_registered_account(query.body.account_id, query.body.initial_balance)?;
-            Ok(())
-        })
+        models::Account,
+        (|schema, query| schema
+            .activate_registered_account(query.body.account_id, query.body.initial_balance)
+            .map_err(From::from))
     );
 }
 
