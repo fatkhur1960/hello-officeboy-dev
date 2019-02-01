@@ -1,4 +1,35 @@
 Ansvia Payment Framework
 ============================
 
-Merupakan project framework untuk membuat aplikasi _payment_, dibuat dan ditulis menggunakan [Rust](https://rust-lang.org).
+Merupakan framework untuk membuat aplikasi _Payment_, dibuat dan ditulis menggunakan [Rust](https://rust-lang.org).
+
+Kebutuhan
+----------------
+
+Berikut kebutuhan pokok untuk bisa mem-build library:
+
+1. [Rust](https://www.rust-lang.org/)
+2. PostgreSQL >= 9.x
+3. [diesel](http://diesel.rs)
+4. [Aglio](https://www.npmjs.com/package/aglio) (optional, untuk dokumentasi)
+
+
+Dokumentasi
+-------------
+
+Dokumentasi dibagikan menjadi beberapa bagian:
+
+1. Dokumentasi pustaka (library).
+2. Dokumentasi Rest API.
+
+Untuk menggenerasikan dokumentasi pustaka cukup ketikkan:
+
+    $ make lib-docs
+
+Untuk menggenerasikan dokumentasi rest API:
+
+    $ make api-docs
+
+**CATATAN**: Penggenerasian dokumentasi untuk rest API membutuhkan tool [Aglio](https://www.npmjs.com/package/aglio).
+
+Apabila ada yang perlu ditanyakan contact: r@ansvia.com

@@ -29,10 +29,10 @@ extern crate regex;
 pub mod api;
 mod db;
 pub mod error;
-mod models;
-pub(crate) mod result;
+pub mod models;
+mod result;
 mod schema;
-mod schema_op;
+pub mod schema_op;
 pub mod service;
 pub mod web;
 
@@ -44,7 +44,9 @@ pub mod prelude {
     };
     pub use super::result::Result;
     pub use super::{
+        // models::Account,
         schema_op::Schema,
+        schema_op::ID,
         service::{PaymentService, Service},
     };
 }

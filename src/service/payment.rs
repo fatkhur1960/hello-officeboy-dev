@@ -8,7 +8,7 @@ use crate::prelude::*;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Credit {
-    pub account: String,
+    pub account: ID,
     pub amount: Option<f64>,
     pub timestamp: u64,
 }
@@ -22,10 +22,16 @@ struct Debit {
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Transfer {
-    pub from: String,
-    pub to: String,
+    pub from: ID,
+    pub to: ID,
     pub amount: f64,
     pub timestamp: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ActivateAccount {
+    pub account_id: ID,
+    pub initial_balance: f64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -66,8 +72,18 @@ impl AccountInfo {
     }
 }
 
-/// Core basis service payment
-/// Service ini yang men-serve endpoint:
+macro_rules! api_endpoint {
+    ($name:ident, $qt:ident, $rv:ty, (|$schema:ident, $query:ident| $( $cs:tt )+ ) ) => {
+        fn $name(state: &AppState, $query: TxQuery<$qt>) -> api::Result<$rv> {
+            let $schema = Schema::new(state.db());
+
+            {$($cs)+}
+        }
+    };
+}
+
+/// Core basis service payment.
+/// Service ini yang men-serve beberapa endpoint transaksional seperti:
 /// /credit, /transfer, /debit, /balance
 pub struct PaymentService {}
 
@@ -104,7 +120,7 @@ impl PaymentService {
         Ok(AccountInfo::new(&query.account, 0.0f64))
     }
 
-    /// Rest API endpoint untuk membuat akun baru.
+    /// Rest API endpoint untuk mendaftarkan akun baru.
     fn register_account(state: &AppState, query: TxQuery<CreateAccount>) -> api::Result<()> {
         let schema = Schema::new(state.db());
 
@@ -116,6 +132,18 @@ impl PaymentService {
 
         Ok(())
     }
+
+    /// Mengaktifkan user yang telah teregister
+    api_endpoint!(
+        activate_account,
+        ActivateAccount,
+        (),
+        (|schema, query| {
+            schema
+                .activate_registered_account(query.body.account_id, query.body.initial_balance)?;
+            Ok(())
+        })
+    );
 }
 
 impl Service for PaymentService {
@@ -133,6 +161,7 @@ impl Service for PaymentService {
 
         builder
             .private_scope()
-            .endpoint_mut("v1/register_account", Self::register_account);
+            .endpoint_mut("v1/account/register", Self::register_account)
+            .endpoint_mut("v1/account/activate", Self::activate_account);
     }
 }

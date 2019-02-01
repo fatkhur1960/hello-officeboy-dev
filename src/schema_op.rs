@@ -1,3 +1,6 @@
+//! Schema operation a.k.a DAO, digunakan untuk melakukan operasi seperti
+//! membuat akun baru, update, dan delete.
+
 use chrono::{NaiveDateTime, Utc};
 use diesel::prelude::*;
 use failure;
@@ -8,6 +11,7 @@ use std::sync::Arc;
 
 #[derive(Insertable)]
 #[table_name = "register_accounts"]
+#[doc(hidden)]
 pub struct NewRegisterAccount<'a> {
     pub full_name: &'a str,
     pub email: &'a str,
@@ -17,6 +21,7 @@ pub struct NewRegisterAccount<'a> {
 
 #[derive(Insertable)]
 #[table_name = "accounts"]
+#[doc(hidden)]
 pub struct NewAccount<'a> {
     pub full_name: &'a str,
     pub balance: f64,
@@ -44,10 +49,10 @@ impl<'a> Schema<'a> {
         Self { db }
     }
 
-    /// Mendaftarkan akun baru
-    /// Mengembalikan ID dari registered account bukan [Account]
+    /// Mendaftarkan akun baru.
+    /// Mengembalikan ID dari registered account (bukan [Account]: payment::models::Account)
     /// karena user belum aktif, untuk mengaktifkannya perlu memanggil
-    /// perintah [Self::activate_registered_account].
+    /// perintah [Schema::activate_registered_account].
     pub fn register_account(&self, full_name: &str, email: &str, phone_num: &str) -> Result<ID> {
         use crate::schema::register_accounts;
 
