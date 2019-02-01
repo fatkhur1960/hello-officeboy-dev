@@ -22,7 +22,10 @@ use self::with::{Immutable, ImmutableReq, Mutable, MutableReq, NamedWith, With};
 use crate::db;
 use crate::service::Service;
 
-use std::{collections::BTreeMap, convert::From, env, fmt, marker::PhantomData, sync::Arc, thread};
+use std::{
+    collections::BTreeMap, convert::From, env, fmt, marker::PhantomData, sync::mpsc, sync::Arc,
+    thread,
+};
 
 /// Jenis penanda akses API, kita bagikan menjadi 2 macam:
 ///
@@ -692,8 +695,6 @@ impl ServiceApiConfig {
         ServiceApiConfig { api_servers }
     }
 }
-
-use std::sync::mpsc;
 
 /// Start API server berdasarkan konfigurasi yang ada.
 pub fn start(agg: ApiAggregator, config: ServiceApiConfig) {
