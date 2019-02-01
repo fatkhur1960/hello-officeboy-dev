@@ -85,7 +85,7 @@ impl<'a> Schema<'a> {
             let new_account = NewAccount {
                 full_name: &reg_acc.full_name,
                 balance: initial_balance,
-                email: &reg_acc.full_name,
+                email: &reg_acc.email,
                 phone_num: &reg_acc.phone_num,
                 active: true,
                 register_time: Utc::now().naive_utc(),
