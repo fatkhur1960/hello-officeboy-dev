@@ -9,6 +9,7 @@
 extern crate actix;
 extern crate actix_web;
 extern crate chrono;
+#[macro_use]
 extern crate diesel;
 extern crate futures;
 #[macro_use]
@@ -27,6 +28,11 @@ extern crate regex;
 
 pub mod api;
 mod db;
+pub mod error;
+mod models;
+pub(crate) mod result;
+mod schema;
+mod schema_op;
 pub mod service;
 pub mod web;
 
@@ -36,5 +42,9 @@ pub mod prelude {
         self, ApiAccess, ApiAggregator, ApiBuilder, ApiServer, AppState, ServiceApiBuilder,
         ServiceApiConfig, ServiceApiScope,
     };
-    pub use super::service::{PaymentService, Service};
+    pub use super::result::Result;
+    pub use super::{
+        schema_op::Schema,
+        service::{PaymentService, Service},
+    };
 }

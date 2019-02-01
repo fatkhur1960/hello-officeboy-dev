@@ -2,11 +2,13 @@ extern crate payment;
 
 #[macro_use]
 extern crate log;
+extern crate dotenv;
 extern crate env_logger;
 
 use payment::prelude::*;
 
 fn main() {
+    dotenv::dotenv().ok();
     env_logger::init();
 
     trace!("starting up...");

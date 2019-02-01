@@ -57,20 +57,6 @@ impl fmt::Display for ApiAccess {
 
 use serde::{de::DeserializeOwned, Serialize};
 
-#[doc(hidden)]
-pub struct QueryForm<T> {
-    inner: T,
-}
-
-impl<T> From<T> for QueryForm<T>
-where
-    T: DeserializeOwned + 'static,
-{
-    fn from(d: T) -> Self {
-        QueryForm { inner: d }
-    }
-}
-
 #[derive(Serialize)]
 pub(crate) struct ApiResult {
     code: i32,
@@ -640,16 +626,21 @@ impl ApiAggregator {
 /// seperti DB connection.
 #[derive(Clone)]
 pub struct AppState {
-    // db: PgConnection,
+    db: Arc<PgConnection>,
 }
 
 impl AppState {
     #[doc(hidden)]
     pub fn new() -> AppState {
-        // let db_url = env::var("DATABASE_URL").expect("no DATABASE_URL env var");
+        let db_url = env::var("DATABASE_URL").expect("no DATABASE_URL env var");
         AppState {
-            // db: db::connect(&db_url),
+            db: Arc::new(db::connect(&db_url)),
         }
+    }
+
+    /// Get Backend DB connection
+    pub fn db(&self) -> &PgConnection {
+        &*self.db
     }
 }
 

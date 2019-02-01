@@ -31,7 +31,10 @@ struct Transfer {
 #[derive(Debug, Serialize, Deserialize)]
 struct CreateAccount {
     pub full_name: String,
-    pub nik: String,
+    pub email: String,
+    pub phone_num: String,
+    // comment out: mungkin tidak untuk sekarang
+    // pub nik: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -102,8 +105,15 @@ impl PaymentService {
     }
 
     /// Rest API endpoint untuk membuat akun baru.
-    fn create_account(state: &AppState, query: TxQuery<CreateAccount>) -> api::Result<()> {
-        // @TODO(*): Code here
+    fn register_account(state: &AppState, query: TxQuery<CreateAccount>) -> api::Result<()> {
+        let schema = Schema::new(state.db());
+
+        schema.register_account(
+            &query.body.full_name,
+            &query.body.email,
+            &query.body.phone_num,
+        )?;
+
         Ok(())
     }
 }
@@ -123,6 +133,6 @@ impl Service for PaymentService {
 
         builder
             .private_scope()
-            .endpoint_mut("v1/create_account", Self::create_account);
+            .endpoint_mut("v1/register_account", Self::register_account);
     }
 }

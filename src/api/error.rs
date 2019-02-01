@@ -7,7 +7,7 @@
 use actix_web::http::StatusCode;
 use serde::Serialize;
 
-use crate::api::ApiResult;
+use crate::{api::ApiResult, error::Error as PaymentError};
 
 use failure;
 use std::io;
@@ -41,6 +41,11 @@ pub enum Error {
     #[fail(display = "Invalid parameter: {}", _0)]
     InvalidParameter(String),
 
+    /// Error yang muncul ketika sebuah object unik telah ada
+    /// biasanya dimunculkan oleh operasi creation.
+    #[fail(display = "Already exists")]
+    AlreadyExists,
+
     /// Error yang bisa digunakan untuk menampilkan kode dan deskripsi secara custom.
     #[fail(display = "error code {}: {}", _1, _0)]
     CustomError(String, i32),
@@ -60,6 +65,17 @@ impl From<io::Error> for Error {
 impl From<failure::Error> for Error {
     fn from(e: failure::Error) -> Self {
         Error::InternalError(e)
+    }
+}
+
+impl From<PaymentError> for Error {
+    fn from(e: PaymentError) -> Self {
+        match e {
+            PaymentError::Storage(diesel::result::Error::DatabaseError(kind, _)) => {
+                Error::AlreadyExists
+            }
+            e => e.into(),
+        }
     }
 }
 
@@ -97,6 +113,9 @@ impl ResponseError for Error {
             }
             Error::InvalidParameter(d) => {
                 HttpResponse::BadRequest().json(ApiResult::error(5, d.to_owned()))
+            }
+            Error::AlreadyExists => {
+                HttpResponse::Conflict().json(ApiResult::error(6, "Already exists".to_owned()))
             }
             Error::CustomError(d, code) => HttpResponse::build(StatusCode::from_u16(406).unwrap())
                 .json(ApiResult::error(*code, d.to_owned())),
