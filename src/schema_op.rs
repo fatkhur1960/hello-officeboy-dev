@@ -37,6 +37,7 @@ pub struct NewAccount<'a> {
 pub struct NewAccountPasshash<'a> {
     pub account_id: i64,
     pub passhash: &'a str,
+    pub deprecated: bool,
 }
 
 /// Type alias for ID in integer
@@ -47,9 +48,9 @@ pub struct Schema<'a> {
     db: &'a PgConnection,
 }
 
-fn error_mapper(e: diesel::result::Error) -> PaymentError {
-    e.into()
-}
+// fn error_mapper(e: diesel::result::Error) -> PaymentError {
+//     e.into()
+// }
 
 impl<'a> Schema<'a> {
     /// Create new schema instance.
@@ -81,7 +82,7 @@ impl<'a> Schema<'a> {
             .values(&new_reg_account)
             .get_result::<RegisterAccount>(self.db)
             .map(|d| d.id)
-            .map_err(error_mapper)
+            .map_err(From::from)
     }
 
     /// Setting account's password
@@ -111,6 +112,7 @@ impl<'a> Schema<'a> {
                 .values(&NewAccountPasshash {
                     account_id,
                     passhash,
+                    deprecated: false
                 })
                 .execute(self.db)?;
             // .map_err(From::from)?;
@@ -128,8 +130,8 @@ impl<'a> Schema<'a> {
         self.db.build_transaction().read_write().run(|| {
             let reg_acc: RegisterAccount = register_accounts::dsl::register_accounts
                 .find(id)
-                .first(self.db)
-                .map_err(error_mapper)?;
+                .first(self.db)?;
+                // .map_err(From::from)?;
 
             let new_account = NewAccount {
                 full_name: &reg_acc.full_name,
@@ -142,8 +144,8 @@ impl<'a> Schema<'a> {
 
             let account = diesel::insert_into(accounts::table)
                 .values(&new_account)
-                .get_result(self.db)
-                .map_err(error_mapper)?;
+                .get_result(self.db)?;
+                // .map_err(From::from)?;
 
             // delete reference in registered accounts table
             diesel::delete(register_accounts::dsl::register_accounts.find(id)).execute(self.db)?;

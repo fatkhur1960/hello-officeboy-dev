@@ -37,7 +37,7 @@ struct Authorize {
 
 #[derive(Debug, Serialize, Deserialize)]
 struct ActivateAccount {
-    pub account_id: ID,
+    pub reg_id: ID,
     pub initial_balance: f64,
     pub password: String,
 }
@@ -77,6 +77,17 @@ impl AccountInfo {
             id: id.to_owned(),
             balance,
         }
+    }
+}
+
+#[derive(Debug, Serialize, PartialEq)]
+struct SuccessReturn<T> {
+    result: T
+}
+
+impl<T: Serialize> SuccessReturn<T> {
+    pub fn new(result: T) -> Self {
+        Self { result }
     }
 }
 
@@ -140,7 +151,7 @@ impl PaymentService {
     }
 
     /// Rest API endpoint untuk mendaftarkan akun baru.
-    fn register_account(state: &AppState, query: TxQuery<CreateAccount>) -> api::Result<ID> {
+    fn register_account(state: &AppState, query: TxQuery<CreateAccount>) -> api::Result<SuccessReturn<ID>> {
         let schema = Schema::new(state.db());
 
         schema
@@ -150,6 +161,7 @@ impl PaymentService {
                 &query.body.phone_num,
             )
             .map_err(From::from)
+            .map(|id| SuccessReturn::new(id) )
     }
 
     /// Mengaktifkan user yang telah teregister
@@ -183,8 +195,7 @@ impl PaymentService {
         models::Account,
         (|schema, query| {
             let account = schema
-                .activate_registered_account(query.body.account_id, query.body.initial_balance)?;
-            // .map_err(From::from)?;
+                .activate_registered_account(query.body.reg_id, query.body.initial_balance)?;
 
             schema.set_password(account.id, &query.body.password)?;
 

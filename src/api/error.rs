@@ -35,7 +35,7 @@ pub enum Error {
 
     /// Internal server error. This type can return any internal server error to the user.
     #[fail(display = "Internal server error: {}", _0)]
-    InternalError(failure::Error),
+    InternalError(#[cause] failure::Error),
 
     /// Error yang muncul apabila user menginputkan parameter yang tidak sesuai
     #[fail(display = "Invalid parameter: {}", _0)]
@@ -74,7 +74,10 @@ impl From<PaymentError> for Error {
             PaymentError::Storage(diesel::result::Error::DatabaseError(kind, _)) => {
                 Error::AlreadyExists
             }
-            e => e.into(),
+            PaymentError::Storage(diesel::result::Error::NotFound) => {
+                Error::NotFound("Not found".to_owned())
+            }
+            e => Error::InternalError(failure::Error::from(e)),
         }
     }
 }
@@ -109,7 +112,7 @@ impl ResponseError for Error {
             //     HttpResponse::InternalServerError().json(ApiErrorJson::new(err.to_string()))
             // }
             Error::NotFound(err) => {
-                HttpResponse::NotFound().json(ApiErrorJson::new(err.to_string()))
+                HttpResponse::NotFound().json(ApiResult::error(3, err.to_string()))
             }
             Error::InvalidParameter(d) => {
                 HttpResponse::BadRequest().json(ApiResult::error(5, d.to_owned()))
