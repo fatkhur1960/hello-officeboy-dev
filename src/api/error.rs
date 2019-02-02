@@ -47,8 +47,8 @@ pub enum Error {
     AlreadyExists,
 
     /// Error yang bisa digunakan untuk menampilkan kode dan deskripsi secara custom.
-    #[fail(display = "error code {}: {}", _1, _0)]
-    CustomError(String, i32),
+    #[fail(display = "error code {}: {}", _0, _1)]
+    CustomError(i32, String),
 
     /// Unauthorized error. This error occurs when the request lacks valid
     /// authentication credentials.
@@ -68,16 +68,27 @@ impl From<failure::Error> for Error {
     }
 }
 
+use diesel::result::DatabaseErrorKind;
+
 impl From<PaymentError> for Error {
     fn from(e: PaymentError) -> Self {
-        match e {
-            PaymentError::Storage(diesel::result::Error::DatabaseError(kind, _)) => {
-                Error::AlreadyExists
+        match &e {
+            PaymentError::Storage(diesel::result::Error::DatabaseError(kind, msg)) => {
+                error!("error: {:?}", &msg);
+                match kind {
+                    DatabaseErrorKind::UniqueViolation | DatabaseErrorKind::ForeignKeyViolation => {
+                        Error::AlreadyExists
+                    },
+                    _ => {
+                        Error::CustomError(4, "Internal error".to_owned())
+                    }
+                }
+                
             }
             PaymentError::Storage(diesel::result::Error::NotFound) => {
                 Error::NotFound("Not found".to_owned())
             }
-            e => Error::InternalError(failure::Error::from(e)),
+            _ => Error::InternalError(failure::Error::from(e)),
         }
     }
 }
@@ -120,7 +131,7 @@ impl ResponseError for Error {
             Error::AlreadyExists => {
                 HttpResponse::Conflict().json(ApiResult::error(6, "Already exists".to_owned()))
             }
-            Error::CustomError(d, code) => HttpResponse::build(StatusCode::from_u16(406).unwrap())
+            Error::CustomError(code, d) => HttpResponse::build(StatusCode::from_u16(406).unwrap())
                 .json(ApiResult::error(*code, d.to_owned())),
             Error::Unauthorized => {
                 // HttpResponse::Unauthorized().finish()

@@ -74,7 +74,7 @@ pub struct RegisterAccount {
 }
 
 #[doc(hidden)]
-#[derive(Queryable, Serialize)]
+#[derive(Queryable, Serialize, PartialEq, Debug)]
 pub struct AccessToken {
     pub token: String,
     pub account_id: i64,

@@ -9,14 +9,15 @@ use diesel::prelude::*;
 use crate::models::{AccessToken, Account};
 use crate::prelude::*;
 use crate::schema::access_tokens;
-use crate::util;
+use crate::{util, token};
 
 // use std::time::Duration;
 
 #[doc(hidden)]
 #[derive(Insertable)]
 #[table_name = "access_tokens"]
-pub struct NewAccessToken {
+pub struct NewAccessToken<'a> {
+    pub token:&'a str,
     pub account_id: ID,
     pub created: NaiveDateTime,
     pub valid_thru: NaiveDateTime,
@@ -62,6 +63,7 @@ impl<'a> Schema<'a> {
 
         let now = chrono::Utc::now().naive_utc();
         let token = NewAccessToken {
+            token: &token::generate_access_token(),
             account_id,
             created: now,
             valid_thru: now

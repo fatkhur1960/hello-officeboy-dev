@@ -179,6 +179,7 @@ impl PaymentService {
             let schema = auth::Schema::new(state.db());
 
             if !schema.valid_passhash(query.account_id, &query.passhash) {
+                warn!("account `{}` try to authorize using wrong password", &query.account_id);
                 Err(api::Error::Unauthorized)?
             }
 
@@ -216,7 +217,7 @@ impl Service for PaymentService {
             .endpoint_req_mut("v1/transfer", Self::transfer)
             .endpoint_req_mut("v1/debit", Self::debit)
             .endpoint("v1/balance", Self::balance)
-            .endpoint("v1/authorize", Self::authorize);
+            .endpoint_mut("v1/authorize", Self::authorize);
 
         builder
             .private_scope()
