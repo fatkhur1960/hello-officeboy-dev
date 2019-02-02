@@ -42,12 +42,15 @@ pub fn authorized_only(
     let mut in_fn = 0;
     let mut after_fn = false;
     let mut group_cnt = 0;
+    let mut in_open_fn = false;
     // let mut added_op = false;
     let mut has_http_req = false;
     let mut tb = vec![];
 
     for item in items {
         no_add = false;
+
+        // dbg!(&item);
 
         if item.to_string() == "fn" {
             in_fn = 1;
@@ -56,18 +59,18 @@ pub fn authorized_only(
         }
 
         if in_fn == 1 && !after_fn {
-            // in_fn = 2;
             after_fn = true;
             func_name = item.to_string();
             tb.push(item);
             continue;
         }
 
+        // dbg!((group_cnt, after_fn, in_fn, has_http_req));
+
         if after_fn {
             match item {
                 TokenTree::Group(ref group) => {
                     // let param = group.stream().into_iter().flat_map(|a| vec![a]);
-
                     for inner in group.stream() {
                         match inner {
                             TokenTree::Ident(ref ident) => {
@@ -80,10 +83,12 @@ pub fn authorized_only(
                     }
 
                     group_cnt += 1;
+                    in_open_fn = group.delimiter() == Delimiter::Brace;
                 }
                 _ => (),
             }
-            if group_cnt == 3 && in_fn < 2 {
+
+            if group_cnt > 1 && in_fn < 2 && in_open_fn {
                 in_fn = 2;
 
                 if !has_http_req {
@@ -139,6 +144,8 @@ pub fn authorized_only(
             tb.push(item);
         }
     }
+
+    // dbg!(&tb);
 
     proc_macro::TokenStream::from(TokenStream::from_iter(tb.into_iter()))
 }
