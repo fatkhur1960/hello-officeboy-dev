@@ -1,4 +1,13 @@
 table! {
+    access_tokens (token) {
+        token -> Text,
+        account_id -> Int8,
+        created -> Timestamp,
+        valid_thru -> Timestamp,
+    }
+}
+
+table! {
     accounts (id) {
         id -> Int8,
         full_name -> Varchar,
@@ -35,4 +44,9 @@ table! {
     }
 }
 
-allow_tables_to_appear_in_same_query!(accounts, addresses, register_accounts,);
+allow_tables_to_appear_in_same_query!(
+    access_tokens,
+    accounts,
+    addresses,
+    register_accounts,
+);

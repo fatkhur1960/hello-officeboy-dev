@@ -29,6 +29,11 @@ extern crate regex;
 #[macro_use]
 extern crate apf_proc_macro;
 
+extern crate byteorder;
+extern crate rsnowflake;
+extern crate sodiumoxide;
+extern crate hex;
+
 pub mod api;
 mod db;
 pub mod error;
@@ -38,6 +43,7 @@ mod schema;
 pub mod schema_op;
 pub mod service;
 pub mod web;
+pub mod token;
 
 /// Common use (prelude) exports.
 pub mod prelude {
