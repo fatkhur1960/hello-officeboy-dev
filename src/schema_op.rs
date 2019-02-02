@@ -58,6 +58,37 @@ impl<'a> Schema<'a> {
         Self { db }
     }
 
+    /// Mentransfer sejumlah uang dari satu akun ke akun lainnya.
+    pub fn transfer(&self, from: ID, to: ID, amount: f64) -> Result<()> {
+        use crate::schema::accounts;
+        use crate::schema::accounts::dsl;
+
+        self.db.build_transaction().read_write().run(|| {
+            let from = self.get_account(from)?;
+            let to = self.get_account(to)?;
+
+            if from.balance < amount {
+                Err(PaymentError::Insufficient("Insufficient balance"))?
+            }
+
+            if !from.active || !to.active {
+                Err(PaymentError::BadRequest("Account inactive".to_owned()))?
+            }
+
+            debug!("transfer {} -> {} amount of {}", from, to, amount);
+
+            diesel::update(dsl::accounts.filter(dsl::id.eq(from.id)))
+                .set(dsl::balance.eq(dsl::balance - amount))
+                .execute(self.db)?;
+
+            diesel::update(dsl::accounts.filter(dsl::id.eq(to.id)))
+                .set(dsl::balance.eq(dsl::balance + amount))
+                .execute(self.db)?;
+
+            Ok(())
+        })
+    }
+
     /// Get account by ID.
     pub fn get_account(&self, account_id: ID) -> Result<Account> {
         use crate::schema::accounts::dsl::accounts;

@@ -115,10 +115,8 @@ impl PaymentService {
     }
 
     /// Rest API endpoint for topup
-    #[authorized_only(user)]
     fn credit(state: &AppState, query: TxQuery<Credit>, req: &api::HttpRequest) -> api::Result<()> {
         trace!("topup account: {:?}", query);
-        trace!("current_account: {}", current_account);
 
         // @TODO(*): Code here
         Ok(())
@@ -132,12 +130,19 @@ impl PaymentService {
         req: &api::HttpRequest,
     ) -> api::Result<()> {
         trace!("transfer: {:?}", query);
-        // @TODO(*): code here
+        trace!("current_account: {}", current_account);
+
+        if current_account.id != query.body.from {
+            Err(api::Error::Unauthorized)?
+        }
+
+        let schema = Schema::new(state.db());
+        schema.transfer(query.body.from, query.body.to, query.body.amount)?;
+
         Ok(())
     }
 
     /// Rest API endpoint untuk debit
-    #[authorized_only(user)]
     fn debit(state: &AppState, query: TxQuery<Debit>, req: &api::HttpRequest) -> api::Result<()> {
         trace!("debit: {:?}", query);
         // @TODO(*): Code here

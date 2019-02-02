@@ -39,6 +39,10 @@ pub enum Error {
     #[fail(display = "Already exists")]
     AlreadyExists,
 
+    /// Error yang muncul apabila sesuatu tidak mencukupi seperti saldo misalnya.
+    #[fail(display = "{}", _0)]
+    Insufficient(&'static str),
+
     /// Error yang bisa digunakan untuk menampilkan kode dan deskripsi secara custom.
     #[fail(display = "error code {}: {}", _1, _0)]
     CustomError(String, i32),

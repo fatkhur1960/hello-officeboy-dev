@@ -90,16 +90,16 @@ impl From<PaymentError> for Error {
     }
 }
 
-#[derive(Serialize)]
-struct ApiErrorJson {
-    pub error: String,
-}
+// #[derive(Serialize)]
+// struct ApiErrorJson {
+//     pub error: String,
+// }
 
-impl ApiErrorJson {
-    pub fn new(error: String) -> Self {
-        Self { error }
-    }
-}
+// impl ApiErrorJson {
+//     pub fn new(error: String) -> Self {
+//         Self { error }
+//     }
+// }
 
 use actix_web::{HttpResponse, ResponseError};
 
@@ -111,28 +111,28 @@ impl ResponseError for Error {
                 HttpResponse::BadRequest().json(ApiResult::error(400, "Bad request".to_owned()))
             }
             Error::InternalError(err) => {
-                HttpResponse::InternalServerError().json(ApiErrorJson::new(err.to_string()))
+                HttpResponse::InternalServerError().json(ApiResult::error(500, err.to_string()))
             }
             Error::Io(err) => {
-                HttpResponse::InternalServerError().json(ApiErrorJson::new(err.to_string()))
+                HttpResponse::InternalServerError().json(ApiResult::error(500, err.to_string()))
             }
             // Error::Storage(err) => {
             //     HttpResponse::InternalServerError().json(ApiErrorJson::new(err.to_string()))
             // }
             Error::NotFound(err) => {
-                HttpResponse::NotFound().json(ApiResult::error(3, err.to_string()))
+                HttpResponse::NotFound().json(ApiResult::error(404, err.to_string()))
             }
             Error::InvalidParameter(d) => {
-                HttpResponse::BadRequest().json(ApiResult::error(5, d.to_owned()))
+                HttpResponse::BadRequest().json(ApiResult::error(452, d.to_owned()))
             }
             Error::AlreadyExists => {
-                HttpResponse::Conflict().json(ApiResult::error(6, "Already exists".to_owned()))
+                HttpResponse::Conflict().json(ApiResult::error(304, "Already exists".to_owned()))
             }
             Error::CustomError(code, d) => HttpResponse::build(StatusCode::from_u16(406).unwrap())
                 .json(ApiResult::error(*code, d.to_owned())),
             Error::Unauthorized => {
                 // HttpResponse::Unauthorized().finish()
-                HttpResponse::Unauthorized().json(ApiResult::error(8, "Unauthorized".to_owned()))
+                HttpResponse::Unauthorized().json(ApiResult::error(401, "Unauthorized".to_owned()))
             }
         }
     }
