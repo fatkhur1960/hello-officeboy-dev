@@ -6,15 +6,13 @@ extern crate payment;
 extern crate log;
 extern crate env_logger;
 
-use actix_web::server::HttpServer;
-use actix_web::{http::Method, App, AsyncResponder, Error, Path, Result};
+use actix_web::{http::Method, server::HttpServer, App, AsyncResponder, Error, Path, Result};
 use futures::{
     future::{ok, result, Future, FutureResult},
     stream::once,
 };
 
-use payment::prelude::*;
-use payment::service;
+use payment::{prelude::*, service};
 
 use std::{cell::Cell, thread::sleep, time::Duration};
 

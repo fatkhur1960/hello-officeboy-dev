@@ -21,8 +21,7 @@ mod tests {
     use super::Validable;
     use crate::models::AccessToken;
     use chrono::{Duration, Utc};
-    use std::ops::Add;
-    use std::{thread::sleep, time};
+    use std::{ops::Add, thread::sleep, time};
 
     #[test]
     fn test_access_token_valid() {

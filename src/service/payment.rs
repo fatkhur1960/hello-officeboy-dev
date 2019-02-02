@@ -3,9 +3,7 @@
 use actix_web::{HttpRequest, HttpResponse};
 use serde::Serialize;
 
-use crate::models;
-use crate::prelude::*;
-use crate::{api, auth, schema_op, tx};
+use crate::{api, auth, models, prelude::*, schema_op, tx};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Credit {
@@ -161,11 +159,7 @@ impl PaymentService {
 
     /// Rest API endpoint untuk transfer
     #[authorized_only(user)]
-    fn transfer(
-        state: &AppState,
-        query: TxQuery<Transfer>,
-        req: &api::HttpRequest,
-    ) -> api::Result<()> {
+    fn transfer(state: &AppState, query: TxQuery<Transfer>, req: &api::HttpRequest) -> api::Result<()> {
         trace!("transfer: {:?}", query);
         trace!("current_account: {}", current_account);
 
@@ -193,18 +187,11 @@ impl PaymentService {
     }
 
     /// Rest API endpoint untuk mendaftarkan akun baru.
-    fn register_account(
-        state: &AppState,
-        query: TxQuery<CreateAccount>,
-    ) -> api::Result<SuccessReturn<ID>> {
+    fn register_account(state: &AppState, query: TxQuery<CreateAccount>) -> api::Result<SuccessReturn<ID>> {
         let schema = Schema::new(state.db());
 
         schema
-            .register_account(
-                &query.body.full_name,
-                &query.body.email,
-                &query.body.phone_num,
-            )
+            .register_account(&query.body.full_name, &query.body.email, &query.body.phone_num)
             .map_err(From::from)
             .map(SuccessReturn::new)
     }
@@ -227,9 +214,7 @@ impl PaymentService {
                 Err(api::Error::Unauthorized)?
             }
 
-            schema
-                .generate_access_token(query.account_id)
-                .map_err(From::from)
+            schema.generate_access_token(query.account_id).map_err(From::from)
         }
     }
 
@@ -239,8 +224,8 @@ impl PaymentService {
         ActivateAccount,
         models::Account,
         (|schema, query| {
-            let account = schema
-                .activate_registered_account(query.body.reg_id, query.body.initial_balance)?;
+            let account =
+                schema.activate_registered_account(query.body.reg_id, query.body.initial_balance)?;
             schema.set_password(account.id, &query.body.password)?;
             Ok(account)
         })
@@ -301,12 +286,7 @@ impl PaymentService {
         {
             let schema = tx::Schema::new(state.db());
             schema
-                .pay_invoice(
-                    query.body.invoice,
-                    &payer,
-                    query.body.amount,
-                    &query.body.via,
-                )
+                .pay_invoice(query.body.invoice, &payer, query.body.amount, &query.body.via)
                 .map_err(From::from)
                 .map(SuccessReturn::new)
         }

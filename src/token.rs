@@ -14,9 +14,7 @@ pub fn generate_u64() -> u64 {
     // let mut idgen = SnowflakeIdGenerator::new(1);
     // idgen.generate() as u64
     let mut bytes = Cursor::new(randombytes::randombytes(8));
-    bytes
-        .read_u64::<LittleEndian>()
-        .expect("Can't generate u64")
+    bytes.read_u64::<LittleEndian>().expect("Can't generate u64")
 }
 
 /// Menggenerasikan kode unik untuk akses token pada API.

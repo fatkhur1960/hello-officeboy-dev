@@ -105,9 +105,7 @@ impl<Q, I, R, F, K> NamedWith<Q, I, R, F, K> {
 
 impl<Q, I, F> From<F> for With<Q, I, Result<I>, F>
 where
-    // F: for<'r> Fn(&'r AppState, Q) -> Result<I>,
-    Q: DeserializeOwned + 'static,
-    // F: Into<FuncHandler<X>>,
+    Q: DeserializeOwned + 'static, // F: Into<FuncHandler<X>>
 {
     fn from(handler: F) -> Self {
         Self {

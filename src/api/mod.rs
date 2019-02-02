@@ -6,24 +6,25 @@ use actix_web::{
     server::{self, HttpServer},
     AsyncResponder, FromRequest, HttpMessage, HttpResponse, Query,
 };
-use diesel::pg::PgConnection;
-use diesel::prelude::*;
+use diesel::{pg::PgConnection, prelude::*};
 use futures::future::{Future, IntoFuture};
 use regex::Regex;
 
 mod error;
 mod with;
 
-pub use self::error::Error;
-pub use self::with::Result;
+pub use self::{error::Error, with::Result};
 
 use self::with::{Immutable, ImmutableReq, Mutable, MutableReq, NamedWith, With};
 
-use crate::db;
-use crate::service::Service;
+use crate::{db, service::Service};
 
 use std::{
-    collections::BTreeMap, convert::From, env, fmt, marker::PhantomData, sync::mpsc, sync::Arc,
+    collections::BTreeMap,
+    convert::From,
+    env, fmt,
+    marker::PhantomData,
+    sync::{mpsc, Arc},
     thread,
 };
 
@@ -419,11 +420,7 @@ impl ServiceApiScope {
         self
     }
 
-    fn endpoint_internal_mut<Q, I, R, F, E, K>(
-        &mut self,
-        name: &'static str,
-        endpoint: E,
-    ) -> &mut Self
+    fn endpoint_internal_mut<Q, I, R, F, E, K>(&mut self, name: &'static str, endpoint: E) -> &mut Self
     where
         Q: DeserializeOwned + 'static,
         I: Serialize + 'static,
@@ -526,9 +523,7 @@ pub struct ServiceApiBuilder {
 impl ServiceApiBuilder {
     #[doc(hidden)]
     pub fn new() -> Self {
-        Self {
-            ..Default::default()
-        }
+        Self { ..Default::default() }
     }
 
     /// Returns to a mutable reference to the public API builder.

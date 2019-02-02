@@ -53,16 +53,14 @@ pub mod web;
 
 /// Common use (prelude) exports.
 pub mod prelude {
-    pub use super::api::{
-        self, ApiAccess, ApiAggregator, ApiBuilder, ApiServer, AppState, ServiceApiBuilder,
-        ServiceApiConfig, ServiceApiScope,
-    };
-    pub use super::result::Result;
-    pub use super::valid::Validable;
     pub use super::{
-        // models::Account,
-        schema_op::Schema,
-        schema_op::ID,
+        api::{
+            self, ApiAccess, ApiAggregator, ApiBuilder, ApiServer, AppState, ServiceApiBuilder,
+            ServiceApiConfig, ServiceApiScope,
+        },
+        result::Result,
+        schema_op::{Schema, ID},
         service::{PaymentService, Service},
+        valid::Validable,
     };
 }

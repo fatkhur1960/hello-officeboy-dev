@@ -3,13 +3,14 @@
 //!
 
 use chrono::{Duration, NaiveDateTime};
-use diesel::pg::PgConnection;
-use diesel::prelude::*;
+use diesel::{pg::PgConnection, prelude::*};
 
-use crate::models::{AccessToken, Account};
-use crate::prelude::*;
-use crate::schema::access_tokens;
-use crate::{token, util};
+use crate::{
+    models::{AccessToken, Account},
+    prelude::*,
+    schema::access_tokens,
+    token, util,
+};
 
 // use std::time::Duration;
 
@@ -38,12 +39,8 @@ impl<'a> Schema<'a> {
     pub fn get_account_from_access_token(&self, access_token: &str) -> Result<Account> {
         use crate::schema::accounts::dsl::accounts;
 
-        self.get_access_token(access_token).map(|token| {
-            accounts
-                .find(token.account_id)
-                .first(self.db)
-                .map_err(From::from)
-        })?
+        self.get_access_token(access_token)
+            .map(|token| accounts.find(token.account_id).first(self.db).map_err(From::from))?
     }
 
     /// Mendapatkan akses token object dari string token.
@@ -58,8 +55,7 @@ impl<'a> Schema<'a> {
 
     /// Generate access token, this write access token into database.
     pub fn generate_access_token(&self, account_id: ID) -> Result<AccessToken> {
-        use crate::schema::access_tokens;
-        use crate::schema::access_tokens::dsl;
+        use crate::schema::access_tokens::{self, dsl};
 
         let now = chrono::Utc::now().naive_utc();
         let token = NewAccessToken {
@@ -83,11 +79,7 @@ impl<'a> Schema<'a> {
         use crate::schema::account_passhash::dsl;
 
         dsl::account_passhash
-            .filter(
-                dsl::account_id
-                    .eq(account_id)
-                    .and(dsl::passhash.eq(passhash)),
-            )
+            .filter(dsl::account_id.eq(account_id).and(dsl::passhash.eq(passhash)))
             .select(dsl::account_id)
             .get_result::<i64>(self.db)
             .is_ok()

@@ -60,8 +60,7 @@ impl<'a> Schema<'a> {
 
     /// Mentransfer sejumlah uang dari satu akun ke akun lainnya.
     pub fn transfer(&self, from: ID, to: ID, amount: f64) -> Result<()> {
-        use crate::schema::accounts;
-        use crate::schema::accounts::dsl;
+        use crate::schema::accounts::{self, dsl};
 
         self.db.build_transaction().read_write().run(|| {
             let from = self.get_account(from)?;
@@ -100,8 +99,7 @@ impl<'a> Schema<'a> {
     /// karena user belum aktif, untuk mengaktifkannya perlu memanggil
     /// perintah [Schema::activate_registered_account].
     pub fn register_account(&self, full_name: &str, email: &str, phone_num: &str) -> Result<ID> {
-        use crate::schema::accounts::dsl as dsl_account;
-        use crate::schema::register_accounts;
+        use crate::schema::{accounts::dsl as dsl_account, register_accounts};
 
         // tolak akun dengan nama-nama tertentu
         // @TODO(robin): buat konfigurable
@@ -141,8 +139,7 @@ impl<'a> Schema<'a> {
 
     /// Setting account's password
     pub fn set_password(&self, account_id: ID, password: &str) -> Result<()> {
-        use crate::schema::account_passhash;
-        use crate::schema::account_passhash::dsl;
+        use crate::schema::account_passhash::{self, dsl};
 
         let _ = self.get_account(account_id)?;
 
@@ -151,11 +148,7 @@ impl<'a> Schema<'a> {
 
             // dipresiasi password lama
             diesel::update(
-                dsl::account_passhash.filter(
-                    dsl::account_id
-                        .eq(account_id)
-                        .and(dsl::deprecated.eq(false)),
-                ),
+                dsl::account_passhash.filter(dsl::account_id.eq(account_id).and(dsl::deprecated.eq(false))),
             )
             .set(dsl::deprecated.eq(true))
             .execute(self.db)?;
@@ -178,8 +171,7 @@ impl<'a> Schema<'a> {
     /// Mengaktifkan akun yang telah melakukan registrasi tapi belum aktif
     /// bisa diset juga balance pertamanya (initial balance).
     pub fn activate_registered_account(&self, id: ID, initial_balance: f64) -> Result<Account> {
-        use crate::schema::accounts;
-        use crate::schema::register_accounts;
+        use crate::schema::{accounts, register_accounts};
 
         self.db.build_transaction().read_write().run(|| {
             let reg_acc: RegisterAccount = register_accounts::dsl::register_accounts

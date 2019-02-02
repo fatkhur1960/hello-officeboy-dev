@@ -71,8 +71,7 @@ impl<'a> Schema<'a> {
 
     /// Meng-kredit akun sejumlah uang
     pub fn credit(&self, account: &Account, amount: f64) -> Result<()> {
-        use crate::schema::accounts;
-        use crate::schema::accounts::dsl;
+        use crate::schema::accounts::{self, dsl};
 
         diesel::update(dsl::accounts.filter(dsl::id.eq(account.id)))
             .set(dsl::balance.eq(dsl::balance + amount))
@@ -119,8 +118,7 @@ impl<'a> Schema<'a> {
                 .get_result(self.db)?;
             // .map_err(From::from)?;
 
-            let items: Vec<NewInvoiceItem> =
-                items.iter().map(|item| item.set_invoice_id(id)).collect();
+            let items: Vec<NewInvoiceItem> = items.iter().map(|item| item.set_invoice_id(id)).collect();
 
             diesel::insert_into(invoice_items::table)
                 .values(&items)
@@ -179,11 +177,9 @@ impl<'a> Schema<'a> {
                 .execute(self.db)?;
 
             // credit saldo issuer
-            diesel::update(
-                dsl_account::accounts.filter(dsl_account::id.eq(invoice.issuer_account)),
-            )
-            .set(dsl_account::balance.eq(dsl_account::balance + amount))
-            .execute(self.db)?;
+            diesel::update(dsl_account::accounts.filter(dsl_account::id.eq(invoice.issuer_account)))
+                .set(dsl_account::balance.eq(dsl_account::balance + amount))
+                .execute(self.db)?;
 
             // catat history pembayarannya
             diesel::insert_into(payment_history::table)
@@ -201,12 +197,8 @@ impl<'a> Schema<'a> {
     /// Mendapatkan invoice berdasarkan ID-nya.
     pub fn get_invoice(&self, id: ID) -> Result<Invoice> {
         assert!(id > 0);
-        use crate::schema::invoices;
-        use crate::schema::invoices::dsl;
+        use crate::schema::invoices::{self, dsl};
 
-        dsl::invoices
-            .find(id)
-            .get_result(self.db)
-            .map_err(From::from)
+        dsl::invoices.find(id).get_result(self.db).map_err(From::from)
     }
 }

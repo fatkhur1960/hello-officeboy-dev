@@ -82,46 +82,25 @@ impl From<PaymentError> for Error {
                     _ => Error::CustomError(4, "Internal error".to_owned()),
                 }
             }
-            PaymentError::Storage(diesel::result::Error::NotFound) => {
-                Error::NotFound("Not found".to_owned())
-            }
+            PaymentError::Storage(diesel::result::Error::NotFound) => Error::NotFound("Not found".to_owned()),
             _ => Error::InternalError(failure::Error::from(e)),
         }
     }
 }
-
-// #[derive(Serialize)]
-// struct ApiErrorJson {
-//     pub error: String,
-// }
-
-// impl ApiErrorJson {
-//     pub fn new(error: String) -> Self {
-//         Self { error }
-//     }
-// }
 
 use actix_web::{HttpResponse, ResponseError};
 
 impl ResponseError for Error {
     fn error_response(&self) -> HttpResponse {
         match self {
-            Error::BadRequest(err) => {
-                // HttpResponse::BadRequest().json(ApiErrorJson::new(err.to_owned()))
-                HttpResponse::BadRequest().json(ApiResult::error(400, err.to_owned()))
-            }
+            Error::BadRequest(err) => HttpResponse::BadRequest().json(ApiResult::error(400, err.to_owned())),
             Error::InternalError(err) => {
                 HttpResponse::InternalServerError().json(ApiResult::error(500, err.to_string()))
             }
             Error::Io(err) => {
                 HttpResponse::InternalServerError().json(ApiResult::error(500, err.to_string()))
             }
-            // Error::Storage(err) => {
-            //     HttpResponse::InternalServerError().json(ApiErrorJson::new(err.to_string()))
-            // }
-            Error::NotFound(err) => {
-                HttpResponse::NotFound().json(ApiResult::error(404, err.to_string()))
-            }
+            Error::NotFound(err) => HttpResponse::NotFound().json(ApiResult::error(404, err.to_string())),
             Error::InvalidParameter(d) => {
                 HttpResponse::BadRequest().json(ApiResult::error(452, d.to_owned()))
             }
