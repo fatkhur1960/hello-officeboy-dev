@@ -207,7 +207,7 @@ where
             let context = request.state();
             let future = Query::from_request(&request, &Default::default())
                 .map(|query: Query<Q>| query.into_inner())
-                .or_else(|e| map_error(e))
+                .or_else(map_error)
                 .and_then(|query| handler(context, query).map_err(From::from))
                 // .and_then(|value| Ok(HttpResponse::Ok().json(value)))
                 .and_then(|value| Ok(map_ok(value, &request)))
@@ -237,7 +237,7 @@ where
             let context = request.state();
             let future = Query::from_request(&request, &Default::default())
                 .map(|query: Query<Q>| query.into_inner())
-                .or_else(|e| map_error(e))
+                .or_else(map_error)
                 .and_then(|query| handler(context, query, &request).map_err(From::from))
                 // .and_then(|value| Ok(HttpResponse::Ok().json(value)))
                 .and_then(|value| Ok(map_ok(value, &request)))
@@ -265,12 +265,10 @@ fn map_ok<I: Serialize>(value: I, request: &HttpRequest) -> HttpResponse {
                 HttpResponse::Ok()
                     .header(header::CONTENT_TYPE, "application/json")
                     .body(body)
+            } else if body == "null" {
+                HttpResponse::Ok().json(ApiResult::success())
             } else {
-                if body == "null" {
-                    HttpResponse::Ok().json(ApiResult::success())
-                } else {
-                    HttpResponse::Ok().body(body)
-                }
+                HttpResponse::Ok().body(body)
             }
         }
         Err(e) => panic!("cannot serialize response"),
@@ -313,7 +311,7 @@ where
             request
                 .json()
                 // .from_err()
-                .or_else(|e| map_error(e))
+                .or_else(map_error)
                 .and_then(move |query: Q| {
                     handler(&context, query)
                         .map(|v| map_ok(v, &request))
@@ -344,12 +342,11 @@ where
 
             request
                 .json()
-                .or_else(|e| map_error(e))
+                .or_else(map_error)
                 .and_then(move |query: Q| {
-                    let rv = handler(&context, query, &request)
+                    handler(&context, query, &request)
                         .map(|v| map_ok(v, &request))
-                        .map_err(From::from);
-                    rv
+                        .map_err(From::from)
                 })
                 .responder()
         };
@@ -362,11 +359,14 @@ where
     }
 }
 
+/// Just type alias for complex type
+pub type ResourceFunc = Arc<Box<Fn(Scope) -> Scope + Sync + Send + 'static>>;
+
 /// Scope API
 #[derive(Default, Clone)]
 pub struct ServiceApiScope {
     pub(crate) actix_backend: ApiBuilder,
-    pub(crate) resources: Vec<Arc<Box<Fn(Scope) -> Scope + Sync + Send + 'static>>>,
+    pub(crate) resources: Vec<ResourceFunc>,
 }
 
 impl ServiceApiScope {
@@ -499,7 +499,7 @@ impl ServiceApiScope {
     ///         })
     ///     });
     /// ```
-    pub fn with_scope<'a, F>(&mut self, f: F) -> &mut Self
+    pub fn with_scope<F>(&mut self, f: F) -> &mut Self
     where
         F: Fn(Scope) -> Scope + Sync + Send + 'static,
     {
@@ -577,7 +577,7 @@ impl ApiAggregator {
             scope = scope.nested(&item.0, move |scope| {
                 let mut scope = item.1.actix_backend.wire(scope);
                 let ress = item.1.resources.iter();
-                for ref res in ress {
+                for res in ress.as_ref() {
                     scope = res(scope)
                 }
                 scope

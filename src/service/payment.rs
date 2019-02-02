@@ -164,7 +164,7 @@ impl PaymentService {
                 &query.body.phone_num,
             )
             .map_err(From::from)
-            .map(|id| SuccessReturn::new(id))
+            .map(SuccessReturn::new)
     }
 
     /// Mengaktifkan user yang telah teregister

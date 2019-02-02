@@ -5,6 +5,7 @@
 //!
 #![deny(missing_docs)]
 #![allow(unused_imports, unused_variables, dead_code)]
+#![allow(clippy::new_without_default)]
 
 extern crate actix;
 extern crate actix_web;
