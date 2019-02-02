@@ -48,10 +48,6 @@ pub struct Schema<'a> {
     db: &'a PgConnection,
 }
 
-// fn error_mapper(e: diesel::result::Error) -> PaymentError {
-//     e.into()
-// }
-
 impl<'a> Schema<'a> {
     /// Create new schema instance.
     pub fn new(db: &'a PgConnection) -> Self {

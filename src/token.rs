@@ -5,7 +5,7 @@
 use byteorder::{BigEndian, LittleEndian, ReadBytesExt, WriteBytesExt};
 use hex;
 use rsnowflake::SnowflakeIdGenerator;
-use sodiumoxide::{crypto, randombytes};
+use sodiumoxide::{crypto::hash::sha512, randombytes};
 
 use std::io::Cursor;
 
@@ -20,10 +20,9 @@ pub fn generate_u64() -> u64 {
 /// Menggenerasikan kode unik untuk akses token pada API.
 pub fn generate_access_token() -> String {
     let token_u64 = generate_u64();
-    dbg!(token_u64);
     let mut wtr = vec![];
     wtr.write_u64::<BigEndian>(token_u64).unwrap();
-    hex::encode(&crypto::hash::hash(wtr.as_slice()))
+    hex::encode(&sha512::hash(wtr.as_slice()))
 }
 
 #[cfg(test)]
