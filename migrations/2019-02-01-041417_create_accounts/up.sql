@@ -9,6 +9,20 @@ CREATE TABLE accounts (
     register_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- create nobody account
+INSERT INTO accounts (id, full_name, balance, email, phone_num, active)
+VALUES
+(0, 'nobody', 0.0, 'nobody@nowhere.net', '', TRUE);
+
+
+CREATE UNIQUE INDEX accounts_email ON accounts (
+    (lower(email))
+);
+CREATE UNIQUE INDEX accounts_phone_num ON accounts (
+    (lower(phone_num))
+);
+
+
 -- Berisi koleksi passhash dari akun
 -- dibuat one-to-many agar ada history-nya setiap user merubah password.
 CREATE TABLE account_passhash (

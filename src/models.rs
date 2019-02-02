@@ -5,6 +5,8 @@ use serde::Serialize;
 
 use std::fmt;
 
+use crate::schema_op::ID;
+
 /// Bentuk model akun di dalam database.
 #[derive(Queryable, Serialize, PartialEq)]
 pub struct Account {
@@ -91,6 +93,41 @@ pub struct AccountPashash {
     pub passhash: String,
     pub deperecated: bool,
     pub created: NaiveDateTime,
+}
+
+#[doc(hidden)]
+#[derive(Queryable)]
+pub struct Invoice {
+    pub id: ID,
+    pub id_ref: String,
+    pub issuer_account: ID,
+    pub to_account: ID,
+    pub discount: f64,
+    pub amount: f64,
+    pub notes: String,
+    pub created: NaiveDateTime,
+    pub paid: bool,
+    pub paid_by: ID,
+    pub paid_at: Option<NaiveDateTime>,
+}
+
+#[doc(hidden)]
+#[derive(Queryable)]
+pub struct InvoiceItem {
+    pub id: ID,
+    pub invoice_id: String,
+    pub name: String,
+    pub price: f64,
+}
+
+#[doc(hidden)]
+#[derive(Queryable)]
+pub struct PaymentHistory {
+    pub id: ID,
+    pub invoice_id: ID,
+    pub payer: ID,
+    pub via: String,
+    pub ts: NaiveDateTime,
 }
 
 impl fmt::Display for Account {

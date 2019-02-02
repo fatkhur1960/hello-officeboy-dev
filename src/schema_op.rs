@@ -100,7 +100,30 @@ impl<'a> Schema<'a> {
     /// karena user belum aktif, untuk mengaktifkannya perlu memanggil
     /// perintah [Schema::activate_registered_account].
     pub fn register_account(&self, full_name: &str, email: &str, phone_num: &str) -> Result<ID> {
+        use crate::schema::accounts::dsl as dsl_account;
         use crate::schema::register_accounts;
+
+        // tolak akun dengan nama-nama tertentu
+        // @TODO(robin): buat konfigurable
+        if full_name == "nobody" {
+            warn!("Name exception to register: `{}`", full_name);
+            Err(PaymentError::Unauthorized)?
+        }
+
+        // check apakah akun dengan email/phone sama sudah ada
+        let exists = dsl_account::accounts
+            .filter(
+                dsl_account::email
+                    .eq(email)
+                    .or(dsl_account::phone_num.eq(phone_num)),
+            )
+            .select(dsl_account::id)
+            .first::<ID>(self.db)
+            .is_ok();
+
+        if exists {
+            Err(PaymentError::AlreadyExists)?
+        }
 
         let new_reg_account = NewRegisterAccount {
             full_name,

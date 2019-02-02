@@ -5,3 +5,4 @@ DROP TABLE account_passhash;
 DROP TABLE accounts;
 DROP TABLE register_accounts;
 DROP TABLE addresses;
+

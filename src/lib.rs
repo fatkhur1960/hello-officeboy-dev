@@ -46,6 +46,7 @@ mod schema;
 pub mod schema_op;
 pub mod service;
 pub mod token;
+pub mod tx;
 pub(crate) mod util;
 mod valid;
 pub mod web;

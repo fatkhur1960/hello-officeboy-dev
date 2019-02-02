@@ -108,7 +108,7 @@ impl ResponseError for Error {
         match self {
             Error::BadRequest(err) => {
                 // HttpResponse::BadRequest().json(ApiErrorJson::new(err.to_owned()))
-                HttpResponse::BadRequest().json(ApiResult::error(400, "Bad request".to_owned()))
+                HttpResponse::BadRequest().json(ApiResult::error(400, err.to_owned()))
             }
             Error::InternalError(err) => {
                 HttpResponse::InternalServerError().json(ApiResult::error(500, err.to_string()))
