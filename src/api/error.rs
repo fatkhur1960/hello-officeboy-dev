@@ -78,12 +78,9 @@ impl From<PaymentError> for Error {
                 match kind {
                     DatabaseErrorKind::UniqueViolation | DatabaseErrorKind::ForeignKeyViolation => {
                         Error::AlreadyExists
-                    },
-                    _ => {
-                        Error::CustomError(4, "Internal error".to_owned())
                     }
+                    _ => Error::CustomError(4, "Internal error".to_owned()),
                 }
-                
             }
             PaymentError::Storage(diesel::result::Error::NotFound) => {
                 Error::NotFound("Not found".to_owned())

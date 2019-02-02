@@ -82,7 +82,7 @@ impl AccountInfo {
 
 #[derive(Debug, Serialize, PartialEq)]
 struct SuccessReturn<T> {
-    result: T
+    result: T,
 }
 
 impl<T: Serialize> SuccessReturn<T> {
@@ -151,7 +151,10 @@ impl PaymentService {
     }
 
     /// Rest API endpoint untuk mendaftarkan akun baru.
-    fn register_account(state: &AppState, query: TxQuery<CreateAccount>) -> api::Result<SuccessReturn<ID>> {
+    fn register_account(
+        state: &AppState,
+        query: TxQuery<CreateAccount>,
+    ) -> api::Result<SuccessReturn<ID>> {
         let schema = Schema::new(state.db());
 
         schema
@@ -161,15 +164,11 @@ impl PaymentService {
                 &query.body.phone_num,
             )
             .map_err(From::from)
-            .map(|id| SuccessReturn::new(id) )
+            .map(|id| SuccessReturn::new(id))
     }
 
     /// Mengaktifkan user yang telah teregister
-    fn authorize(
-        state: &AppState,
-        query: Authorize,
-        // req: &api::HttpRequest,
-    ) -> api::Result<models::AccessToken> {
+    fn authorize(state: &AppState, query: Authorize) -> api::Result<models::AccessToken> {
         {
             let schema = Schema::new(state.db());
             let account = schema.get_account(query.account_id);
@@ -179,7 +178,10 @@ impl PaymentService {
             let schema = auth::Schema::new(state.db());
 
             if !schema.valid_passhash(query.account_id, &query.passhash) {
-                warn!("account `{}` try to authorize using wrong password", &query.account_id);
+                warn!(
+                    "account `{}` try to authorize using wrong password",
+                    &query.account_id
+                );
                 Err(api::Error::Unauthorized)?
             }
 
@@ -197,9 +199,7 @@ impl PaymentService {
         (|schema, query| {
             let account = schema
                 .activate_registered_account(query.body.reg_id, query.body.initial_balance)?;
-
             schema.set_password(account.id, &query.body.password)?;
-
             Ok(account)
         })
     );

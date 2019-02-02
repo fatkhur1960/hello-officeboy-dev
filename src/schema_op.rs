@@ -112,7 +112,7 @@ impl<'a> Schema<'a> {
                 .values(&NewAccountPasshash {
                     account_id,
                     passhash,
-                    deprecated: false
+                    deprecated: false,
                 })
                 .execute(self.db)?;
             // .map_err(From::from)?;
@@ -131,7 +131,7 @@ impl<'a> Schema<'a> {
             let reg_acc: RegisterAccount = register_accounts::dsl::register_accounts
                 .find(id)
                 .first(self.db)?;
-                // .map_err(From::from)?;
+            // .map_err(From::from)?;
 
             let new_account = NewAccount {
                 full_name: &reg_acc.full_name,
@@ -145,7 +145,7 @@ impl<'a> Schema<'a> {
             let account = diesel::insert_into(accounts::table)
                 .values(&new_account)
                 .get_result(self.db)?;
-                // .map_err(From::from)?;
+            // .map_err(From::from)?;
 
             // delete reference in registered accounts table
             diesel::delete(register_accounts::dsl::register_accounts.find(id)).execute(self.db)?;
