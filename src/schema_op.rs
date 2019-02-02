@@ -101,6 +101,5 @@ impl<'a> Schema<'a> {
 
             Ok(account)
         })
-
     }
 }

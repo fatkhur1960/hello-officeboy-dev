@@ -119,7 +119,10 @@ impl ResponseError for Error {
             }
             Error::CustomError(d, code) => HttpResponse::build(StatusCode::from_u16(406).unwrap())
                 .json(ApiResult::error(*code, d.to_owned())),
-            Error::Unauthorized => HttpResponse::Unauthorized().finish(),
+            Error::Unauthorized => {
+                // HttpResponse::Unauthorized().finish()
+                HttpResponse::Unauthorized().json(ApiResult::error(8, "Unauthorized".to_owned()))
+            },
         }
     }
 }

@@ -22,3 +22,6 @@ regex = "1"
 
 diesel = { version = "1.4", default-features = false, features = ["32-column-tables", "postgres", "chrono"]}
 dotenv = "0.13"
+
+apf_proc_macro = { path = "./macros/apf_proc_macro" }
+

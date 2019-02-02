@@ -1,6 +1,6 @@
 //! Core implementasi untuk Service Payment
 
-use actix_web::HttpResponse;
+use actix_web::{HttpRequest, HttpResponse};
 use serde::Serialize;
 
 use crate::api;
@@ -83,6 +83,8 @@ macro_rules! api_endpoint {
     };
 }
 
+// use crate::api::Error as ApiError;
+
 /// Core basis service payment.
 /// Service ini yang men-serve beberapa endpoint transaksional seperti:
 /// /credit, /transfer, /debit, /balance
@@ -95,21 +97,26 @@ impl PaymentService {
     }
 
     /// Rest API endpoint for topup
-    fn credit(state: &AppState, query: TxQuery<Credit>) -> api::Result<()> {
+    #[authorized_only(user)]
+    fn credit(state: &AppState, query: TxQuery<Credit>, req: &api::HttpRequest) -> api::Result<()> {
         trace!("topup account: {:?}", query);
+        trace!("access_token: {}", access_token);
+
         // @TODO(*): Code here
         Ok(())
     }
 
     /// Rest API endpoint untuk transfer
-    fn transfer(state: &AppState, query: TxQuery<Transfer>) -> api::Result<()> {
+    #[authorized_only(user)]
+    fn transfer(state: &AppState, query: TxQuery<Transfer>, req: &api::HttpRequest) -> api::Result<()> {
         trace!("transfer: {:?}", query);
         // @TODO(*): code here
         Ok(())
     }
 
     /// Rest API endpoint untuk debit
-    fn debit(state: &AppState, query: TxQuery<Debit>) -> api::Result<()> {
+    #[authorized_only(user)]
+    fn debit(state: &AppState, query: TxQuery<Debit>, req: &api::HttpRequest) -> api::Result<()> {
         trace!("debit: {:?}", query);
         // @TODO(*): Code here
         Ok(())
@@ -153,9 +160,9 @@ impl Service for PaymentService {
     fn wire_api(&self, builder: &mut ServiceApiBuilder) {
         builder
             .public_scope()
-            .endpoint_mut("v1/credit", Self::credit)
-            .endpoint_mut("v1/transfer", Self::transfer)
-            .endpoint_mut("v1/debit", Self::debit)
+            .endpoint_req_mut("v1/credit", Self::credit)
+            .endpoint_req_mut("v1/transfer", Self::transfer)
+            .endpoint_req_mut("v1/debit", Self::debit)
             .endpoint("v1/balance", Self::balance);
 
         builder
@@ -164,3 +171,5 @@ impl Service for PaymentService {
             .endpoint_mut("v1/account/activate", Self::activate_account);
     }
 }
+
+
