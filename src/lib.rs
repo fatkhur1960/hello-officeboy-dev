@@ -47,6 +47,7 @@ pub mod schema_op;
 pub mod service;
 pub mod token;
 pub(crate) mod util;
+mod valid;
 pub mod web;
 
 /// Common use (prelude) exports.
@@ -56,6 +57,7 @@ pub mod prelude {
         ServiceApiConfig, ServiceApiScope,
     };
     pub use super::result::Result;
+    pub use super::valid::Validable;
     pub use super::{
         // models::Account,
         schema_op::Schema,

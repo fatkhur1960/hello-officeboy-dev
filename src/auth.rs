@@ -34,8 +34,8 @@ impl<'a> Schema<'a> {
         Self { db }
     }
 
-    /// Mendaftarkan akun dari akses token.
-    pub fn get_auth_account(&self, access_token: &str) -> Result<Account> {
+    /// Mendapatkan akun dari akses token.
+    pub fn get_account_from_access_token(&self, access_token: &str) -> Result<Account> {
         use crate::schema::accounts::dsl::accounts;
 
         self.get_access_token(access_token).map(|token| {

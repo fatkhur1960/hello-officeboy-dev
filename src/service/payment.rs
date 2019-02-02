@@ -5,7 +5,7 @@ use serde::Serialize;
 
 use crate::models;
 use crate::prelude::*;
-use crate::{api, auth};
+use crate::{api, auth, schema_op};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Credit {
@@ -118,7 +118,7 @@ impl PaymentService {
     #[authorized_only(user)]
     fn credit(state: &AppState, query: TxQuery<Credit>, req: &api::HttpRequest) -> api::Result<()> {
         trace!("topup account: {:?}", query);
-        trace!("access_token: {}", access_token);
+        trace!("current_account: {}", current_account);
 
         // @TODO(*): Code here
         Ok(())

@@ -3,6 +3,8 @@
 use chrono::NaiveDateTime;
 use serde::Serialize;
 
+use std::fmt;
+
 /// Bentuk model akun di dalam database.
 #[derive(Queryable, Serialize, PartialEq)]
 pub struct Account {
@@ -89,4 +91,10 @@ pub struct AccountPashash {
     pub passhash: String,
     pub deperecated: bool,
     pub created: NaiveDateTime,
+}
+
+impl fmt::Display for Account {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Account({}, {})", self.id, self.full_name)
+    }
 }

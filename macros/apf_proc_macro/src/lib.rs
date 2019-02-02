@@ -1,3 +1,5 @@
+#![recursion_limit="128"]
+
 extern crate proc_macro;
 
 // use crate::proc_macro;
@@ -95,14 +97,29 @@ pub fn authorized_only(
                 if let TokenTree::Group(ref group) = item {
                     let mut new_stream = vec![];
                     let access_token_guard: TokenStream = quote! {
-                        // {
+
+                        let current_account = {
                             let access_token = req.headers().get("X-Access-Token")
                                 .ok_or(api::Error::Unauthorized)?
                                 .to_str()
                                 .map_err(|_| api::Error::Unauthorized)?;
 
-                            // println!("got access token: {}", access_token);
-                        // }
+                            // periksa akses token
+                            let schema = auth::Schema::new(state.db());
+                            let access_token = schema.get_access_token(&access_token)
+                                .map_err(|_| api::Error::Unauthorized)?;
+
+                            if !access_token.valid(){
+                                warn!("access token no more valid: {}", &access_token.token[..10]);
+                                Err(api::Error::Unauthorized)?
+                            }
+
+                            let account_schema = schema_op::Schema::new(state.db());
+                            let account = account_schema.get_account(access_token.account_id)?;
+
+                            account
+                        };
+
                     };
                     new_stream.push(access_token_guard);
                     new_stream.push(group.stream());
