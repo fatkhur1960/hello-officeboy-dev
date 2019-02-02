@@ -30,11 +30,13 @@ extern crate regex;
 extern crate apf_proc_macro;
 
 extern crate byteorder;
+extern crate hex;
 extern crate rsnowflake;
 extern crate sodiumoxide;
-extern crate hex;
 
 pub mod api;
+mod auth;
+mod crypto;
 mod db;
 pub mod error;
 pub mod models;
@@ -42,8 +44,9 @@ mod result;
 mod schema;
 pub mod schema_op;
 pub mod service;
-pub mod web;
 pub mod token;
+pub(crate) mod util;
+pub mod web;
 
 /// Common use (prelude) exports.
 pub mod prelude {

@@ -31,6 +31,14 @@ pub struct NewAccount<'a> {
     pub register_time: NaiveDateTime,
 }
 
+#[derive(Insertable)]
+#[table_name = "account_passhash"]
+#[doc(hidden)]
+pub struct NewAccountPasshash<'a> {
+    pub account_id: i64,
+    pub passhash: &'a str,
+}
+
 /// Type alias for ID in integer
 pub type ID = i64;
 
@@ -47,6 +55,12 @@ impl<'a> Schema<'a> {
     /// Create new schema instance.
     pub fn new(db: &'a PgConnection) -> Self {
         Self { db }
+    }
+
+    /// Get account by ID.
+    pub fn get_account(&self, account_id: ID) -> Result<Account> {
+        use crate::schema::accounts::dsl::accounts;
+        accounts.find(account_id).first(self.db).map_err(From::from)
     }
 
     /// Mendaftarkan akun baru.
@@ -68,6 +82,41 @@ impl<'a> Schema<'a> {
             .get_result::<RegisterAccount>(self.db)
             .map(|d| d.id)
             .map_err(error_mapper)
+    }
+
+    /// Setting account's password
+    pub fn set_password(&self, account_id: ID, password: &str) -> Result<()> {
+        use crate::schema::account_passhash;
+        use crate::schema::account_passhash::dsl;
+
+        let _ = self.get_account(account_id)?;
+
+        self.db.build_transaction().read_write().run(|| {
+            let passhash = &crate::crypto::get_passhash(password);
+
+            // dipresiasi password lama
+            diesel::update(
+                dsl::account_passhash.filter(
+                    dsl::account_id
+                        .eq(account_id)
+                        .and(dsl::deprecated.eq(false)),
+                ),
+            )
+            .set(dsl::deprecated.eq(true))
+            .execute(self.db)?;
+            // .map_err(From::from)?;
+
+            // tambahkan password baru
+            diesel::insert_into(account_passhash::table)
+                .values(&NewAccountPasshash {
+                    account_id,
+                    passhash,
+                })
+                .execute(self.db)?;
+            // .map_err(From::from)?;
+
+            Ok(())
+        })
     }
 
     /// Mengaktifkan akun yang telah melakukan registrasi tapi belum aktif

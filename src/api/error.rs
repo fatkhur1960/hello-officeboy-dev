@@ -122,7 +122,7 @@ impl ResponseError for Error {
             Error::Unauthorized => {
                 // HttpResponse::Unauthorized().finish()
                 HttpResponse::Unauthorized().json(ApiResult::error(8, "Unauthorized".to_owned()))
-            },
+            }
         }
     }
 }

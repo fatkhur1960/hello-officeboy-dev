@@ -3,9 +3,9 @@
 use actix_web::{HttpRequest, HttpResponse};
 use serde::Serialize;
 
-use crate::api;
 use crate::models;
 use crate::prelude::*;
+use crate::{api, auth};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Credit {
@@ -30,9 +30,16 @@ struct Transfer {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+struct Authorize {
+    pub account_id: ID,
+    pub passhash: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 struct ActivateAccount {
     pub account_id: ID,
     pub initial_balance: f64,
+    pub password: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -108,7 +115,11 @@ impl PaymentService {
 
     /// Rest API endpoint untuk transfer
     #[authorized_only(user)]
-    fn transfer(state: &AppState, query: TxQuery<Transfer>, req: &api::HttpRequest) -> api::Result<()> {
+    fn transfer(
+        state: &AppState,
+        query: TxQuery<Transfer>,
+        req: &api::HttpRequest,
+    ) -> api::Result<()> {
         trace!("transfer: {:?}", query);
         // @TODO(*): code here
         Ok(())
@@ -142,13 +153,43 @@ impl PaymentService {
     }
 
     /// Mengaktifkan user yang telah teregister
+    fn authorize(
+        state: &AppState,
+        query: Authorize,
+        // req: &api::HttpRequest,
+    ) -> api::Result<models::AccessToken> {
+        {
+            let schema = Schema::new(state.db());
+            let account = schema.get_account(query.account_id);
+        }
+
+        {
+            let schema = auth::Schema::new(state.db());
+
+            if !schema.valid_passhash(query.account_id, &query.passhash) {
+                Err(api::Error::Unauthorized)?
+            }
+
+            schema
+                .generate_access_token(query.account_id)
+                .map_err(From::from)
+        }
+    }
+
+    /// Mengaktifkan user yang telah teregister
     api_endpoint!(
         activate_account,
         ActivateAccount,
         models::Account,
-        (|schema, query| schema
-            .activate_registered_account(query.body.account_id, query.body.initial_balance)
-            .map_err(From::from))
+        (|schema, query| {
+            let account = schema
+                .activate_registered_account(query.body.account_id, query.body.initial_balance)?;
+            // .map_err(From::from)?;
+
+            schema.set_password(account.id, &query.body.password)?;
+
+            Ok(account)
+        })
     );
 }
 
@@ -163,7 +204,8 @@ impl Service for PaymentService {
             .endpoint_req_mut("v1/credit", Self::credit)
             .endpoint_req_mut("v1/transfer", Self::transfer)
             .endpoint_req_mut("v1/debit", Self::debit)
-            .endpoint("v1/balance", Self::balance);
+            .endpoint("v1/balance", Self::balance)
+            .endpoint("v1/authorize", Self::authorize);
 
         builder
             .private_scope()
@@ -171,5 +213,3 @@ impl Service for PaymentService {
             .endpoint_mut("v1/account/activate", Self::activate_account);
     }
 }
-
-

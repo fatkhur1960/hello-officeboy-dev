@@ -27,7 +27,6 @@ pub fn authorized_only(
 
     // dbg!(role);
 
-    // let item2:TokenTree = item.into();
     let mut func_name = String::new();
 
     // convert ke proc_macro2 dulu
@@ -123,25 +122,6 @@ pub fn authorized_only(
             tb.push(item);
         }
     }
-
-    // let func_name = Ident::new(&func_name, Span::call_site());
-
-    // dbg!(&func_name);
-
-    // let gen = quote! {
-    //     // fn #func_name (state: &AppState, query: TxQuery<Credit>) -> api::Result<()> {
-    //     //     trace!(concat!("API call /", #func_name, ", query: {:?}"), query);
-    //     //     // @TODO(*): Code here
-    //     //     Ok(())
-    //     // }
-    // };
-
-    // item
-    // gen.into()
-
-    // after
-    // println!("AFTER:");
-    // dbg!(&tb2);
 
     proc_macro::TokenStream::from(TokenStream::from_iter(tb.into_iter()))
 }

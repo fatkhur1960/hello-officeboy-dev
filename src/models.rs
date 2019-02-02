@@ -72,3 +72,21 @@ pub struct RegisterAccount {
     pub phone_num: String,
     pub register_time: NaiveDateTime,
 }
+
+#[doc(hidden)]
+#[derive(Queryable, Serialize)]
+pub struct AccessToken {
+    pub token: String,
+    pub account_id: i64,
+    pub created: NaiveDateTime,
+    pub valid_thru: NaiveDateTime,
+}
+
+#[doc(hidden)]
+#[derive(Queryable)]
+pub struct AccountPashash {
+    pub account_id: i64,
+    pub passhash: String,
+    pub deperecated: bool,
+    pub created: NaiveDateTime,
+}

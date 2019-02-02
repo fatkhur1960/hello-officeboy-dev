@@ -8,6 +8,15 @@ table! {
 }
 
 table! {
+    account_passhash (account_id) {
+        account_id -> Int8,
+        passhash -> Varchar,
+        deprecated -> Bool,
+        created -> Timestamp,
+    }
+}
+
+table! {
     accounts (id) {
         id -> Int8,
         full_name -> Varchar,
@@ -44,8 +53,12 @@ table! {
     }
 }
 
+joinable!(access_tokens -> accounts (account_id));
+joinable!(account_passhash -> accounts (account_id));
+
 allow_tables_to_appear_in_same_query!(
     access_tokens,
+    account_passhash,
     accounts,
     addresses,
     register_accounts,

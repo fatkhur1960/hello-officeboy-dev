@@ -9,6 +9,15 @@ CREATE TABLE accounts (
     register_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Berisi koleksi passhash dari akun
+-- dibuat one-to-many agar ada history-nya setiap user merubah password.
+CREATE TABLE account_passhash (
+    account_id BIGINT PRIMARY KEY REFERENCES accounts(id),
+    passhash VARCHAR NOT NULL,
+    deprecated BOOLEAN NOT NULL,
+    created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Tabel untuk menampung user-user yang baru mendaftar tapi belum melakukan aktifasi
 CREATE TABLE register_accounts (
     id BIGSERIAL PRIMARY KEY,
