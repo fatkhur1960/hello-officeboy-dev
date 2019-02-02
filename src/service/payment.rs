@@ -213,15 +213,15 @@ impl Service for PaymentService {
     fn wire_api(&self, builder: &mut ServiceApiBuilder) {
         builder
             .public_scope()
-            .endpoint_req_mut("v1/credit", Self::credit)
             .endpoint_req_mut("v1/transfer", Self::transfer)
-            .endpoint_req_mut("v1/debit", Self::debit)
             .endpoint("v1/balance", Self::balance)
             .endpoint_mut("v1/authorize", Self::authorize);
 
         builder
             .private_scope()
             .endpoint_mut("v1/account/register", Self::register_account)
-            .endpoint_mut("v1/account/activate", Self::activate_account);
+            .endpoint_mut("v1/account/activate", Self::activate_account)
+            .endpoint_req_mut("v1/credit", Self::credit)
+            .endpoint_req_mut("v1/debit", Self::debit);
     }
 }
