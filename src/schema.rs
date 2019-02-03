@@ -8,6 +8,17 @@ table! {
 }
 
 table! {
+    account_keys (id) {
+        id -> Int8,
+        account_id -> Int8,
+        pub_key -> Text,
+        secret_key -> Text,
+        created -> Timestamp,
+        active -> Bool,
+    }
+}
+
+table! {
     account_passhash (account_id) {
         account_id -> Int8,
         passhash -> Varchar,
@@ -89,7 +100,9 @@ table! {
 }
 
 joinable!(access_tokens -> accounts (account_id));
+joinable!(account_keys -> accounts (account_id));
 joinable!(account_passhash -> accounts (account_id));
+joinable!(addresses -> accounts (account_id));
 joinable!(invoice_items -> invoices (invoice_id));
 joinable!(invoices -> accounts (paid_by));
 joinable!(payment_history -> accounts (payer));
@@ -97,6 +110,7 @@ joinable!(payment_history -> invoices (invoice_id));
 
 allow_tables_to_appear_in_same_query!(
     access_tokens,
+    account_keys,
     account_passhash,
     accounts,
     addresses,

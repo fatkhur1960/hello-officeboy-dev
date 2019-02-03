@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package protos;
+
+message Transfer {
+    // ID pengirim
+    int64 from = 1;
+    // ID penerima
+    int64 to = 2;
+    // Jumlah yang akan ditransfer
+    double amount = 3;
+    // Waktu transfer
+    int64 timestamp = 4;
+    // nomor auxiliary untuk memastikan operasi idempoten
+    int64 seed = 5;
+}
+

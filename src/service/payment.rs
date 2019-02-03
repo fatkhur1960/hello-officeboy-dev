@@ -1,7 +1,9 @@
 //! Core implementasi untuk Service Payment
 
 use actix_web::{HttpRequest, HttpResponse};
+use chrono::NaiveDateTime;
 use serde::Serialize;
+use sodiumoxide::crypto;
 
 use crate::api::SuccessReturn;
 use crate::{api, auth, models, prelude::*, schema_op, tx};
@@ -20,13 +22,14 @@ struct Debit {
     pub timestamp: u64,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct Transfer {
-    pub from: ID,
-    pub to: ID,
-    pub amount: f64,
-    pub timestamp: u64,
-}
+// #[derive(Debug, Serialize, Deserialize)]
+// struct Transfer {
+//     pub from: ID,
+//     pub to: ID,
+//     pub amount: f64,
+//     pub timestamp: u64,
+// }
+use crate::protos::Transfer;
 
 /// Query transaction untuk melakukan pembayaran
 #[derive(Debug, Serialize, Deserialize)]
@@ -37,7 +40,9 @@ struct Pay {
     pub invoice: ID,
     /// Jumlah yang dibayarkan.
     pub amount: f64,
-    pub timestamp: u64,
+
+    pub timestamp: NaiveDateTime,
+
     pub via: String,
 }
 
@@ -70,6 +75,25 @@ where
 {
     body: T,
     signature: String,
+}
+
+use protobuf::Message;
+
+impl<T> TxQuery<T>
+where
+    T: Serialize + Clone,
+{
+    pub fn sign(&self) -> Self {
+        assert!(self.signature.len() > 0, "already signed.");
+
+        // convert ke bytes format protobuf
+        // self.body.write_to_bytes()
+        // @TODO(*): Code here
+        Self {
+            body: self.body.clone(),
+            signature: "".to_string(),
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]

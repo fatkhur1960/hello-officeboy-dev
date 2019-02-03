@@ -130,8 +130,25 @@ pub struct PaymentHistory {
     pub ts: NaiveDateTime,
 }
 
+#[doc(hidden)]
+#[derive(Queryable)]
+pub struct AccountKey {
+    pub id: ID,
+    pub account_id: ID,
+    pub pub_key: String,
+    pub secret_key: String,
+    pub created: NaiveDateTime,
+    pub active: bool,
+}
+
 impl fmt::Display for Account {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Account({}, {})", self.id, self.full_name)
+    }
+}
+
+impl fmt::Display for AccountKey {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Key({})", &self.pub_key[..8])
     }
 }

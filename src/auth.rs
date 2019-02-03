@@ -39,6 +39,7 @@ impl<'a> Schema<'a> {
     pub fn get_account_from_access_token(&self, access_token: &str) -> Result<Account> {
         use crate::schema::accounts::dsl::accounts;
 
+        // @TODO(robin): ini masih bisa diimprove dengan hanya menggunakan sekali call ke DB
         self.get_access_token(access_token)
             .map(|token| accounts.find(token.account_id).first(self.db).map_err(From::from))?
     }

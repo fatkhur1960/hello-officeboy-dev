@@ -5,7 +5,7 @@ use chrono::{NaiveDateTime, Utc};
 use diesel::prelude::*;
 use failure;
 
-use crate::{error::Error as PaymentError, models::*, result::Result, schema::*};
+use crate::{crypto, error::Error as PaymentError, models::*, result::Result, schema::*};
 
 use std::sync::Arc;
 
@@ -35,9 +35,19 @@ pub struct NewAccount<'a> {
 #[table_name = "account_passhash"]
 #[doc(hidden)]
 pub struct NewAccountPasshash<'a> {
-    pub account_id: i64,
+    pub account_id: ID,
     pub passhash: &'a str,
     pub deprecated: bool,
+}
+
+#[derive(Insertable)]
+#[table_name = "account_keys"]
+#[doc(hidden)]
+pub struct NewAccountKey {
+    pub account_id: ID,
+    pub pub_key: String,
+    pub secret_key: String,
+    pub active: bool,
 }
 
 /// Type alias for ID in integer
@@ -167,6 +177,7 @@ impl<'a> Schema<'a> {
     /// Mengaktifkan akun yang telah melakukan registrasi tapi belum aktif
     /// bisa diset juga balance pertamanya (initial balance).
     pub fn activate_registered_account(&self, id: ID, initial_balance: f64) -> Result<Account> {
+        use crate::schema::account_keys::{self, dsl as ak_dsl};
         use crate::schema::{accounts, register_accounts};
 
         self.db.build_transaction().read_write().run(|| {
@@ -186,8 +197,20 @@ impl<'a> Schema<'a> {
 
             let account = diesel::insert_into(accounts::table)
                 .values(&new_account)
-                .get_result(self.db)?;
+                .get_result::<Account>(self.db)?;
             // .map_err(From::from)?;
+
+            // Buatkan key pair untuk akun yang baru saja dibuat.
+            let (pub_key, secret_key) = crypto::gen_keypair();
+
+            diesel::insert_into(account_keys::table)
+                .values(&NewAccountKey {
+                    account_id: account.id,
+                    pub_key: pub_key.to_hex(),
+                    secret_key: secret_key.to_hex(),
+                    active: true,
+                })
+                .execute(self.db)?;
 
             // delete reference in registered accounts table
             diesel::delete(register_accounts::dsl::register_accounts.find(id)).execute(self.db)?;

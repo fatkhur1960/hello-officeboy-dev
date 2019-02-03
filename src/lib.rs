@@ -33,14 +33,19 @@ extern crate apf_proc_macro;
 extern crate byteorder;
 extern crate hex;
 extern crate rsnowflake;
-extern crate sodiumoxide;
+pub extern crate sodiumoxide;
 
+pub use sodiumoxide as crypto_impl;
+
+#[macro_use]
+pub mod macros;
 pub mod api;
 mod auth;
 mod crypto;
 mod db;
 pub mod error;
 pub mod models;
+mod protos;
 mod result;
 mod schema;
 pub mod schema_op;

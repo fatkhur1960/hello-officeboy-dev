@@ -26,7 +26,7 @@ CREATE UNIQUE INDEX accounts_phone_num ON accounts (
 -- Berisi koleksi passhash dari akun
 -- dibuat one-to-many agar ada history-nya setiap user merubah password.
 CREATE TABLE account_passhash (
-    account_id BIGINT PRIMARY KEY REFERENCES accounts(id),
+    account_id BIGINT PRIMARY KEY REFERENCES accounts(id) ON DELETE CASCADE,
     passhash VARCHAR NOT NULL,
     deprecated BOOLEAN NOT NULL,
     created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -51,7 +51,7 @@ CREATE UNIQUE INDEX register_accounts_phone_num ON register_accounts (
 -- Tabel untuk alamat akun
 CREATE TABLE addresses (
     id BIGSERIAL PRIMARY KEY,
-    account_id BIGINT NOT NULL,
+    account_id BIGINT NOT NULL DEFAULT 0 REFERENCES accounts (id) ON DELETE SET DEFAULT,
     kind INT NOT NULL DEFAULT 0, -- 0=Domisili, 1=Asli
     "address" TEXT NOT NULL,
     regency VARCHAR NOT NULL,
@@ -61,3 +61,16 @@ CREATE TABLE addresses (
     active BOOLEAN NOT NULL,
     notes TEXT NOT NULL DEFAULT ''
 );
+
+-- Koleksi key pair untuk akun.
+CREATE TABLE account_keys (
+    id BIGSERIAL PRIMARY KEY,
+    account_id BIGINT NOT NULL DEFAULT 0 REFERENCES accounts (id) ON DELETE CASCADE,
+    pub_key TEXT NOT NULL,
+    secret_key TEXT NOT NULL,
+    created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    active BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+
+
