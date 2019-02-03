@@ -35,5 +35,10 @@ audit:
 	@@echo Auditing...
 	@@cargo audit
 
+commit:
+	@@echo Committing...
+	@@make fmt
+	@@cargo check
+	@@git ci -a
 
-.PHONY: prepare docs lib-docs api-docs fmt test lint audit
+.PHONY: prepare docs lib-docs api-docs fmt test lint audit commit

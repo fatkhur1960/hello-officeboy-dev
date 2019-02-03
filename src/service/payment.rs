@@ -190,6 +190,7 @@ impl Service for PaymentService {
     }
 }
 
+/// Holder untuk implementasi API endpoint publik.
 struct PublicApi;
 
 impl PublicApi {
@@ -308,6 +309,7 @@ impl PublicApi {
     }
 }
 
+/// Holder untuk implementasi API endpoint privat.
 struct PrivateApi;
 
 impl PrivateApi {
