@@ -12,7 +12,9 @@ Berikut kebutuhan pokok untuk bisa mem-build library:
 2. PostgreSQL >= 9.x
 3. [diesel](http://diesel.rs)
 4. [Aglio](https://www.npmjs.com/package/aglio) (optional, untuk dokumentasi)
-
+5. [Rustfmt](https://github.com/rust-lang/rustfmt)
+5. [Cargo clippy](https://github.com/rust-lang/rust-clippy)
+6. [Cargo audit](https://github.com/RustSec/cargo-audit)
 
 Dokumentasi
 -------------
@@ -41,9 +43,10 @@ Setiap perubahan pada project ini harus mengikuti konvensi ini.
 Sebelum melakukan commit harus:
 
 * Memastikan kodenya telah diformat menggunakan perintah: `make fmt`.
-* Memastikan kodenya telah layak dan lolos unittest dengan cara menjalankan perintah: `make test`.
+* Memastikan kodenya telah layak sesuai standar dengan cara menjalankan perintah: `make lint`.
+* Memastikan kodenya telah lolos unittest dengan cara menjalankan perintah: `make test`.
+* Memastikan kodenya telah aman dari dependensi yang bermasalah dengan menjalankan perintah: `make audit`.
 * Menggunakan tata bahasa yang mudah dipahami dan menjelaskan perubahan mendasar pada commit message-nya.
-
 
 ----
 Apabila ada yang perlu ditanyakan contact: r@ansvia.com

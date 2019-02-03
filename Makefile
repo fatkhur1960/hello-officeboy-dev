@@ -27,4 +27,13 @@ test:
 	@@echo Testing...
 	@@cargo test
 
-.PHONY: prepare docs lib-docs api-docs fmt test
+lint:
+	@@echo Linting...
+	@@cargo clippy
+
+audit:
+	@@echo Auditing...
+	@@cargo audit
+
+
+.PHONY: prepare docs lib-docs api-docs fmt test lint audit
