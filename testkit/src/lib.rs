@@ -46,6 +46,7 @@ impl fmt::Display for ApiKind {
     }
 }
 
+#[derive(Clone)]
 pub struct TestKit {}
 
 impl TestKit {

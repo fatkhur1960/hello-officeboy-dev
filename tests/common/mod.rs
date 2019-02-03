@@ -1,6 +1,7 @@
 use sodiumoxide;
 
-use apf_testkit::TestKit;
+use apf::api::payment::*;
+use apf_testkit::{ApiKind, TestKit};
 use env_logger;
 
 use std::env;
@@ -22,4 +23,23 @@ pub fn create_testkit() -> TestKit {
     );
 
     TestKit::new()
+}
+
+pub struct TestHelper {
+    testkit: TestKit,
+}
+
+impl TestHelper {
+    pub fn new(testkit: &TestKit) -> Self {
+        Self {
+            testkit: testkit.clone(),
+        }
+    }
+
+    // pub fn generate_users(&self) -> (alice, bob) {
+    //     let api = self.testkit.api()
+    //         .public(ApiKind::Payment)
+    //         .post()
+
+    // }
 }

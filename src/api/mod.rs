@@ -11,6 +11,7 @@ use futures::future::{Future, IntoFuture};
 use regex::Regex;
 
 mod error;
+pub mod payment;
 mod with;
 
 pub use self::{error::Error, with::Result};

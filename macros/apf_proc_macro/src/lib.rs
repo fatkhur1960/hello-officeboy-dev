@@ -74,7 +74,7 @@ pub fn authorized_only(
                     for inner in group.stream() {
                         match inner {
                             TokenTree::Ident(ref ident) => {
-                                if ident.to_string() == "HttpRequest" {
+                                if ident.to_string() == "ApiHttpRequest" {
                                     has_http_req = true;
                                 }
                             }
@@ -105,18 +105,18 @@ pub fn authorized_only(
 
                         let current_account = {
                             let access_token = req.headers().get("X-Access-Token")
-                                .ok_or(api::Error::Unauthorized)?
+                                .ok_or(ApiError::Unauthorized)?
                                 .to_str()
-                                .map_err(|_| api::Error::Unauthorized)?;
+                                .map_err(|_| ApiError::Unauthorized)?;
 
                             // periksa akses token
                             let schema = auth::Schema::new(state.db());
                             let access_token = schema.get_access_token(&access_token)
-                                .map_err(|_| api::Error::Unauthorized)?;
+                                .map_err(|_| ApiError::Unauthorized)?;
 
                             if !access_token.valid(){
                                 warn!("access token no more valid: {}", &access_token.token[..10]);
-                                Err(api::Error::Unauthorized)?
+                                Err(ApiError::Unauthorized)?
                             }
 
                             let account_schema = schema_op::Schema::new(state.db());
