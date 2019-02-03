@@ -164,22 +164,35 @@ impl PaymentService {
     pub fn new() -> Box<Self> {
         Box::new(Self {})
     }
+}
 
-    /// Rest API endpoint for topup
-    fn credit(state: &AppState, query: TxQuery<Credit>, req: &api::HttpRequest) -> api::Result<()> {
-        trace!("topup account: {:?}", query);
-
-        let schema = Schema::new(state.db());
-        let account = schema.get_account(query.body.account)?;
-
-        {
-            let schema = tx::Schema::new(state.db());
-            schema.credit(&account, query.body.amount)?;
-        }
-
-        Ok(())
+impl Service for PaymentService {
+    fn name(&self) -> &'static str {
+        "payment"
     }
 
+    fn wire_api(&self, builder: &mut ServiceApiBuilder) {
+        builder
+            .public_scope()
+            .endpoint("v1/info", PublicApi::info)
+            .endpoint_req_mut("v1/transfer", PublicApi::transfer)
+            .endpoint_req_mut("v1/invoice/publish", PublicApi::publish_invoice)
+            .endpoint_req_mut("v1/pay", PublicApi::pay)
+            .endpoint("v1/balance", PublicApi::balance)
+            .endpoint_mut("v1/authorize", PublicApi::authorize);
+
+        builder
+            .private_scope()
+            .endpoint_mut("v1/account/register", PrivateApi::register_account)
+            .endpoint_mut("v1/account/activate", PrivateApi::activate_account)
+            .endpoint_req_mut("v1/credit", PrivateApi::credit)
+            .endpoint_req_mut("v1/debit", PrivateApi::debit);
+    }
+}
+
+struct PublicApi;
+
+impl PublicApi {
     /// Rest API endpoint untuk transfer
     #[authorized_only(user)]
     fn transfer(state: &AppState, query: TxQuery<Transfer>, req: &api::HttpRequest) -> api::Result<()> {
@@ -196,27 +209,10 @@ impl PaymentService {
         Ok(())
     }
 
-    /// Rest API endpoint untuk debit
-    fn debit(state: &AppState, query: TxQuery<Debit>, req: &api::HttpRequest) -> api::Result<()> {
-        trace!("debit: {:?}", query);
-        // @TODO(*): Code here
-        Ok(())
-    }
-
     /// Rest API endpoint untuk mendapatkan informasi balance pada akun.
     fn balance(state: &AppState, query: BalanceQuery) -> api::Result<AccountInfo> {
         // @TODO(*): Code here
         Ok(AccountInfo::new(&query.account, 0.0f64))
-    }
-
-    /// Rest API endpoint untuk mendaftarkan akun baru.
-    fn register_account(state: &AppState, query: TxQuery<CreateAccount>) -> api::Result<SuccessReturn<ID>> {
-        let schema = Schema::new(state.db());
-
-        schema
-            .register_account(&query.body.full_name, &query.body.email, &query.body.phone_num)
-            .map_err(From::from)
-            .map(SuccessReturn::new)
     }
 
     /// Mengaktifkan user yang telah teregister
@@ -247,19 +243,6 @@ impl PaymentService {
         (),
         SuccessReturn<String>,
         (|s, q| Ok(SuccessReturn::new("success".to_owned())))
-    );
-
-    /// Mengaktifkan user yang telah teregister
-    api_tx_endpoint!(
-        activate_account,
-        ActivateAccount,
-        models::Account,
-        (|schema, query| {
-            let account =
-                schema.activate_registered_account(query.body.reg_id, query.body.initial_balance)?;
-            schema.set_password(account.id, &query.body.password)?;
-            Ok(account)
-        })
     );
 
     /// API endpoint untuk mem-publish invoice (membuat invoice baru).
@@ -325,26 +308,51 @@ impl PaymentService {
     }
 }
 
-impl Service for PaymentService {
-    fn name(&self) -> &'static str {
-        "payment"
+struct PrivateApi;
+
+impl PrivateApi {
+    /// Rest API endpoint untuk mendaftarkan akun baru.
+    fn register_account(state: &AppState, query: TxQuery<CreateAccount>) -> api::Result<SuccessReturn<ID>> {
+        let schema = Schema::new(state.db());
+
+        schema
+            .register_account(&query.body.full_name, &query.body.email, &query.body.phone_num)
+            .map_err(From::from)
+            .map(SuccessReturn::new)
     }
 
-    fn wire_api(&self, builder: &mut ServiceApiBuilder) {
-        builder
-            .public_scope()
-            .endpoint("v1/info", Self::info)
-            .endpoint_req_mut("v1/transfer", Self::transfer)
-            .endpoint_req_mut("v1/invoice/publish", Self::publish_invoice)
-            .endpoint_req_mut("v1/pay", Self::pay)
-            .endpoint("v1/balance", Self::balance)
-            .endpoint_mut("v1/authorize", Self::authorize);
+    /// Mengaktifkan user yang telah teregister
+    api_tx_endpoint!(
+        activate_account,
+        ActivateAccount,
+        models::Account,
+        (|schema, query| {
+            let account =
+                schema.activate_registered_account(query.body.reg_id, query.body.initial_balance)?;
+            schema.set_password(account.id, &query.body.password)?;
+            Ok(account)
+        })
+    );
 
-        builder
-            .private_scope()
-            .endpoint_mut("v1/account/register", Self::register_account)
-            .endpoint_mut("v1/account/activate", Self::activate_account)
-            .endpoint_req_mut("v1/credit", Self::credit)
-            .endpoint_req_mut("v1/debit", Self::debit);
+    /// Rest API endpoint for topup
+    fn credit(state: &AppState, query: TxQuery<Credit>, req: &api::HttpRequest) -> api::Result<()> {
+        trace!("topup account: {:?}", query);
+
+        let schema = Schema::new(state.db());
+        let account = schema.get_account(query.body.account)?;
+
+        {
+            let schema = tx::Schema::new(state.db());
+            schema.credit(&account, query.body.amount)?;
+        }
+
+        Ok(())
+    }
+
+    /// Rest API endpoint untuk debit
+    fn debit(state: &AppState, query: TxQuery<Debit>, req: &api::HttpRequest) -> api::Result<()> {
+        trace!("debit: {:?}", query);
+        // @TODO(*): Code here
+        Ok(())
     }
 }
