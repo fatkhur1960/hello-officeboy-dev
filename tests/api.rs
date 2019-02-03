@@ -5,8 +5,6 @@ extern crate apf_testkit;
 extern crate env_logger;
 extern crate sodiumoxide;
 
-use actix_web::http::Method;
-
 use apf::api::SuccessReturn;
 use apf_testkit::ApiKind;
 
@@ -23,4 +21,15 @@ fn test_get_info() {
             .unwrap(),
         SuccessReturn::new("success".to_string())
     );
+}
+
+#[test]
+fn test_float_compare() {
+    let a = 1.234f64;
+    let b = 1.235f64;
+
+    dbg!((a - b).abs());
+    dbg!((a - b).abs() < 0.1);
+
+    assert!((a - b).abs() < 0.01);
 }

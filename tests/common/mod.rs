@@ -20,6 +20,6 @@ pub fn create_testkit() -> TestKit {
         "DATABASE_URL",
         "postgresql://localhost/payment_test?sslmode=disable",
     );
-    
+
     TestKit::new()
 }

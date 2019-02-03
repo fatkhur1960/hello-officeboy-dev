@@ -32,4 +32,18 @@ Untuk menggenerasikan dokumentasi rest API:
 
 **CATATAN**: Penggenerasian dokumentasi untuk rest API membutuhkan tool [Aglio](https://www.npmjs.com/package/aglio).
 
+
+Konvensi
+------------
+
+Setiap perubahan pada project ini harus mengikuti konvensi ini.
+
+Sebelum melakukan commit harus:
+
+* Memastikan kodenya telah diformat menggunakan perintah: `make fmt`.
+* Memastikan kodenya telah layak dan lolos unittest dengan cara menjalankan perintah: `make test`.
+* Menggunakan tata bahasa yang mudah dipahami dan menjelaskan perubahan mendasar pada commit message-nya.
+
+
+----
 Apabila ada yang perlu ditanyakan contact: r@ansvia.com

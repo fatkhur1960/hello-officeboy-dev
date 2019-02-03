@@ -19,4 +19,12 @@ api-docs: api-docs/public-api.md
 	@@cd api-docs && aglio -i public-api.md -o $(PUBLIC_API_DOC_OUTPUT)
 	@@echo generated: $(PUBLIC_API_DOC_OUTPUT)
 
-.PHONY: prepare docs lib-docs api-docs
+fmt:
+	cd testkit && cargo fmt
+	cargo fmt
+
+test:
+	@@echo Testing...
+	@@cargo test
+
+.PHONY: prepare docs lib-docs api-docs fmt test

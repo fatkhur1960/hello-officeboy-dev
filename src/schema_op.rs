@@ -91,7 +91,7 @@ impl<'a> Schema<'a> {
     }
 
     /// Mendaftarkan akun baru.
-    /// Mengembalikan ID dari registered account (bukan [Account]: payment::models::Account)
+    /// Mengembalikan ID dari registered account (bukan [Account]: apf::models::Account)
     /// karena user belum aktif, untuk mengaktifkannya perlu memanggil
     /// perintah [Schema::activate_registered_account].
     pub fn register_account(&self, full_name: &str, email: &str, phone_num: &str) -> Result<ID> {

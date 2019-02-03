@@ -160,7 +160,7 @@ where
         let url = format!(
             "{url}{access}/{prefix}/{endpoint}{query}",
             url = self.test_server_url,
-            access = self.access,
+            access = format!("{}", self.access).to_lowercase(),
             prefix = self.prefix,
             endpoint = endpoint,
             query = params
@@ -181,7 +181,7 @@ where
         let url = format!(
             "{url}{access}/{prefix}/{endpoint}",
             url = self.test_server_url,
-            access = self.access,
+            access = format!("{}", self.access).to_lowercase(),
             prefix = self.prefix,
             endpoint = endpoint
         );

@@ -1,12 +1,12 @@
 [package]
-name = "payment"
+name = "apf"
 version = "0.1.0"
 authors = ["robin <robin@ansvia.com>"]
 edition = "2018"
 description = "Ansvia Payment Framework"
 
 [dependencies]
-actix = "0.7"
+# actix = "0.7"
 actix-web = "0.7"
 chrono = { version = "0.4", features = ["serde"]}
 futures = "0.1"
@@ -26,6 +26,9 @@ regex = "1"
 diesel = { version = "1.4", default-features = false, features = ["32-column-tables", "postgres", "chrono"]}
 dotenv = "0.13"
 
-apf_proc_macro = { path = "./macros/apf_proc_macro" }
+apf-proc-macro = { path = "./macros/apf_proc_macro" }
 
 rsnowflake = "0.1"
+
+[dev-dependencies]
+apf-testkit = { version = "0.1.0", path = "./testkit" }

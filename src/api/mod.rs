@@ -50,15 +50,15 @@ pub enum ApiAccess {
 impl fmt::Display for ApiAccess {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            ApiAccess::Public => f.write_str("public"),
-            ApiAccess::Private => f.write_str("private"),
+            ApiAccess::Public => f.write_str("Public"),
+            ApiAccess::Private => f.write_str("Private"),
         }
     }
 }
 
 use serde::{de::DeserializeOwned, Serialize};
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub(crate) struct ApiResult {
     code: i32,
     status: String,
@@ -80,6 +80,19 @@ impl ApiResult {
 
     pub fn error(code: i32, description: String) -> Self {
         Self::new(code, "error".to_owned(), description)
+    }
+}
+
+/// Bentuk standar API respon apabila operasi sukses.
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+pub struct SuccessReturn<T> {
+    result: T,
+}
+
+impl<T: Serialize> SuccessReturn<T> {
+    #[doc(hidden)]
+    pub fn new(result: T) -> Self {
+        Self { result }
     }
 }
 
@@ -480,7 +493,7 @@ impl ServiceApiScope {
     ///
     /// ```
     /// use actix_web::{http::Method, Path};
-    /// use payment::api::{self, ServiceApiBuilder};
+    /// use apf::api::{self, ServiceApiBuilder};
     ///
     /// let mut builder = ServiceApiBuilder::new();
     ///
@@ -609,6 +622,7 @@ impl ApiAggregator {
     }
 
     /// Build system API
+    #[allow(clippy::let_and_return)]
     pub fn system_api() -> ServiceApiBuilder {
         let builder = ServiceApiBuilder::new();
         // TODO: code here
@@ -639,7 +653,8 @@ impl AppState {
     }
 }
 
-pub(crate) fn create_app(agg: &ApiAggregator, access: ApiAccess) -> App {
+#[doc(hidden)]
+pub fn create_app(agg: &ApiAggregator, access: ApiAccess) -> App {
     let state = AppState::new();
     let mut app = App::with_state(state);
     app = app.scope("api", |scope: Scope| agg.extend(access, scope));

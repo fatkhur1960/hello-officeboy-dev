@@ -1,6 +1,6 @@
 #![allow(unused_imports)]
 
-extern crate payment;
+extern crate apf;
 
 #[macro_use]
 extern crate log;
@@ -12,7 +12,7 @@ use futures::{
     stream::once,
 };
 
-use payment::{prelude::*, service};
+use apf::{prelude::*, service};
 
 use std::{cell::Cell, thread::sleep, time::Duration};
 

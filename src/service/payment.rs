@@ -3,6 +3,7 @@
 use actix_web::{HttpRequest, HttpResponse};
 use serde::Serialize;
 
+use crate::api::SuccessReturn;
 use crate::{api, auth, models, prelude::*, schema_op, tx};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -108,19 +109,18 @@ struct InvoiceItem {
     pub price: f64,
 }
 
-#[derive(Debug, Serialize, PartialEq)]
-struct SuccessReturn<T> {
-    result: T,
-}
-
-impl<T: Serialize> SuccessReturn<T> {
-    pub fn new(result: T) -> Self {
-        Self { result }
-    }
-}
-
 macro_rules! api_endpoint {
-    ($name:ident, $qt:ident, $rv:ty, (|$schema:ident, $query:ident| $( $cs:tt )+ ) ) => {
+    ($name:ident, $qt:ty, $rv:ty, (|$schema:ident, $query:ident| $( $cs:tt )+ ) ) => {
+        fn $name(state: &AppState, $query: $qt) -> api::Result<$rv> {
+            let $schema = Schema::new(state.db());
+
+            {$($cs)+}
+        }
+    };
+}
+
+macro_rules! api_tx_endpoint {
+    ($name:ident, $qt:ty, $rv:ty, (|$schema:ident, $query:ident| $( $cs:tt )+ ) ) => {
         fn $name(state: &AppState, $query: TxQuery<$qt>) -> api::Result<$rv> {
             let $schema = Schema::new(state.db());
 
@@ -131,7 +131,7 @@ macro_rules! api_endpoint {
 
 // use crate::api::Error as ApiError;
 
-/// Core basis service payment.
+/// Core basis service apf.
 /// Service ini yang men-serve beberapa endpoint transaksional seperti:
 /// /credit, /transfer, /debit, /balance
 pub struct PaymentService {}
@@ -218,8 +218,16 @@ impl PaymentService {
         }
     }
 
-    /// Mengaktifkan user yang telah teregister
+    /// Hanya digunakan untuk testing
     api_endpoint!(
+        info,
+        (),
+        SuccessReturn<String>,
+        (|s, q| Ok(SuccessReturn::new("success".to_owned())))
+    );
+
+    /// Mengaktifkan user yang telah teregister
+    api_tx_endpoint!(
         activate_account,
         ActivateAccount,
         models::Account,
@@ -255,16 +263,17 @@ impl PaymentService {
             schema.get_account(query.body.to)?
         };
 
+        let new_invoice = tx::NewInvoice {
+            id_ref: &query.body.id_ref,
+            issuer_account: current_account.id,
+            to_account: to.id,
+            discount: query.body.discount,
+            amount: query.body.amount,
+            notes: &query.body.notes,
+        };
+
         schema
-            .publish_invoice(
-                &query.body.id_ref,
-                &current_account,
-                &to,
-                query.body.discount,
-                query.body.amount,
-                &query.body.notes,
-                items,
-            )
+            .publish_invoice(new_invoice, items)
             .map_err(From::from)
             .map(SuccessReturn::new)
     }
@@ -301,6 +310,7 @@ impl Service for PaymentService {
     fn wire_api(&self, builder: &mut ServiceApiBuilder) {
         builder
             .public_scope()
+            .endpoint("v1/info", Self::info)
             .endpoint_req_mut("v1/transfer", Self::transfer)
             .endpoint_req_mut("v1/invoice/publish", Self::publish_invoice)
             .endpoint_req_mut("v1/pay", Self::pay)

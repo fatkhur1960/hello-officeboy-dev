@@ -1,5 +1,5 @@
 [package]
-name = "apf_proc_macro"
+name = "apf-proc-macro"
 version = "0.1.0"
 authors = ["robin <robin@ansvia.com>"]
 edition = "2018"

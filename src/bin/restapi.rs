@@ -1,15 +1,17 @@
-extern crate payment;
+extern crate apf;
 
 #[macro_use]
 extern crate log;
 extern crate dotenv;
 extern crate env_logger;
+extern crate sodiumoxide;
 
-use payment::prelude::*;
+use apf::prelude::*;
 
 fn main() {
     dotenv::dotenv().ok();
     env_logger::init();
+    sodiumoxide::init().expect("Cannot initialize NaCl");
 
     trace!("starting up...");
 

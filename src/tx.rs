@@ -87,33 +87,15 @@ impl<'a> Schema<'a> {
     /// * `id_ref` merupakan id yang ada dari sisi external misal client/merchant.
     /// * `issuer_account` akun yang menerbitkan invoice.
     /// * `to_account` akun yang dituju untuk melakukan pembayaran
-    pub fn publish_invoice(
-        &self,
-        id_ref: &str,
-        issuer_account: &Account,
-        to_account: &Account,
-        discount: f64,
-        amount: f64,
-        notes: &str,
-        items: Vec<NewInvoiceItem>,
-    ) -> Result<ID> {
+    pub fn publish_invoice(&self, new_invoice: NewInvoice, items: Vec<NewInvoiceItem>) -> Result<ID> {
         use crate::schema::invoice_items;
         use crate::schema::invoice_items::dsl as item_dsl;
         use crate::schema::invoices;
         use crate::schema::invoices::dsl;
 
-        let value = NewInvoice {
-            id_ref,
-            issuer_account: issuer_account.id,
-            to_account: to_account.id,
-            discount,
-            amount,
-            notes,
-        };
-
         self.db.build_transaction().read_write().run(|| {
             let id: ID = diesel::insert_into(invoices::table)
-                .values(&value)
+                .values(&new_invoice)
                 .returning(dsl::id)
                 .get_result(self.db)?;
             // .map_err(From::from)?;
@@ -152,7 +134,9 @@ impl<'a> Schema<'a> {
         let invoice = self.get_invoice(id)?;
 
         // amount harus sama
-        if amount != invoice.amount {
+        // if amount != invoice.amount { // tidak menggunakan strict unequality comparison pada floating point
+        // kita gunakan epsilon dengan margin error
+        if (amount - invoice.amount).abs() < 0.001 {
             Err(PaymentError::BadRequest("Mismatch amount".to_owned()))?
         }
 

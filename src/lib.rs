@@ -1,13 +1,13 @@
 //! Ansvia Payment Framework Library.
 //!
-//! Ini merupakan payment framework dalam bentuk library yang bisa digunakan untuk
-//! mem-build backend payment.
+//! Ini merupakan apf framework dalam bentuk library yang bisa digunakan untuk
+//! mem-build backend apf.
 //!
 #![deny(missing_docs)]
 #![allow(unused_imports, unused_variables, dead_code)]
 #![allow(clippy::new_without_default)]
 
-extern crate actix;
+// extern crate actix;
 extern crate actix_web;
 extern crate chrono;
 #[macro_use]
