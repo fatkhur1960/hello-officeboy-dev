@@ -15,3 +15,18 @@ message Transfer {
     int64 seed = 5;
 }
 
+message Credit {
+    int64 account = 1;
+    double amount = 2;
+    int64 timestamp = 3;
+    int64 seed = 4;
+}
+
+
+message Debit {
+    int64 account = 1;
+    double amount = 2;
+    int64 timestamp = 3;
+    int64 seed = 4;
+}
+
