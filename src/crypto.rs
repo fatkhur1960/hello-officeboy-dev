@@ -62,9 +62,14 @@ pub fn sign(bytes: &[u8], secret_key: &SecretKey) -> Signature {
     Signature(signature)
 }
 
+/// Memverifikasi digital signature apakah cocok dengan data dan public key-nya.
+pub fn verify(bytes: &[u8], signature: &Signature, pub_key: &PublicKey) -> bool {
+    ds::verify_detached(&signature.0, bytes, &pub_key.0)
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{PublicKey, SecretKey};
+    use super::{PublicKey, SecretKey, Signature};
 
     #[test]
     fn test_get_pass_hash() {
@@ -92,16 +97,36 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_signature() {
-        let (p, s) = (
+    const DATA: &'static [u8] = b"Zufar";
+
+    fn get_preset_keypair() -> (PublicKey, SecretKey) {
+        (
             "db70a045a13645e1c0e227f0c4097e58880d5c4b227fb4d5ff448425ebf7b90d".parse::<PublicKey>().unwrap(),
-            "fa1c6ed8bd8d3e88a84561fc60ae3f205a3c6538f9d2883597524a374f1aa969db70a045a13645e1c0e227f0c4097e58880d5c4b227fb4d5ff448425ebf7b90d".parse::<SecretKey>().unwrap()
-        );
-        let signature = super::sign(b"Zufar", &s);
+            "fa1c6ed8bd8d3e88a84561fc60ae3f205a3c6538f9d2883597524a374f1aa969\
+             db70a045a13645e1c0e227f0c4097e58880d5c4b227fb4d5ff448425ebf7b90d".parse::<SecretKey>().unwrap()
+        )
+    }
+
+    fn create_signature() -> Signature {
+        let (p, s) = get_preset_keypair();
+        super::sign(DATA, &s)
+    }
+
+    #[test]
+    fn test_create_signature() {
+        let signature = create_signature();
 
         println!("signature: {}", signature.to_hex());
 
-        assert_eq!(signature.to_hex(), "e5628fac8dfd4d61da9bdca8c63e1ba81447d6151d0017daee4b35146df688f1889f7ee7b06fe87bb1a385bbe1f6437aa3463566fbf32d31c267e1f6717c7f0d");
+        assert_eq!(signature.to_hex(), "e5628fac8dfd4d61da9bdca8c63e1ba81447d6151d0017daee4b35146df688f1\
+                                        889f7ee7b06fe87bb1a385bbe1f6437aa3463566fbf32d31c267e1f6717c7f0d");
+    }
+
+    #[test]
+    fn test_verify_signature() {
+        let (p, _) = get_preset_keypair();
+        let signature = create_signature();
+
+        assert!(super::verify(DATA, &signature, &p));
     }
 }
