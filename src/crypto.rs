@@ -48,16 +48,19 @@ pub fn gen_keypair() -> (PublicKey, SecretKey) {
 }
 
 /// Hash some str text
-pub fn hash_str(text:&str) -> Hash {
-    Hash(sha256::hash(&text.as_bytes()))
+pub fn hash_str(text: &str) -> Hash {
+    hash_bytes(&text.as_bytes())
+}
+
+pub fn hash_bytes(bytes: &[u8]) -> Hash {
+    Hash(sha256::hash(bytes))
 }
 
 /// Sign a data in bytes, return Signature.
-pub fn sign(bytes:&[u8], secret_key:&SecretKey) -> Signature {
+pub fn sign(bytes: &[u8], secret_key: &SecretKey) -> Signature {
     let signature = ds::sign_detached(bytes, &secret_key.0);
     Signature(signature)
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -72,7 +75,7 @@ mod tests {
     }
 
     #[test]
-    fn test_gen_keyppair(){
+    fn test_gen_keyppair() {
         let (p, s) = super::gen_keypair();
         println!("{} -> {}", p.to_hex(), s.to_hex());
         assert_ne!(p.to_hex(), s.to_hex());
@@ -81,13 +84,16 @@ mod tests {
     }
 
     #[test]
-    fn test_hash(){
+    fn test_hash() {
         let h = super::hash_str("Zufar");
-        assert_eq!(h.to_hex(), "96d301802cf09936d0aa746c5de12b2f2085bd878f2c1e43ebad6074650f218a".to_string());
+        assert_eq!(
+            h.to_hex(),
+            "96d301802cf09936d0aa746c5de12b2f2085bd878f2c1e43ebad6074650f218a".to_string()
+        );
     }
 
     #[test]
-    fn test_signature(){
+    fn test_signature() {
         let (p, s) = (
             "db70a045a13645e1c0e227f0c4097e58880d5c4b227fb4d5ff448425ebf7b90d".parse::<PublicKey>().unwrap(),
             "fa1c6ed8bd8d3e88a84561fc60ae3f205a3c6538f9d2883597524a374f1aa969db70a045a13645e1c0e227f0c4097e58880d5c4b227fb4d5ff448425ebf7b90d".parse::<SecretKey>().unwrap()
@@ -97,6 +103,5 @@ mod tests {
         println!("signature: {}", signature.to_hex());
 
         assert_eq!(signature.to_hex(), "e5628fac8dfd4d61da9bdca8c63e1ba81447d6151d0017daee4b35146df688f1889f7ee7b06fe87bb1a385bbe1f6437aa3463566fbf32d31c267e1f6717c7f0d");
-
     }
 }

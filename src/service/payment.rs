@@ -2,10 +2,11 @@
 
 use actix_web::{HttpRequest, HttpResponse};
 use chrono::NaiveDateTime;
+use protobuf;
 use serde::Serialize;
-use sodiumoxide::crypto;
 
 use crate::api::SuccessReturn;
+use crate::crypto::{self, SecretKey};
 use crate::{api, auth, models, prelude::*, schema_op, tx};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -77,21 +78,19 @@ where
     signature: String,
 }
 
-use protobuf::Message;
-
 impl<T> TxQuery<T>
 where
-    T: Serialize + Clone,
+    T: protobuf::Message + Serialize + Clone,
 {
-    pub fn sign(&self) -> Self {
+    pub fn sign(&self, secret_key: &SecretKey) -> Self {
         assert!(self.signature.len() > 0, "already signed.");
 
         // convert ke bytes format protobuf
-        // self.body.write_to_bytes()
-        // @TODO(*): Code here
+        let bytes = self.body.write_to_bytes().expect("Cannot write to bytes");
+        let signature = crypto::sign(&bytes, &secret_key);
         Self {
             body: self.body.clone(),
-            signature: "".to_string(),
+            signature: signature.to_hex(),
         }
     }
 }

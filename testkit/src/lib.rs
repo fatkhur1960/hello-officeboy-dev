@@ -1,3 +1,5 @@
+#![allow(unused_imports)]
+
 extern crate actix_web;
 extern crate apf;
 extern crate reqwest;
@@ -12,7 +14,7 @@ extern crate serde_json;
 extern crate serde_urlencoded;
 
 use actix_web::{test::TestServer, App};
-use reqwest::{Client, ClientBuilder, Response, StatusCode};
+use reqwest::{Client, Response, StatusCode};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use std::{env, fmt};

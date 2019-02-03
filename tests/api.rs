@@ -1,8 +1,8 @@
 extern crate apf;
-#[macro_use]
-extern crate log;
+//#[macro_use]
 extern crate apf_testkit;
 extern crate env_logger;
+extern crate log;
 extern crate sodiumoxide;
 
 use apf::api::SuccessReturn;

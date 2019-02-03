@@ -33,7 +33,7 @@ macro_rules! implement_crypto_wrapper {
                 write!(f, "{}({}..)", stringify!($name), &self.to_hex()[..8])
             }
         }
-        
+
         impl ::std::fmt::Display for $name {
             fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
                 write!(f, "{}({}..)", stringify!($name), &self.to_hex()[..8])
