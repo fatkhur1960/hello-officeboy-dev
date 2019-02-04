@@ -11,7 +11,7 @@ prepare:
 
 lib-docs:
 	@@echo generating library documentation...
-	@@cargo doc --package payment --no-deps --lib
+	@@cargo doc --package apf --no-deps --lib
 	@@echo generated: $(LIBRARY_DOC_OUTPUT)
 
 api-docs: api-docs/public-api.md

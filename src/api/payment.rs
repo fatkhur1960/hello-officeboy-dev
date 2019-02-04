@@ -71,6 +71,11 @@ pub struct ActivateAccount {
     pub password: String,
 }
 
+/// Setiap query transaksi harus menggunakan wrapper ini,
+/// masuk pada `body` dan signature dari `body` disimpan pada field `signature`.
+///
+/// TxQuery implement `sign` method yang bisa digunakan untuk melakukan signing
+/// pada data di `body`.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TxQuery<T>
 where
@@ -84,6 +89,9 @@ impl<T> TxQuery<T>
 where
     T: protobuf::Message + Serialize + Clone,
 {
+    /// Lakukan signing pada data di `body`.
+    /// Operasi signing dilakukan dengan cara men-serialize data pada `body` ke dalam
+    /// bentuk protobuf bytes lalu di-sign menggunakan `secret_key`.
     pub fn sign(&self, secret_key: &SecretKey) -> Self {
         assert!(self.signature.len() > 0, "already signed.");
 

@@ -37,7 +37,7 @@ fn test_float_compare() {
 }
 
 #[test]
-fn test_register_account(){
+fn test_register_account() {
     let testkit = create_testkit();
     let h = TestHelper::new(&testkit);
 
@@ -45,4 +45,3 @@ fn test_register_account(){
     h.cleanup_registered_account(id);
     assert!(id > 0);
 }
-

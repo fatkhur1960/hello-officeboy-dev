@@ -16,7 +16,7 @@ macro_rules! implement_crypto_wrapper {
                 $name($source(bytes_array))
             }
 
-            // Creates new instance from bytes slice.
+            /// Creates new instance from bytes slice.
             pub fn from_slice(bytes: &[u8]) -> Option<Self> {
                 use $source;
                 $source_name::from_slice(bytes).map(Self)

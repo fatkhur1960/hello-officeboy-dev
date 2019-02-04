@@ -1,7 +1,9 @@
 //! Utilitas berkaitan dengan kriptografi.
-//! Misalnya untuk mendapatkan passhash dari plain password.
+//! Misalnya untuk mendapatkan passhash dari plain password,
+//! menggenerasikan pasangan kunci (keypair) asimetris,
+//! melakukan signing pada data, dll.
 
-pub use crate::crypto_impl::crypto::sign::ed25519 as ds;
+pub(crate) use crate::crypto_impl::crypto::sign::ed25519 as ds;
 use crate::crypto_impl::crypto::{self, hash::sha256};
 use hex;
 
@@ -52,6 +54,7 @@ pub fn hash_str(text: &str) -> Hash {
     hash_bytes(&text.as_bytes())
 }
 
+/// Hash byte data
 pub fn hash_bytes(bytes: &[u8]) -> Hash {
     Hash(sha256::hash(bytes))
 }

@@ -1,7 +1,12 @@
 //! Ansvia Payment Framework Library.
 //!
-//! Ini merupakan apf framework dalam bentuk library yang bisa digunakan untuk
-//! mem-build backend apf.
+//! Library untuk membuat sistem payment.
+//!
+//! # Fitur
+//!
+//! * Service & Http rest API management.
+//! * Authentication & Authorization.
+//! * Multi service implementation.
 //!
 #![deny(missing_docs)]
 #![allow(unused_imports, unused_variables, dead_code)]
@@ -33,15 +38,15 @@ extern crate apf_proc_macro;
 extern crate byteorder;
 extern crate hex;
 extern crate rsnowflake;
-pub extern crate sodiumoxide;
+pub(crate) extern crate sodiumoxide;
 
-pub use sodiumoxide as crypto_impl;
+pub(crate) use sodiumoxide as crypto_impl;
 
 #[macro_use]
-pub mod macros;
+mod macros;
 pub mod api;
-mod auth;
-mod crypto;
+pub mod auth;
+pub mod crypto;
 mod db;
 pub mod error;
 pub mod models;
