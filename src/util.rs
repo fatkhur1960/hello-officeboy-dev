@@ -40,5 +40,6 @@ pub fn random_number() -> i32 {
 /// Menggenerasikan angka acak untuk tipe f64
 pub fn random_number_f64() -> f64 {
     let mut rng = rand::thread_rng();
-    rng.gen_range(0, 100) as f64
+    //     rng.gen_range(0, 100) as f64
+    f64::from(rng.gen_range(0, 100))
 }

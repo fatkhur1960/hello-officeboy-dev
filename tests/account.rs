@@ -1,11 +1,9 @@
-
 mod common;
 
-use common::{create_testkit};
-
+use common::create_testkit;
 
 #[test]
-fn test_new_account_has_keypair(){
+fn test_new_account_has_keypair() {
     let testkit = create_testkit();
     let helper = testkit.helper();
     let accounts = helper.generate_accounts(2);

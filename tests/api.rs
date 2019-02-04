@@ -10,7 +10,7 @@ use apf_testkit::ApiKind;
 
 mod common;
 
-use common::{create_testkit};
+use common::create_testkit;
 
 #[test]
 fn test_get_info() {
@@ -45,4 +45,3 @@ fn test_register_account() {
     h.cleanup_registered_account(id);
     assert!(id > 0);
 }
-

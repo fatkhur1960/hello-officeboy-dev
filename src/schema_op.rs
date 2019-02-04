@@ -270,7 +270,6 @@ pub struct TestSchema<'a> {
 
 // #[cfg(test)]
 impl<'a> TestSchema<'a> {
-
     #[doc(hidden)]
     pub fn new(db: &'a PgConnection) -> Self {
         Self { db }
@@ -282,8 +281,9 @@ impl<'a> TestSchema<'a> {
         use crate::schema::accounts::dsl;
 
         for account in accounts {
-            diesel::delete(dsl::accounts.filter(dsl::id.eq(account.id))).execute(self.db)
-            .expect("cannot delete account");
+            diesel::delete(dsl::accounts.filter(dsl::id.eq(account.id)))
+                .execute(self.db)
+                .expect("cannot delete account");
         }
     }
 }

@@ -1,17 +1,15 @@
-
 use apf::api::payment::{ActivateAccount, RegisterAccount};
 use apf::api::SuccessReturn;
+use apf::crypto::*;
+use apf::models::*;
 use apf::prelude::*;
 use apf::schema_op::*;
-use apf::models::*;
-use apf::crypto::*;
 use apf::util;
 use diesel::{connection::Connection, pg::PgConnection};
 
 use crate::{ApiKind, TestKit, TestKitApi};
 
 use std::env;
-
 
 pub struct AccountWithKey {
     pub account: Account,
@@ -28,7 +26,6 @@ impl AccountWithKey {
         }
     }
 }
-
 
 pub struct TestHelper {
     testkit: TestKit,
@@ -93,8 +90,7 @@ impl TestHelper {
     }
 
     pub fn generate_email() -> String {
-        format!("{}@{}.com", util::random_string(10), util::random_string(5))
-            .to_lowercase()
+        format!("{}@{}.com", util::random_string(10), util::random_string(5)).to_lowercase()
     }
 
     pub fn generate_phone_num() -> String {
@@ -133,4 +129,3 @@ impl TestHelper {
         schema.cleanup_accounts(accounts);
     }
 }
-

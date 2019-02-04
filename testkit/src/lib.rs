@@ -25,7 +25,6 @@ use apf::{
     service,
 };
 
-
 pub mod helper;
 
 use helper::TestHelper;
