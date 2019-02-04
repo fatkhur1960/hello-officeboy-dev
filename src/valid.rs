@@ -16,9 +16,23 @@ impl Validable for AccessToken {
     }
 }
 
+/// Trait untuk memastikan apakah suatu object
+/// bisa expired atau tidak.
+pub trait Expirable {
+    /// Periksa apakah object sudah expired.
+    fn expired(&self) -> bool;
+}
+
+impl Expirable for AccessToken {
+    fn expired(&self) -> bool {
+        let now = Utc::now().naive_utc();
+        now > self.valid_thru
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::Validable;
+    use super::{Expirable, Validable};
     use crate::models::AccessToken;
     use chrono::{Duration, Utc};
     use std::{ops::Add, thread::sleep, time};
@@ -33,5 +47,18 @@ mod tests {
         };
         sleep(time::Duration::from_millis(1000));
         assert!(access_token.valid());
+    }
+
+    #[test]
+    fn test_access_token_expire() {
+        let access_token = AccessToken {
+            token: "".to_owned(),
+            account_id: 1,
+            created: Utc::now().naive_utc(),
+            valid_thru: Utc::now().naive_utc().add(Duration::milliseconds(50)),
+        };
+        sleep(time::Duration::from_millis(1000));
+        assert!(!access_token.valid());
+        assert!(access_token.expired());
     }
 }

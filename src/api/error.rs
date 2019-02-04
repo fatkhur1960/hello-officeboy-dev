@@ -46,6 +46,11 @@ pub enum Error {
     #[fail(display = "Already exists")]
     AlreadyExists,
 
+    /// Error yang muncul ketika suatu object telah habis masa berlakunya
+    /// pada saat transaksi misalnya.
+    #[fail(display = "{} expired", _0)]
+    Expired(&'static str),
+
     /// Error yang bisa digunakan untuk menampilkan kode dan deskripsi secara custom.
     #[fail(display = "error code {}: {}", _0, _1)]
     CustomError(i32, String),
@@ -113,6 +118,7 @@ impl ResponseError for Error {
                 // HttpResponse::Unauthorized().finish()
                 HttpResponse::Unauthorized().json(ApiResult::error(401, "Unauthorized".to_owned()))
             }
+            Error::Expired(d) => HttpResponse::Ok().json(ApiResult::error(4001, d.to_string())),
         }
     }
 }

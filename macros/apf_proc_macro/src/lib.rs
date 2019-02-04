@@ -114,9 +114,9 @@ pub fn authorized_only(
                             let access_token = schema.get_access_token(&access_token)
                                 .map_err(|_| ApiError::Unauthorized)?;
 
-                            if !access_token.valid(){
-                                warn!("access token no more valid: {}", &access_token.token[..10]);
-                                Err(ApiError::Unauthorized)?
+                            if !access_token.expired(){
+                                warn!("access token expired: {}", &access_token.token[..10]);
+                                Err(ApiError::Expired("access token"))?
                             }
 
                             let account_schema = schema_op::Schema::new(state.db());
