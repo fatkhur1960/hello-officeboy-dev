@@ -2,7 +2,7 @@
 PROJ_DIR=$(shell pwd)
 
 PUBLIC_API_DOC_OUTPUT=$(PROJ_DIR)/target/api-docs/public-api.html
-LIBRARY_DOC_OUTPUT=$(PROJ_DIR)/target/doc/payment/index.html
+LIBRARY_DOC_OUTPUT=$(PROJ_DIR)/target/doc/apf/index.html
 
 docs: prepare lib-docs api-docs
 
@@ -14,7 +14,7 @@ lib-docs:
 	@@cargo doc --package apf --no-deps --lib
 	@@echo generated: $(LIBRARY_DOC_OUTPUT)
 
-api-docs: api-docs/public-api.md
+api-docs: prepare api-docs/public-api.md
 	@@echo generating API documentation...
 	@@cd api-docs && aglio -i public-api.md -o $(PUBLIC_API_DOC_OUTPUT)
 	@@echo generated: $(PUBLIC_API_DOC_OUTPUT)
