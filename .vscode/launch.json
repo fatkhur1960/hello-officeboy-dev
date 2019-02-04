@@ -30,7 +30,7 @@
                 "args": [
                     "build",
                     "--bin=restapi",
-                    "--package=payment"
+                    "--package=apf"
                 ],
                 "filter": {
                     "kind": "bin"
@@ -48,7 +48,7 @@
                     "test",
                     "--no-run",
                     "--bin=web",
-                    "--package=payment"
+                    "--package=apf"
                 ],
                 "filter": {
                     "kind": "bin"
