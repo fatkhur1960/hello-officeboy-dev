@@ -64,11 +64,11 @@ impl Service for PaymentService {
             .endpoint_req_mut("v1/invoice/publish", PublicApi::publish_invoice)
             .endpoint_req_mut("v1/pay", PublicApi::pay)
             .endpoint("v1/balance", PublicApi::balance)
+            .endpoint_mut("v1/account/register", PublicApi::register_account)
             .endpoint_mut("v1/authorize", PublicApi::authorize);
 
         builder
             .private_scope()
-            .endpoint_mut("v1/account/register", PrivateApi::register_account)
             .endpoint_mut("v1/account/activate", PrivateApi::activate_account)
             .endpoint_req_mut("v1/credit", PrivateApi::credit)
             .endpoint_req_mut("v1/debit", PrivateApi::debit);
@@ -79,6 +79,16 @@ impl Service for PaymentService {
 struct PublicApi;
 
 impl PublicApi {
+    /// Rest API endpoint untuk mendaftarkan akun baru.
+    fn register_account(state: &AppState, query: RegisterAccount) -> ApiResult<SuccessReturn<ID>> {
+        let schema = Schema::new(state.db());
+
+        schema
+            .register_account(&query.full_name, &query.email, &query.phone_num)
+            .map_err(From::from)
+            .map(SuccessReturn::new)
+    }
+
     /// Rest API endpoint untuk transfer
     #[authorized_only(user)]
     fn transfer(state: &AppState, query: TxQuery<Transfer>, req: &ApiHttpRequest) -> ApiResult<()> {
@@ -198,16 +208,6 @@ impl PublicApi {
 struct PrivateApi;
 
 impl PrivateApi {
-    /// Rest API endpoint untuk mendaftarkan akun baru.
-    fn register_account(state: &AppState, query: TxQuery<RegisterAccount>) -> ApiResult<SuccessReturn<ID>> {
-        let schema = Schema::new(state.db());
-
-        schema
-            .register_account(&query.body.full_name, &query.body.email, &query.body.phone_num)
-            .map_err(From::from)
-            .map(SuccessReturn::new)
-    }
-
     /// Mengaktifkan user yang telah teregister
     api_tx_endpoint!(
         activate_account,

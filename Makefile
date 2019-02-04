@@ -41,4 +41,8 @@ commit:
 	@@cargo check
 	@@git ci -a
 
-.PHONY: prepare docs lib-docs api-docs fmt test lint audit commit
+test-env:
+	diesel setup --database-url postgresql://localhost/apf_test?sslmode=disable
+
+.PHONY: prepare docs lib-docs api-docs fmt test lint audit commit \
+		test-env

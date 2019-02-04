@@ -1,4 +1,4 @@
-extern crate apf;
+// extern crate apf;
 //#[macro_use]
 extern crate apf_testkit;
 extern crate env_logger;
@@ -10,9 +10,11 @@ use apf_testkit::ApiKind;
 
 mod common;
 
+use common::{create_testkit, TestHelper};
+
 #[test]
 fn test_get_info() {
-    let testkit = common::create_testkit();
+    let testkit = create_testkit();
     let api = testkit.api();
 
     assert_eq!(
@@ -33,3 +35,14 @@ fn test_float_compare() {
 
     assert!((a - b).abs() < 0.01);
 }
+
+#[test]
+fn test_register_account(){
+    let testkit = create_testkit();
+    let h = TestHelper::new(&testkit);
+
+    let id = h.register_account("Akmal", "akmal@gmail.com", "+62857898122");
+    h.cleanup_registered_account(id);
+    assert!(id > 0);
+}
+

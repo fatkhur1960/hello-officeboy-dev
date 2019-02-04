@@ -87,7 +87,8 @@ impl ApiResult {
 /// Bentuk standar API respon apabila operasi sukses.
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct SuccessReturn<T> {
-    result: T,
+    #[doc(hidden)]
+    pub result: T,
 }
 
 impl<T: Serialize> SuccessReturn<T> {

@@ -235,16 +235,21 @@ where
             StatusCode::BAD_REQUEST => Err(api::Error::BadRequest(error(response))),
             StatusCode::NOT_FOUND => Err(api::Error::NotFound(error(response))),
             s if s.is_server_error() => Err(api::Error::InternalError(format_err!("{}", error(response)))),
-            s => panic!("Received non-error response status: {}", s.as_u16()),
+            s => {
+                let body = response.text().expect("Unable to get response text");
+                eprintln!("error body: {}", body);
+                panic!(
+                    "Received non-error response status: {} ({})",
+                    s.as_u16(),
+                    error(response)
+                )
+            }
         }
     }
 }
 
 pub fn setup() {
-    env::set_var(
-        "DATABASE_URL",
-        "postgresql://localhost/payment_test?sslmode=disable",
-    );
+    env::set_var("DATABASE_URL", "postgresql://localhost/apf_test?sslmode=disable");
 }
 
 pub fn create_test_server() -> TestServer {

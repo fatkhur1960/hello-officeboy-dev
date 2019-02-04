@@ -218,4 +218,14 @@ impl<'a> Schema<'a> {
             Ok(account)
         })
     }
+
+    /// Clean up registered account by id
+    pub fn cleanup_registered_account(&self, id: ID) -> Result<usize> {
+        use crate::schema::register_accounts;
+        use crate::schema::register_accounts::dsl;
+
+        diesel::delete(dsl::register_accounts.filter(dsl::id.eq(id)))
+            .execute(self.db)
+            .map_err(From::from)
+    }
 }

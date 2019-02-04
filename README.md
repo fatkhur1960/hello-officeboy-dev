@@ -16,6 +16,23 @@ Berikut kebutuhan pokok untuk bisa mem-build library:
 5. [Cargo clippy](https://github.com/rust-lang/rust-clippy)
 6. [Cargo audit](https://github.com/RustSec/cargo-audit)
 
+
+Testing
+----------
+
+Testing kebanyakan ditulis terintegrasi (integration testing), untuk itu perlu menjalankan database
+dan mempersiapkan environment-nya, ini hanya perlu dijalankan sekali, ketikkan:
+
+    $ make test-env
+
+**CATATAN**: Perintah `test-env` akan membuat database baru dengan nama `apf_test` dimana database ini akan digunakan
+sebagai storage ketika proses testing terjadi.
+
+Untuk melakukan test ketikkan:
+
+    $ make test
+
+
 Dokumentasi
 -------------
 
