@@ -8,7 +8,7 @@ use std::fmt;
 use crate::schema_op::ID;
 
 /// Bentuk model akun di dalam database.
-#[derive(Queryable, Serialize, PartialEq)]
+#[derive(Queryable, Clone, Serialize, PartialEq)]
 pub struct Account {
     /// ID dari akun.
     pub id: i64,

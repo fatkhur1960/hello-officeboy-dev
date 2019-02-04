@@ -17,7 +17,7 @@ pub const HASH_SIZE: usize = sha256::DIGESTBYTES;
 pub const SIGNATURE_LENGTH: usize = ds::SIGNATUREBYTES;
 
 // Buatkan wrapper untuk object-object internal dari crypto_impl
-// agar lebih flexibel kita bisa menambahkan implementasi.
+// agar lebih flexibel kita bisa menambahkan implementasi sendiri.
 
 implement_crypto_wrapper!(
     struct PublicKey, PUBLIC_KEY_LENGTH

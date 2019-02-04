@@ -5,7 +5,13 @@ use chrono::{NaiveDateTime, Utc};
 use diesel::prelude::*;
 use failure;
 
-use crate::{crypto, error::Error as PaymentError, models::*, result::Result, schema::*};
+use crate::{
+    crypto::{self, PublicKey, SecretKey},
+    error::Error as PaymentError,
+    models::*,
+    result::Result,
+    schema::*,
+};
 
 use std::sync::Arc;
 
@@ -219,6 +225,32 @@ impl<'a> Schema<'a> {
         })
     }
 
+    /// Buat akun baru secara langsung.
+    pub fn create_account(&self, new_account: &NewAccount) -> Result<(Account, (PublicKey, SecretKey))> {
+        use crate::schema::account_keys::{self, dsl as ak_dsl};
+        use crate::schema::accounts;
+
+        self.db.build_transaction().read_write().run(|| {
+            let account = diesel::insert_into(accounts::table)
+                .values(new_account)
+                .get_result::<Account>(self.db)?;
+
+            // Buatkan key pair untuk akun yang baru saja dibuat.
+            let keypair = crypto::gen_keypair();
+
+            diesel::insert_into(account_keys::table)
+                .values(&NewAccountKey {
+                    account_id: account.id,
+                    pub_key: keypair.0.to_hex(),
+                    secret_key: keypair.1.to_hex(),
+                    active: true,
+                })
+                .execute(self.db)?;
+
+            Ok((account, keypair))
+        })
+    }
+
     /// Clean up registered account by id
     pub fn cleanup_registered_account(&self, id: ID) -> Result<usize> {
         use crate::schema::register_accounts;
@@ -227,5 +259,31 @@ impl<'a> Schema<'a> {
         diesel::delete(dsl::register_accounts.filter(dsl::id.eq(id)))
             .execute(self.db)
             .map_err(From::from)
+    }
+}
+
+/// Schema untuk memudahkan integration testing
+// #[cfg(test)]
+pub struct TestSchema<'a> {
+    db: &'a PgConnection,
+}
+
+// #[cfg(test)]
+impl<'a> TestSchema<'a> {
+
+    #[doc(hidden)]
+    pub fn new(db: &'a PgConnection) -> Self {
+        Self { db }
+    }
+
+    /// Menghapus akun secara batch
+    pub fn cleanup_accounts(&self, accounts: Vec<Account>) {
+        use crate::schema::accounts;
+        use crate::schema::accounts::dsl;
+
+        for account in accounts {
+            diesel::delete(dsl::accounts.filter(dsl::id.eq(account.id))).execute(self.db)
+            .expect("cannot delete account");
+        }
     }
 }

@@ -7,6 +7,7 @@ extern crate reqwest;
 extern crate log;
 #[macro_use]
 extern crate failure;
+extern crate diesel;
 
 extern crate serde;
 #[macro_use]
@@ -23,6 +24,11 @@ use apf::{
     api::{self, ApiAccess, ApiAggregator},
     service,
 };
+
+
+pub mod helper;
+
+use helper::TestHelper;
 
 /// Kind of API service.
 ///
@@ -56,6 +62,10 @@ impl TestKit {
 
     pub fn api(&self) -> TestKitApi {
         TestKitApi::new()
+    }
+
+    pub fn helper(&self) -> TestHelper {
+        TestHelper::new(self)
     }
 }
 

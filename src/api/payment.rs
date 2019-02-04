@@ -93,7 +93,7 @@ where
     /// Operasi signing dilakukan dengan cara men-serialize data pada `body` ke dalam
     /// bentuk protobuf bytes lalu di-sign menggunakan `secret_key`.
     pub fn sign(&self, secret_key: &SecretKey) -> Self {
-        assert!(self.signature.len() > 0, "already signed.");
+        assert!(self.signature.is_empty(), "already signed.");
 
         // convert ke bytes format protobuf
         let bytes = self.body.write_to_bytes().expect("Cannot write to bytes");

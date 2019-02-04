@@ -10,7 +10,7 @@ use apf_testkit::ApiKind;
 
 mod common;
 
-use common::{create_testkit, TestHelper};
+use common::{create_testkit};
 
 #[test]
 fn test_get_info() {
@@ -39,9 +39,10 @@ fn test_float_compare() {
 #[test]
 fn test_register_account() {
     let testkit = create_testkit();
-    let h = TestHelper::new(&testkit);
+    let h = testkit.helper();
 
     let id = h.register_account("Akmal", "akmal@gmail.com", "+62857898122");
     h.cleanup_registered_account(id);
     assert!(id > 0);
 }
+

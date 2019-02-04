@@ -37,6 +37,7 @@ extern crate apf_proc_macro;
 
 extern crate byteorder;
 extern crate hex;
+extern crate rand;
 extern crate rsnowflake;
 pub(crate) extern crate sodiumoxide;
 
@@ -57,11 +58,12 @@ pub mod schema_op;
 pub mod service;
 pub mod token;
 pub mod tx;
-pub(crate) mod util;
+pub mod util;
 mod valid;
 pub mod web;
 
 /// Common use (prelude) exports.
+#[doc(hidden)]
 pub mod prelude {
     pub use super::{
         api::{
@@ -71,6 +73,6 @@ pub mod prelude {
         result::Result,
         schema_op::{Schema, ID},
         service::{PaymentService, Service},
-        valid::Validable,
+        valid::{Expirable, Validable},
     };
 }
