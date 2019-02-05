@@ -11,7 +11,7 @@ use crate::{
     models::*,
     result::Result,
     schema::*,
-    token
+    token,
 };
 
 use std::sync::Arc;
@@ -108,7 +108,6 @@ impl<'a> Schema<'a> {
         accounts.find(account_id).first(self.db).map_err(From::from)
     }
 
-
     /// Setting account's password
     pub fn set_password(&self, account_id: ID, password: &str) -> Result<()> {
         use crate::schema::account_passhash::{self, dsl};
@@ -140,13 +139,32 @@ impl<'a> Schema<'a> {
         })
     }
 
-
     /// Mendaftarkan akun baru.
     /// Mengembalikan ID dari registered account (bukan [Account]: apf::models::Account)
     /// karena user belum aktif, untuk mengaktifkannya perlu memanggil
     /// perintah [Schema::activate_registered_account].
     pub fn register_account(&self, full_name: &str, email: &str, phone_num: &str) -> Result<String> {
-        use crate::schema::{accounts::dsl as dsl_account, register_accounts::{self, dsl as dsl_ra}};
+        use crate::schema::{
+            accounts::dsl as dsl_account,
+            register_accounts::{self, dsl as dsl_ra},
+        };
+
+        if full_name == "" {
+            Err(PaymentError::InvalidParameter(
+                "full name cannot be empty".to_string(),
+            ))?
+        }
+        if email == "" {
+            Err(PaymentError::InvalidParameter(
+                "email cannot be empty".to_string(),
+            ))?
+        }
+        // @TODO(robin): lakukan validasi format nomor telp
+        if phone_num == "" {
+            Err(PaymentError::InvalidParameter(
+                "phone_num cannot be empty".to_string(),
+            ))?
+        }
 
         // tolak akun dengan nama-nama tertentu
         // @TODO(robin): buat konfigurable
@@ -257,7 +275,7 @@ impl<'a> Schema<'a> {
     }
 
     /// Clean up registered account by token
-    pub fn cleanup_registered_account(&self, token:&str) -> Result<usize> {
+    pub fn cleanup_registered_account(&self, token: &str) -> Result<usize> {
         use crate::schema::register_accounts;
         use crate::schema::register_accounts::dsl;
 
@@ -268,12 +286,12 @@ impl<'a> Schema<'a> {
 }
 
 /// Schema untuk memudahkan integration testing
-#[cfg(feature="with-test")]
+#[cfg(feature = "with-test")]
 pub struct TestSchema<'a> {
     db: &'a PgConnection,
 }
 
-#[cfg(feature="with-test")]
+#[cfg(feature = "with-test")]
 impl<'a> TestSchema<'a> {
     #[doc(hidden)]
     pub fn new(db: &'a PgConnection) -> Self {
@@ -281,16 +299,28 @@ impl<'a> TestSchema<'a> {
     }
 
     /// Menghapus akun secara batch
-    pub fn cleanup_accounts(&self, accounts: Vec<Account>) {
+    pub fn cleanup_accounts(&self, account_ids: Vec<ID>) {
         use crate::schema::accounts;
         use crate::schema::accounts::dsl;
 
-        let _ = self.db.build_transaction().read_write().run::<(), diesel::result::Error, _>(|| {
-            for account in accounts {
-                diesel::delete(dsl::accounts.filter(dsl::id.eq(account.id)))
-                    .execute(self.db)?;
-            }
-            Ok(())
-        });
+        let _ = self
+            .db
+            .build_transaction()
+            .read_write()
+            .run::<(), diesel::result::Error, _>(|| {
+                for id in account_ids {
+                    diesel::delete(dsl::accounts.filter(dsl::id.eq(id))).execute(self.db)?;
+                }
+                Ok(())
+            });
+    }
+
+    /// Hapus akun berdasarkan id
+    pub fn delete_account_by_id(&self, id: ID) -> Result<usize> {
+        use crate::schema::accounts;
+        use crate::schema::accounts::dsl;
+        diesel::delete(dsl::accounts.find(id))
+            .execute(self.db)
+            .map_err(From::from)
     }
 }

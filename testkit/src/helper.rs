@@ -1,7 +1,7 @@
+use apf::api::payment::models::*;
 use apf::api::payment::{ActivateAccount, RegisterAccount};
 use apf::api::SuccessReturn;
 use apf::crypto::*;
-use apf::models::*;
 use apf::prelude::*;
 use apf::schema_op::*;
 use apf::util;
@@ -38,6 +38,8 @@ impl TestHelper {
         }
     }
 
+    /// Register account
+    /// Mengembalikan token
     pub fn register_account(&self, account_name: &str, email: &str, phone_number: &str) -> String {
         let api = self.testkit.api();
 
@@ -54,7 +56,7 @@ impl TestHelper {
             .result
     }
 
-    pub fn activate_account(&self, token: String, initial_balance: f64, password: &String) -> ID {
+    pub fn activate_account(&self, token: String, initial_balance: f64, password: &str) -> Account {
         let api = self.testkit.api();
 
         let data = ActivateAccount {
@@ -65,9 +67,8 @@ impl TestHelper {
 
         api.public(ApiKind::Payment)
             .query(&data)
-            .post::<SuccessReturn<ID>>("v1/account/activate")
-            .expect("create account")
-            .result
+            .post::<Account>("v1/account/activate")
+            .expect("activate account")
     }
 
     fn get_db() -> PgConnection {
@@ -80,20 +81,20 @@ impl TestHelper {
         let _ = schema.cleanup_registered_account(token);
     }
 
-    pub fn generate_full_name() -> String {
+    pub fn generate_full_name(&self) -> String {
         // @TODO(robin): mungkin nantinya gunakan tool seperti ini: https://github.com/fnichol/names ?
         util::random_string(10)
     }
 
-    pub fn generate_amount() -> f64 {
+    pub fn generate_amount(&self) -> f64 {
         util::random_number_f64()
     }
 
-    pub fn generate_email() -> String {
+    pub fn generate_email(&self) -> String {
         format!("{}@{}.com", util::random_string(10), util::random_string(5)).to_lowercase()
     }
 
-    pub fn generate_phone_num() -> String {
+    pub fn generate_phone_num(&self) -> String {
         let nums: String = (0..10).map(|_| util::random_number().to_string()).collect();
         format!("+628{}", nums)
     }
@@ -106,26 +107,36 @@ impl TestHelper {
         let mut rv = vec![];
         for _ in 0..count {
             let new_account = NewAccount {
-                full_name: &Self::generate_full_name(),
-                balance: Self::generate_amount(),
-                email: &Self::generate_email(),
-                phone_num: &Self::generate_phone_num(),
+                full_name: &self.generate_full_name(),
+                balance: self.generate_amount(),
+                email: &self.generate_email(),
+                phone_num: &self.generate_phone_num(),
                 active: true,
                 register_time: util::now(),
             };
             let (account, (public_key, secret_key)) = schema
                 .create_account(&new_account)
                 .expect("cannot create account");
-            rv.push(AccountWithKey::new(account, public_key, secret_key));
+            rv.push(AccountWithKey::new(account.into(), public_key, secret_key));
         }
         rv
+    }
+
+    /// Menghapus akun berdasarkan ID.
+    pub fn cleanup_account_by_id(&self, account_id: ID) {
+        let db = Self::get_db();
+        let schema = TestSchema::new(&db);
+        let _ = schema.delete_account_by_id(account_id);
+    }
+
+    /// Menghapus akun
+    pub fn cleanup_account(&self, account: Account) {
+        self.cleanup_account_by_id(account.id);
     }
 
     pub fn cleanup_accounts(&self, accounts: Vec<AccountWithKey>) {
         let db = Self::get_db();
         let schema = TestSchema::new(&db);
-
-        let accounts: Vec<Account> = accounts.iter().map(|a| a.account.clone()).collect();
-        schema.cleanup_accounts(accounts);
+        schema.cleanup_accounts(accounts.iter().map(|a| a.account.id).collect());
     }
 }

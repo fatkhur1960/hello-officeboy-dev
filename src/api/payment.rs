@@ -141,3 +141,38 @@ pub struct InvoiceItem {
     pub name: String,
     pub price: f64,
 }
+
+/// Model untuk keperluan tukar menukar data API
+/// bukan yang di database (crate::models).
+pub mod models {
+
+    use chrono::NaiveDateTime;
+
+    use crate::models;
+
+    use std::convert::From;
+
+    /// Bentuk model akun di dalam database.
+    #[derive(Clone, Serialize, Deserialize, PartialEq)]
+    pub struct Account {
+        /// ID dari akun.
+        pub id: i64,
+
+        /// Nama lengkap akun.
+        pub full_name: String,
+
+        /// Waktu kapan akun ini didaftarkan.
+        pub register_time: NaiveDateTime,
+    }
+
+    impl From<models::Account> for Account {
+        fn from(a: models::Account) -> Self {
+            Account {
+                id: a.id,
+                full_name: a.full_name,
+                register_time: a.register_time,
+            }
+        }
+    }
+
+}

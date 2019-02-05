@@ -9,7 +9,7 @@
 //! * Multi service implementation.
 //!
 #![deny(missing_docs)]
-#![allow(unused_imports, unused_variables, dead_code)]
+#![allow(unused_imports, unused_variables, dead_code, unused_macros)]
 #![allow(clippy::new_without_default)]
 
 // extern crate actix;

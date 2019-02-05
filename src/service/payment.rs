@@ -65,11 +65,11 @@ impl Service for PaymentService {
             .endpoint_req_mut("v1/pay", PublicApi::pay)
             .endpoint("v1/balance", PublicApi::balance)
             .endpoint_mut("v1/account/register", PublicApi::register_account)
+            .endpoint_mut("v1/account/activate", PublicApi::activate_account)
             .endpoint_mut("v1/authorize", PublicApi::authorize);
 
         builder
             .private_scope()
-            .endpoint_mut("v1/account/activate", PrivateApi::activate_account)
             .endpoint_req_mut("v1/credit", PrivateApi::credit)
             .endpoint_req_mut("v1/debit", PrivateApi::debit);
     }
@@ -88,6 +88,20 @@ impl PublicApi {
             .map_err(From::from)
             .map(SuccessReturn::new)
     }
+
+    /// Mengaktifkan user yang telah teregister.
+    /// Ini nantinya dijadikan link yang akan dikirimkan ke email
+    /// user yang telah mendaftar.
+    api_endpoint!(
+        activate_account,
+        ActivateAccount,
+        models::Account,
+        (|schema, query| {
+            let account = schema.activate_registered_account(query.token, query.initial_balance)?;
+            schema.set_password(account.id, &query.password)?;
+            Ok(account)
+        })
+    );
 
     /// Rest API endpoint untuk transfer
     #[authorized_only(user)]
@@ -208,19 +222,6 @@ impl PublicApi {
 struct PrivateApi;
 
 impl PrivateApi {
-    /// Mengaktifkan user yang telah teregister
-    api_tx_endpoint!(
-        activate_account,
-        ActivateAccount,
-        models::Account,
-        (|schema, query| {
-            let account =
-                schema.activate_registered_account(query.body.token, query.body.initial_balance)?;
-            schema.set_password(account.id, &query.body.password)?;
-            Ok(account)
-        })
-    );
-
     /// Rest API endpoint for topup
     fn credit(state: &AppState, query: TxQuery<Credit>, req: &ApiHttpRequest) -> ApiResult<()> {
         trace!("topup account: {:?}", query);

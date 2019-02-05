@@ -5,7 +5,10 @@
 use byteorder::{BigEndian, LittleEndian, ReadBytesExt, WriteBytesExt};
 use hex;
 use rsnowflake::SnowflakeIdGenerator;
-use sodiumoxide::{crypto::hash::{sha512, sha256}, randombytes};
+use sodiumoxide::{
+    crypto::hash::{sha256, sha512},
+    randombytes,
+};
 
 use std::io::Cursor;
 

@@ -5,6 +5,7 @@ extern crate apf;
 extern crate reqwest;
 #[macro_use]
 extern crate log;
+extern crate env_logger;
 #[macro_use]
 extern crate failure;
 extern crate diesel;
@@ -27,7 +28,7 @@ use apf::{
 
 pub mod helper;
 
-use helper::TestHelper;
+pub use helper::TestHelper;
 
 /// Kind of API service.
 ///
@@ -237,7 +238,7 @@ where
         match response.status() {
             StatusCode::OK => Ok({
                 let body = response.text().expect("Unable to get response text");
-                trace!("Body: {}", body);
+                eprintln!("error body: {}", body);
                 serde_json::from_str(&body).expect("Unable to deserialize body")
             }),
             StatusCode::FORBIDDEN => Err(api::Error::Unauthorized),
@@ -258,6 +259,7 @@ where
 }
 
 pub fn setup() {
+    let _ = env_logger::try_init();
     env::set_var("DATABASE_URL", "postgresql://localhost/apf_test?sslmode=disable");
 }
 

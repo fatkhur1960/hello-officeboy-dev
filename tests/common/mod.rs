@@ -1,16 +1,18 @@
 #![allow(dead_code, unused_variables)]
 
-use sodiumoxide;
 use apf_testkit::TestKit;
+use sodiumoxide;
 
 use std::env;
 
 pub mod prelude {
-    pub use actix_web::test::*;
+    //pub use actix_web::test::*;
+    pub use super::{create_testkit, setup};
+    pub use apf_testkit::{TestHelper, TestKit, TestKitApi};
 }
 
 pub fn setup() {
-    // env_logger::init();
+    let _ = env_logger::try_init();
     sodiumoxide::init().expect("Cannot initialize sodiumoxide");
 }
 

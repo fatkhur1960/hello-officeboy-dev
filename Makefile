@@ -27,6 +27,10 @@ test:
 	@@echo Testing...
 	@@cargo test
 
+test-dev:
+	@@echo Testing...
+	@@cargo test -- --nocapture
+
 lint:
 	@@echo Linting...
 	@@cargo clippy
@@ -44,5 +48,6 @@ commit:
 test-env:
 	diesel setup --database-url postgresql://localhost/apf_test?sslmode=disable
 
-.PHONY: prepare docs lib-docs api-docs fmt test lint audit commit \
+.PHONY: prepare docs lib-docs api-docs fmt \
+		test test-dev lint audit commit \
 		test-env
