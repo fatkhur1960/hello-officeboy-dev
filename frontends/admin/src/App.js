@@ -2,15 +2,15 @@ import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
 
-import SideNav, { Toggle, Nav, NavItem, NavIcon, NavText } from '@trendmicro/react-sidenav';
 import '@trendmicro/react-sidenav/dist/react-sidenav.css';
+import SideNav, { Toggle, Nav, NavItem, NavIcon, NavText } from '@trendmicro/react-sidenav';
+
 import { BrowserRouter as Router, Route, Link } from "react-router-dom";
 import 'font-awesome/css/font-awesome.min.css';
 
 import Page, { Index } from './components/Page';
 import AccountPage from './components/AccountPage';
 import HomePage from './components/HomePage';
-
 
 
 class App extends Component {
@@ -30,7 +30,7 @@ class App extends Component {
             <Route render={({ location, history }) => (
               <React.Fragment>
 
-                <SideNav
+                <SideNav id="SideNav"
                   expanded={this.state.expanded}
                   onToggle={(expanded) => {
                     this.setState({ expanded })

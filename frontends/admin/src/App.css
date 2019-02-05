@@ -1,6 +1,15 @@
 .App {
   /* text-align: center; */
   margin-left: 80px;
+
+}
+
+#SideNav {
+  background-color: #000;
+}
+
+div[class^='sidenav---navicon'] i {
+  color: #FFF !important;
 }
 
 .App-logo {

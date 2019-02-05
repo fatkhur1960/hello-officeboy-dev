@@ -5,9 +5,6 @@ import { Icon, Statistic } from 'semantic-ui-react'
 import Page from './Page';
 import apiClient from './axios';
 
-// import './AccountPage.css';
-
-
 export default class HomePage extends Page {
   constructor(props) {
     super(props);
@@ -16,9 +13,6 @@ export default class HomePage extends Page {
       title: "Statistics",
       userCount: 0
     }
-
-    // this.loadPage(0, this.limit);
-
   }
 
   componentDidMount() {
