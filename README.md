@@ -32,6 +32,19 @@ Untuk melakukan test ketikkan:
 
     $ make test
 
+Frontend
+------------
+
+Stack frontend kita menggunakan React, base ada di direktori `/frontends`.
+
+Apabila ingin mencoba menjalankannya bisa check frontend untuk admin:
+
+    $ cd frontends/admin
+    $ npm install
+    $ npm start
+
+Buka http://localhost:3000/
+
 
 Dokumentasi
 -------------
