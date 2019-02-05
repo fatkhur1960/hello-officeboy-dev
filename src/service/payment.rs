@@ -53,6 +53,7 @@ impl Service for PaymentService {
             .endpoint_req_mut("v1/credit", PrivateApi::credit)
             .endpoint_req_mut("v1/debit", PrivateApi::debit)
             .endpoint("v1/accounts", PrivateApi::list_account)
-            .endpoint("v1/account/search", PrivateApi::search_accounts);
+            .endpoint("v1/account/search", PrivateApi::search_accounts)
+            .endpoint("v1/account/count", PrivateApi::account_count);
     }
 }

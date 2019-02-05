@@ -9,10 +9,8 @@ import 'font-awesome/css/font-awesome.min.css';
 
 import Page, { Index } from './components/Page';
 import AccountPage from './components/AccountPage';
+import HomePage from './components/HomePage';
 
-
-// const Index = () => <h2>Home</h2>;
-const About = () => <h2>About</h2>;
 
 
 class App extends Component {
@@ -48,10 +46,10 @@ class App extends Component {
                   <SideNav.Nav>
                     <NavItem eventKey="home">
                       <NavIcon>
-                        <i className="fa fa-fw fa-home" style={{ fontSize: '1.75em' }} />
+                        <i className="fa fa-fw fa-dashboard" style={{ fontSize: '1.75em' }} />
                       </NavIcon>
                       <NavText>
-                        Home
+                        Dashboard
                         </NavText>
                     </NavItem>
                     <NavItem eventKey="account">
@@ -75,9 +73,9 @@ class App extends Component {
 
                 <main>
                   {/* <Route path="/" exact component={props => <RootComponent />} /> */}
-                  <Route path="/home" component={props => <Index title="Home" expanded={this.state.expanded} />} />
+                  <Route path="/home" component={props => <HomePage title="Dashboard" expanded={this.state.expanded} />} />
                   <Route path="/account" component={props => <AccountPage expanded={this.state.expanded} />} />
-                  <Route path="/about" component={props => <About />} />
+                  <Route path="/about" component={props => <Page title="About" expanded={this.state.expanded} />} />
                 </main>
               </React.Fragment>
             )}
