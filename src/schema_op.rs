@@ -307,6 +307,14 @@ impl<'a> Schema<'a> {
             .load(self.db)
             .map_err(From::from)
     }
+
+    /// Mendapatkan jumlah akun keseluruhan di dalam database.
+    pub fn get_account_count(&self) -> Result<i64> {
+        use crate::schema::accounts;
+        use crate::schema::accounts::dsl;
+
+        dsl::accounts.select(diesel::dsl::count(dsl::id)).first(self.db).map_err(From::from)
+    }
 }
 
 /// Schema untuk memudahkan integration testing

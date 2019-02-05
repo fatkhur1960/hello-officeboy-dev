@@ -23,7 +23,7 @@ export default class Page extends Component {
     return (<div id={this.id} style={{ marginLeft: marginLeft, padding: 10 }}>
       <h2>{this.state.title}</h2>
       <div>
-      {this.content()}
+        {this.content()}
       </div>
     </div>)
   }
@@ -32,11 +32,11 @@ export default class Page extends Component {
     return null;
   }
 
-  componentDidMount(){
+  componentDidMount() {
     console.log("mounting...");
   }
 
-  componentWillUnmount(){
+  componentWillUnmount() {
     console.log("unmounting...");
   }
 }
@@ -58,20 +58,25 @@ export class AccountPage extends Page {
   constructor(props) {
     super(props);
     this.id = "AccountPage";
+    this.limit = 5;
     this.state = {
       title: "Accounts",
-      items: []
+      items: [],
+      paging: []
     }
 
-    apiClient.private.get("/accounts?offset=0&limit=10")
-      .then((resp) => {
-        console.log(resp);
-        // let items = resp.data.result.map((a) => 
-        //   <li>{a.id} - {a.full_name}</li>
-        // );
-        this.setState({ items: resp.data.result })
-      });
+    this.loadPage(0, this.limit);
 
+  }
+
+  loadPage(offset, limit) {
+    apiClient.private.get(`/accounts?page=${offset}&limit=${limit}`)
+      .then((resp) => {
+        var count = Math.round(resp.data.count / this.limit),
+          remain = resp.data.count % this.limit > 0;
+        var paging = Array.from(Array(count + 1).keys());
+        this.setState({ items: resp.data.entries, paging: paging });
+      });
   }
 
   content() {
@@ -111,10 +116,11 @@ export class AccountPage extends Page {
               <Menu.Item as='a' icon>
                 <Icon name='chevron left' />
               </Menu.Item>
-              <Menu.Item as='a'>1</Menu.Item>
-              <Menu.Item as='a'>2</Menu.Item>
-              <Menu.Item as='a'>3</Menu.Item>
-              <Menu.Item as='a'>4</Menu.Item>
+              {
+                this.state.paging.map((i) =>
+                  <Menu.Item as='a' key={i + 1} onClick={() => this.loadPage(i, this.limit)}>{i + 1}</Menu.Item>
+                )
+              }
               <Menu.Item as='a' icon>
                 <Icon name='chevron right' />
               </Menu.Item>

@@ -362,18 +362,28 @@ impl PrivateApi {
     }
 
     /// Listing account
-    pub fn list_account(state: &AppState, query: ListAccount) -> ApiResult<SuccessReturn<Vec<Account>>> {
+    pub fn list_account(state: &AppState, query: ListAccount) -> ApiResult<EntriesResult<Account>> {
         let schema = Schema::new(state.db());
-        schema
-            .get_accounts(query.offset, query.limit)
-            .map(SuccessReturn::new)
-            .map_err(From::from)
-            
+        
+        let offset = query.page * query.limit;
+
+        let entries = schema
+            .get_accounts(offset, query.limit)?;
+            // .map(SuccessReturn::new)?;
+            // .map_err(From::from)
+        let count = schema.get_account_count()?;
+        Ok(EntriesResult { count, entries })
     }
 }
 
 #[derive(Deserialize)]
 pub struct ListAccount {
-    pub offset: i64,
+    pub page: i64,
     pub limit: i64,
+}
+
+#[derive(Serialize)]
+pub struct EntriesResult<T> {
+    pub count: i64,
+    pub entries: Vec<T>
 }
