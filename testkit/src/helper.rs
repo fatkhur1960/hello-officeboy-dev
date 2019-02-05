@@ -38,7 +38,7 @@ impl TestHelper {
         }
     }
 
-    pub fn register_account(&self, account_name: &str, email: &str, phone_number: &str) -> ID {
+    pub fn register_account(&self, account_name: &str, email: &str, phone_number: &str) -> String {
         let api = self.testkit.api();
 
         let data = RegisterAccount {
@@ -49,16 +49,16 @@ impl TestHelper {
 
         api.public(ApiKind::Payment)
             .query(&data)
-            .post::<SuccessReturn<ID>>("v1/account/register")
+            .post::<SuccessReturn<String>>("v1/account/register")
             .expect("create account")
             .result
     }
 
-    pub fn activate_account(&self, reg_id: ID, initial_balance: f64, password: &String) -> ID {
+    pub fn activate_account(&self, token: String, initial_balance: f64, password: &String) -> ID {
         let api = self.testkit.api();
 
         let data = ActivateAccount {
-            reg_id,
+            token,
             initial_balance,
             password: password.to_owned(),
         };
@@ -74,10 +74,10 @@ impl TestHelper {
         PgConnection::establish(&env::var("DATABASE_URL").unwrap()).expect("Cannot connect to db")
     }
 
-    pub fn cleanup_registered_account(&self, reg_id: ID) {
+    pub fn cleanup_registered_account(&self, token: &str) {
         let db = Self::get_db();
         let schema = Schema::new(&db);
-        let _ = schema.cleanup_registered_account(reg_id);
+        let _ = schema.cleanup_registered_account(token);
     }
 
     pub fn generate_full_name() -> String {

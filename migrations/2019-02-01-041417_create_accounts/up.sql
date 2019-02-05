@@ -34,7 +34,8 @@ CREATE TABLE account_passhash (
 
 -- Tabel untuk menampung user-user yang baru mendaftar tapi belum melakukan aktifasi
 CREATE TABLE register_accounts (
-    id BIGSERIAL PRIMARY KEY,
+    -- id BIGSERIAL PRIMARY KEY,
+    token VARCHAR(100) PRIMARY KEY,
     full_name VARCHAR NOT NULL,
     email VARCHAR NOT NULL, -- untuk melakukan aktivasi via email
     phone_num VARCHAR NOT NULL, -- untuk melakukan aktivasi via phone (kalau tidak email)

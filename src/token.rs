@@ -5,7 +5,7 @@
 use byteorder::{BigEndian, LittleEndian, ReadBytesExt, WriteBytesExt};
 use hex;
 use rsnowflake::SnowflakeIdGenerator;
-use sodiumoxide::{crypto::hash::sha512, randombytes};
+use sodiumoxide::{crypto::hash::{sha512, sha256}, randombytes};
 
 use std::io::Cursor;
 
@@ -23,6 +23,15 @@ pub fn generate_access_token() -> String {
     let mut wtr = vec![];
     wtr.write_u64::<BigEndian>(token_u64).unwrap();
     hex::encode(&sha512::hash(wtr.as_slice()))
+}
+
+/// Sama dengan `generate_access_token` bedanya ini general purpose
+/// dengan menggunakan sha256 dengan ukuran token yang lebih pendek.
+pub fn generate_token() -> String {
+    let token_u64 = generate_u64();
+    let mut wtr = vec![];
+    wtr.write_u64::<BigEndian>(token_u64).unwrap();
+    hex::encode(&sha256::hash(wtr.as_slice()))
 }
 
 #[cfg(test)]

@@ -90,8 +90,8 @@ table! {
 }
 
 table! {
-    register_accounts (id) {
-        id -> Int8,
+    register_accounts (token) {
+        token -> Varchar,
         full_name -> Varchar,
         email -> Varchar,
         phone_num -> Varchar,

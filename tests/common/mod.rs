@@ -1,11 +1,6 @@
 #![allow(dead_code, unused_variables)]
 
 use sodiumoxide;
-// use apf::crypto::*;
-// use apf::models::*;
-
-// use apf_testkit::{ApiKind, TestKit};
-// use env_logger;
 use apf_testkit::TestKit;
 
 use std::env;

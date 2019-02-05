@@ -70,7 +70,8 @@ pub struct Address {
 #[doc(hidden)]
 #[derive(Queryable)]
 pub struct RegisterAccount {
-    pub id: i64,
+    // pub id: i64,
+    pub token: String,
     pub full_name: String,
     pub email: String,
     pub phone_num: String,

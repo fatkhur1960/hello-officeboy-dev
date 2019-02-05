@@ -41,7 +41,7 @@ fn test_register_account() {
     let testkit = create_testkit();
     let h = testkit.helper();
 
-    let id = h.register_account("Akmal", "akmal@gmail.com", "+62857898122");
-    h.cleanup_registered_account(id);
-    assert!(id > 0);
+    let token = h.register_account("Akmal", "akmal@gmail.com", "+62857898122");
+    h.cleanup_registered_account(&token);
+    assert!(token.len() > 0);
 }

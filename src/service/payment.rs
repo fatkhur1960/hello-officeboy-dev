@@ -80,7 +80,7 @@ struct PublicApi;
 
 impl PublicApi {
     /// Rest API endpoint untuk mendaftarkan akun baru.
-    fn register_account(state: &AppState, query: RegisterAccount) -> ApiResult<SuccessReturn<ID>> {
+    fn register_account(state: &AppState, query: RegisterAccount) -> ApiResult<SuccessReturn<String>> {
         let schema = Schema::new(state.db());
 
         schema
@@ -215,7 +215,7 @@ impl PrivateApi {
         models::Account,
         (|schema, query| {
             let account =
-                schema.activate_registered_account(query.body.reg_id, query.body.initial_balance)?;
+                schema.activate_registered_account(query.body.token, query.body.initial_balance)?;
             schema.set_password(account.id, &query.body.password)?;
             Ok(account)
         })

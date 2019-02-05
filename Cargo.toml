@@ -8,6 +8,7 @@ description = "Ansvia Payment Framework"
 [features]
 default = ["with-serde"]
 with-serde = []
+with-test = []
 
 [dependencies]
 # actix = "0.7"

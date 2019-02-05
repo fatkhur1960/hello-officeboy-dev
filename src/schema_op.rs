@@ -11,6 +11,7 @@ use crate::{
     models::*,
     result::Result,
     schema::*,
+    token
 };
 
 use std::sync::Arc;
@@ -19,6 +20,7 @@ use std::sync::Arc;
 #[table_name = "register_accounts"]
 #[doc(hidden)]
 pub struct NewRegisterAccount<'a> {
+    pub token: &'a str,
     pub full_name: &'a str,
     pub email: &'a str,
     pub phone_num: &'a str,
@@ -106,48 +108,6 @@ impl<'a> Schema<'a> {
         accounts.find(account_id).first(self.db).map_err(From::from)
     }
 
-    /// Mendaftarkan akun baru.
-    /// Mengembalikan ID dari registered account (bukan [Account]: apf::models::Account)
-    /// karena user belum aktif, untuk mengaktifkannya perlu memanggil
-    /// perintah [Schema::activate_registered_account].
-    pub fn register_account(&self, full_name: &str, email: &str, phone_num: &str) -> Result<ID> {
-        use crate::schema::{accounts::dsl as dsl_account, register_accounts};
-
-        // tolak akun dengan nama-nama tertentu
-        // @TODO(robin): buat konfigurable
-        if full_name == "nobody" {
-            warn!("Name exception to register: `{}`", full_name);
-            Err(PaymentError::Unauthorized)?
-        }
-
-        // check apakah akun dengan email/phone sama sudah ada
-        let exists = dsl_account::accounts
-            .filter(
-                dsl_account::email
-                    .eq(email)
-                    .or(dsl_account::phone_num.eq(phone_num)),
-            )
-            .select(dsl_account::id)
-            .first::<ID>(self.db)
-            .is_ok();
-
-        if exists {
-            Err(PaymentError::AlreadyExists)?
-        }
-
-        let new_reg_account = NewRegisterAccount {
-            full_name,
-            email,
-            phone_num,
-            register_time: Utc::now().naive_utc(),
-        };
-
-        diesel::insert_into(register_accounts::table)
-            .values(&new_reg_account)
-            .get_result::<RegisterAccount>(self.db)
-            .map(|d| d.id)
-            .map_err(From::from)
-    }
 
     /// Setting account's password
     pub fn set_password(&self, account_id: ID, password: &str) -> Result<()> {
@@ -180,15 +140,60 @@ impl<'a> Schema<'a> {
         })
     }
 
+
+    /// Mendaftarkan akun baru.
+    /// Mengembalikan ID dari registered account (bukan [Account]: apf::models::Account)
+    /// karena user belum aktif, untuk mengaktifkannya perlu memanggil
+    /// perintah [Schema::activate_registered_account].
+    pub fn register_account(&self, full_name: &str, email: &str, phone_num: &str) -> Result<String> {
+        use crate::schema::{accounts::dsl as dsl_account, register_accounts::{self, dsl as dsl_ra}};
+
+        // tolak akun dengan nama-nama tertentu
+        // @TODO(robin): buat konfigurable
+        if full_name == "nobody" {
+            warn!("Name exception to register: `{}`", full_name);
+            Err(PaymentError::Unauthorized)?
+        }
+
+        // check apakah akun dengan email/phone sama sudah ada
+        let exists = dsl_account::accounts
+            .filter(
+                dsl_account::email
+                    .eq(email)
+                    .or(dsl_account::phone_num.eq(phone_num)),
+            )
+            .select(dsl_account::id)
+            .first::<ID>(self.db)
+            .is_ok();
+
+        if exists {
+            Err(PaymentError::AlreadyExists)?
+        }
+
+        let new_reg_account = NewRegisterAccount {
+            token: &token::generate_token(),
+            full_name,
+            email,
+            phone_num,
+            register_time: Utc::now().naive_utc(),
+        };
+
+        diesel::insert_into(register_accounts::table)
+            .values(&new_reg_account)
+            .returning(dsl_ra::token)
+            .get_result(self.db)
+            .map_err(From::from)
+    }
+
     /// Mengaktifkan akun yang telah melakukan registrasi tapi belum aktif
     /// bisa diset juga balance pertamanya (initial balance).
-    pub fn activate_registered_account(&self, id: ID, initial_balance: f64) -> Result<Account> {
+    pub fn activate_registered_account(&self, token: String, initial_balance: f64) -> Result<Account> {
         use crate::schema::account_keys::{self, dsl as ak_dsl};
         use crate::schema::{accounts, register_accounts};
 
         self.db.build_transaction().read_write().run(|| {
             let reg_acc: RegisterAccount = register_accounts::dsl::register_accounts
-                .find(id)
+                .find(token.clone())
                 .first(self.db)?;
             // .map_err(From::from)?;
 
@@ -219,7 +224,7 @@ impl<'a> Schema<'a> {
                 .execute(self.db)?;
 
             // delete reference in registered accounts table
-            diesel::delete(register_accounts::dsl::register_accounts.find(id)).execute(self.db)?;
+            diesel::delete(register_accounts::dsl::register_accounts.find(token)).execute(self.db)?;
 
             Ok(account)
         })
@@ -251,24 +256,24 @@ impl<'a> Schema<'a> {
         })
     }
 
-    /// Clean up registered account by id
-    pub fn cleanup_registered_account(&self, id: ID) -> Result<usize> {
+    /// Clean up registered account by token
+    pub fn cleanup_registered_account(&self, token:&str) -> Result<usize> {
         use crate::schema::register_accounts;
         use crate::schema::register_accounts::dsl;
 
-        diesel::delete(dsl::register_accounts.filter(dsl::id.eq(id)))
+        diesel::delete(dsl::register_accounts.filter(dsl::token.eq(token)))
             .execute(self.db)
             .map_err(From::from)
     }
 }
 
 /// Schema untuk memudahkan integration testing
-// #[cfg(test)]
+#[cfg(feature="with-test")]
 pub struct TestSchema<'a> {
     db: &'a PgConnection,
 }
 
-// #[cfg(test)]
+#[cfg(feature="with-test")]
 impl<'a> TestSchema<'a> {
     #[doc(hidden)]
     pub fn new(db: &'a PgConnection) -> Self {
@@ -280,10 +285,12 @@ impl<'a> TestSchema<'a> {
         use crate::schema::accounts;
         use crate::schema::accounts::dsl;
 
-        for account in accounts {
-            diesel::delete(dsl::accounts.filter(dsl::id.eq(account.id)))
-                .execute(self.db)
-                .expect("cannot delete account");
-        }
+        let _ = self.db.build_transaction().read_write().run::<(), diesel::result::Error, _>(|| {
+            for account in accounts {
+                diesel::delete(dsl::accounts.filter(dsl::id.eq(account.id)))
+                    .execute(self.db)?;
+            }
+            Ok(())
+        });
     }
 }

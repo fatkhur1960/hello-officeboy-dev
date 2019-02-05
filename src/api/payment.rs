@@ -66,7 +66,7 @@ pub struct RegisterAccount {
 /// Definisi query untuk mengaktifkan akun yang telah didaftarkan.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ActivateAccount {
-    pub reg_id: ID,
+    pub token: String,
     pub initial_balance: f64,
     pub password: String,
 }

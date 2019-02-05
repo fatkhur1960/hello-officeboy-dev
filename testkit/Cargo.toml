@@ -19,5 +19,5 @@ serde_urlencoded = "=0.5.4"
 
 diesel = { version = "1.4", default-features = false, features = ["32-column-tables", "postgres", "chrono"]}
 
-apf = { path = "../" }
+apf = { path = "../", features = ["with-test"] }
 
