@@ -347,7 +347,6 @@ impl<'a> Schema<'a> {
 
         Ok((entries, count))
     }
-
 }
 
 /// Schema untuk memudahkan integration testing

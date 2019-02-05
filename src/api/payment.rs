@@ -395,7 +395,10 @@ impl PrivateApi {
     pub fn account_count(state: &AppState, query: ()) -> ApiResult<SuccessReturn<i64>> {
         let schema = Schema::new(state.db());
 
-        schema.get_account_count().map(SuccessReturn::new).map_err(From::from)
+        schema
+            .get_account_count()
+            .map(SuccessReturn::new)
+            .map_err(From::from)
     }
 }
 
