@@ -56,12 +56,11 @@ impl TestHelper {
             .result
     }
 
-    pub fn activate_account(&self, token: String, initial_balance: f64, password: &str) -> Account {
+    pub fn activate_account(&self, token: String, password: &str) -> Account {
         let api = self.testkit.api();
 
         let data = ActivateAccount {
             token,
-            initial_balance,
             password: password.to_owned(),
         };
 

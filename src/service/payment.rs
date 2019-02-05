@@ -90,14 +90,13 @@ impl PublicApi {
     }
 
     /// Mengaktifkan user yang telah teregister.
-    /// Ini nantinya dijadikan link yang akan dikirimkan ke email
-    /// user yang telah mendaftar.
+    /// Ini nantinya dijadikan link yang akan dikirimkan ke email pendaftar.
     api_endpoint!(
         activate_account,
         ActivateAccount,
         models::Account,
         (|schema, query| {
-            let account = schema.activate_registered_account(query.token, query.initial_balance)?;
+            let account = schema.activate_registered_account(query.token, 0.0f64)?;
             schema.set_password(account.id, &query.password)?;
             Ok(account)
         })

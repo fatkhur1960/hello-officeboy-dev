@@ -21,7 +21,7 @@ fn test_register_and_activate_account() {
     let helper = testkit.helper();
     let name = helper.generate_full_name();
     let reg_token = helper.register_account(&name, &helper.generate_email(), &helper.generate_phone_num());
-    let account = helper.activate_account(reg_token, 0.0, "123");
+    let account = helper.activate_account(reg_token, "123");
     assert_eq!(account.full_name, name);
     helper.cleanup_account(account);
 }
@@ -36,7 +36,7 @@ fn test_activate_account_invalid_token() {
 
     let reg_token = helper.register_account(&name, &helper.generate_email(), &helper.generate_phone_num());
     // this should panic
-    let _ = helper.activate_account(reg_token + "invalid", 0.0, "123");
+    let _ = helper.activate_account(reg_token + "invalid", "123");
 }
 
 macro_rules! test_register_empty_param {

@@ -67,7 +67,6 @@ pub struct RegisterAccount {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ActivateAccount {
     pub token: String,
-    pub initial_balance: f64,
     pub password: String,
 }
 
