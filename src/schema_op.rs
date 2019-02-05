@@ -313,7 +313,39 @@ impl<'a> Schema<'a> {
         use crate::schema::accounts;
         use crate::schema::accounts::dsl;
 
-        dsl::accounts.select(diesel::dsl::count(dsl::id)).first(self.db).map_err(From::from)
+        dsl::accounts
+            .select(diesel::dsl::count(dsl::id))
+            .first(self.db)
+            .map_err(From::from)
+    }
+
+    /// Mencari akun berdasarkan kata kunci
+    /// Ini mengembalikan tidak hanya daftar akun tetapi juga jumlah
+    /// akun yang ada sesuai kata kunci tersebut.
+    pub fn search_accounts(&self, keyword: &str, offset: i64, limit: i64) -> Result<(Vec<Account>, i64)> {
+        use crate::schema::accounts;
+        use crate::schema::accounts::dsl;
+
+        let like_clause = format!("%{}%", keyword);
+
+        let filterer = dsl::id.ne(0).and(
+            dsl::full_name
+                .like(&like_clause)
+                .or(dsl::email.like(&like_clause)),
+        );
+
+        let entries = dsl::accounts
+            .filter(filterer)
+            .offset(offset)
+            .limit(limit)
+            .load(self.db)?;
+
+        let count = dsl::accounts
+            .select(diesel::dsl::count(dsl::id))
+            .filter(filterer)
+            .first(self.db)?;
+
+        Ok((entries, count))
     }
 }
 

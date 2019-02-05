@@ -364,26 +364,43 @@ impl PrivateApi {
     /// Listing account
     pub fn list_account(state: &AppState, query: ListAccount) -> ApiResult<EntriesResult<Account>> {
         let schema = Schema::new(state.db());
-        
+
         let offset = query.page * query.limit;
 
-        let entries = schema
-            .get_accounts(offset, query.limit)?;
-            // .map(SuccessReturn::new)?;
-            // .map_err(From::from)
+        let entries = schema.get_accounts(offset, query.limit)?;
+        // .map(SuccessReturn::new)?;
+        // .map_err(From::from)
         let count = schema.get_account_count()?;
+        Ok(EntriesResult { count, entries })
+    }
+
+    /// Mencari akun berdasarkan kata kunci
+    pub fn search_accounts(state: &AppState, query: ListAccount) -> ApiResult<EntriesResult<Account>> {
+        let schema = Schema::new(state.db());
+
+        let offset = query.page * query.limit;
+
+        if query.query.is_none() {
+            return Self::list_account(&state, query);
+        }
+
+        let keyword = query.query.unwrap();
+
+        let (entries, count) = schema.search_accounts(&keyword, offset, query.limit)?;
+
         Ok(EntriesResult { count, entries })
     }
 }
 
 #[derive(Deserialize)]
 pub struct ListAccount {
+    pub query: Option<String>,
     pub page: i64,
     pub limit: i64,
 }
 
 #[derive(Serialize)]
 pub struct EntriesResult<T> {
+    pub entries: Vec<T>,
     pub count: i64,
-    pub entries: Vec<T>
 }

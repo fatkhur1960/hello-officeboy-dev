@@ -6,8 +6,9 @@ import SideNav, { Toggle, Nav, NavItem, NavIcon, NavText } from '@trendmicro/rea
 import '@trendmicro/react-sidenav/dist/react-sidenav.css';
 import { BrowserRouter as Router, Route, Link } from "react-router-dom";
 import 'font-awesome/css/font-awesome.min.css';
-import CoolTitle from './components/CoolTitle';
-import Page, { Index, AccountPage } from './components/Page';
+
+import Page, { Index } from './components/Page';
+import AccountPage from './components/AccountPage';
 
 
 // const Index = () => <h2>Home</h2>;
