@@ -42,7 +42,7 @@ impl PublicApi {
         Ok(concat!("version: ", env!("CARGO_PKG_VERSION")).to_owned())
     }
 
-    pub fn update(state: &AppState, query: (), req: &api::HttpRequest) -> api::Result<String> {
+    pub fn update(state: &mut AppState, query: (), req: &api::HttpRequest) -> api::Result<String> {
         Ok("".to_owned())
     }
 

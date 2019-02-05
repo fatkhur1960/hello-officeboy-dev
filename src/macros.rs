@@ -74,6 +74,16 @@ macro_rules! api_endpoint {
     };
 }
 
+macro_rules! api_endpoint_mut {
+    ($name:ident, $qt:ty, $rv:ty, (|$schema:ident, $query:ident| $( $cs:tt )+ ) ) => {
+        pub fn $name(state: &mut AppState, $query: $qt) -> ApiResult<$rv> {
+            let $schema = Schema::new(state.db());
+
+            {$($cs)+}
+        }
+    };
+}
+
 macro_rules! api_tx_endpoint {
     ($name:ident, $qt:ty, $rv:ty, (|$schema:ident, $query:ident| $( $cs:tt )+ ) ) => {
         pub fn $name(state: &AppState, $query: TxQuery<$qt>) -> ApiResult<$rv> {

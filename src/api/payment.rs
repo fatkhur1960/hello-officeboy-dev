@@ -4,10 +4,12 @@
 use actix_web::{HttpRequest, HttpResponse};
 use chrono::NaiveDateTime;
 use protobuf;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use serde_json::Value as JsonValue;
 
 use crate::api::SuccessReturn;
 use crate::crypto::{self, SecretKey};
+use crate::models::Account;
 use crate::{
     api::{Error as ApiError, HttpRequest as ApiHttpRequest, Result as ApiResult},
     auth,
@@ -189,7 +191,10 @@ pub struct PublicApi;
 
 impl PublicApi {
     /// Rest API endpoint untuk mendaftarkan akun baru.
-    pub fn register_account(state: &AppState, query: RegisterAccount) -> ApiResult<SuccessReturn<String>> {
+    pub fn register_account(
+        state: &mut AppState,
+        query: RegisterAccount,
+    ) -> ApiResult<SuccessReturn<String>> {
         let schema = Schema::new(state.db());
 
         schema
@@ -200,7 +205,7 @@ impl PublicApi {
 
     /// Mengaktifkan user yang telah teregister.
     /// Ini nantinya dijadikan link yang akan dikirimkan ke email pendaftar.
-    api_endpoint!(
+    api_endpoint_mut!(
         activate_account,
         ActivateAccount,
         models::Account,
@@ -213,7 +218,7 @@ impl PublicApi {
 
     /// Rest API endpoint untuk transfer
     #[authorized_only(user)]
-    pub fn transfer(state: &AppState, query: TxQuery<Transfer>, req: &ApiHttpRequest) -> ApiResult<()> {
+    pub fn transfer(state: &mut AppState, query: TxQuery<Transfer>, req: &ApiHttpRequest) -> ApiResult<()> {
         trace!("transfer: {:?}", query);
         trace!("current_account: {}", current_account);
 
@@ -234,7 +239,7 @@ impl PublicApi {
     }
 
     /// Mengaktifkan user yang telah teregister
-    pub fn authorize(state: &AppState, query: Authorize) -> ApiResult<AccessToken> {
+    pub fn authorize(state: &mut AppState, query: Authorize) -> ApiResult<AccessToken> {
         {
             let schema = Schema::new(state.db());
             let account = schema.get_account(query.account_id);
@@ -259,14 +264,14 @@ impl PublicApi {
     api_endpoint!(
         info,
         (),
-        SuccessReturn<String>,
-        (|s, q| Ok(SuccessReturn::new("success".to_owned())))
+        JsonValue,
+        (|s, q| Ok(json!({ "version": env!("CARGO_PKG_VERSION") })))
     );
 
     /// API endpoint untuk mem-publish invoice (membuat invoice baru).
     #[authorized_only(user)]
     pub fn publish_invoice(
-        state: &AppState,
+        state: &mut AppState,
         query: TxQuery<PublishInvoice>,
         req: &ApiHttpRequest,
     ) -> ApiResult<SuccessReturn<ID>> {
@@ -304,7 +309,11 @@ impl PublicApi {
 
     /// API endpoint untuk melakukan pembayaran.
     #[authorized_only(user)]
-    pub fn pay(state: &AppState, query: TxQuery<Pay>, req: &ApiHttpRequest) -> ApiResult<SuccessReturn<ID>> {
+    pub fn pay(
+        state: &mut AppState,
+        query: TxQuery<Pay>,
+        req: &ApiHttpRequest,
+    ) -> ApiResult<SuccessReturn<ID>> {
         let payer = {
             let schema = schema_op::Schema::new(state.db());
             let payer = schema.get_account(query.body.payer)?;
@@ -331,7 +340,7 @@ pub struct PrivateApi;
 
 impl PrivateApi {
     /// Rest API endpoint for topup
-    pub fn credit(state: &AppState, query: TxQuery<Credit>, req: &ApiHttpRequest) -> ApiResult<()> {
+    pub fn credit(state: &mut AppState, query: TxQuery<Credit>, req: &ApiHttpRequest) -> ApiResult<()> {
         trace!("topup account: {:?}", query);
 
         let schema = Schema::new(state.db());
@@ -346,9 +355,25 @@ impl PrivateApi {
     }
 
     /// Rest API endpoint untuk debit
-    pub fn debit(state: &AppState, query: TxQuery<Debit>, req: &ApiHttpRequest) -> ApiResult<()> {
+    pub fn debit(state: &mut AppState, query: TxQuery<Debit>, req: &ApiHttpRequest) -> ApiResult<()> {
         trace!("debit: {:?}", query);
         // @TODO(*): Code here
         Ok(())
     }
+
+    /// Listing account
+    pub fn list_account(state: &AppState, query: ListAccount) -> ApiResult<SuccessReturn<Vec<Account>>> {
+        let schema = Schema::new(state.db());
+        schema
+            .get_accounts(query.offset, query.limit)
+            .map(SuccessReturn::new)
+            .map_err(From::from)
+            
+    }
+}
+
+#[derive(Deserialize)]
+pub struct ListAccount {
+    pub offset: i64,
+    pub limit: i64,
 }

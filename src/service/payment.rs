@@ -51,6 +51,7 @@ impl Service for PaymentService {
         builder
             .private_scope()
             .endpoint_req_mut("v1/credit", PrivateApi::credit)
-            .endpoint_req_mut("v1/debit", PrivateApi::debit);
+            .endpoint_req_mut("v1/debit", PrivateApi::debit)
+            .endpoint("v1/accounts", PrivateApi::list_account);
     }
 }

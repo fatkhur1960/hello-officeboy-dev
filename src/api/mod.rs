@@ -3,6 +3,7 @@
 use actix_web::{
     actix::System,
     http::header,
+    middleware,
     server::{self, HttpServer},
     AsyncResponder, FromRequest, HttpMessage, HttpResponse, Query,
 };
@@ -315,7 +316,7 @@ where
 
 impl<Q, I, F> From<NamedWith<Q, I, Result<I>, F, Mutable>> for RequestHandler
 where
-    F: for<'r> Fn(&'r AppState, Q) -> Result<I> + 'static + Send + Sync + Clone,
+    F: for<'r> Fn(&'r mut AppState, Q) -> Result<I> + 'static + Send + Sync + Clone,
     Q: DeserializeOwned + 'static,
     I: Serialize + PartialEq + 'static,
 {
@@ -323,13 +324,13 @@ where
         let handler = f.inner.handler;
         let index = move |request: HttpRequest| -> FutureResponse {
             let handler = handler.clone();
-            let context = request.state().clone();
+            let mut context = request.state().clone();
             request
                 .json()
                 // .from_err()
                 .or_else(map_error)
                 .and_then(move |query: Q| {
-                    handler(&context, query)
+                    handler(&mut context, query)
                         .map(|v| map_ok(v, &request))
                         .map_err(From::from)
                 })
@@ -346,7 +347,7 @@ where
 
 impl<Q, I, F> From<NamedWith<Q, I, Result<I>, F, MutableReq>> for RequestHandler
 where
-    F: for<'r> Fn(&'r AppState, Q, &HttpRequest) -> Result<I> + 'static + Send + Sync + Clone,
+    F: for<'r> Fn(&'r mut AppState, Q, &HttpRequest) -> Result<I> + 'static + Send + Sync + Clone,
     Q: DeserializeOwned + 'static,
     I: Serialize + 'static,
 {
@@ -354,13 +355,13 @@ where
         let handler = f.inner.handler;
         let index = move |request: HttpRequest| -> FutureResponse {
             let handler = handler.clone();
-            let context = request.state().clone();
+            let mut context = request.state().clone();
 
             request
                 .json()
                 .or_else(map_error)
                 .and_then(move |query: Q| {
-                    handler(&context, query, &request)
+                    handler(&mut context, query, &request)
                         .map(|v| map_ok(v, &request))
                         .map_err(From::from)
                 })
@@ -458,7 +459,7 @@ impl ServiceApiScope {
     where
         Q: DeserializeOwned + 'static,
         I: Serialize + 'static,
-        F: for<'r> Fn(&'r AppState, Q) -> R + 'static + Clone,
+        F: for<'r> Fn(&'r mut AppState, Q) -> R + 'static + Clone,
         E: Into<With<Q, I, R, F>>,
         RequestHandler: From<NamedWith<Q, I, R, F, Mutable>>,
     {
@@ -479,7 +480,7 @@ impl ServiceApiScope {
     where
         Q: DeserializeOwned + 'static,
         I: Serialize + 'static,
-        F: for<'r> Fn(&'r AppState, Q, &HttpRequest) -> R + 'static + Clone,
+        F: for<'r> Fn(&'r mut AppState, Q, &HttpRequest) -> R + 'static + Clone,
         E: Into<With<Q, I, R, F>>,
         RequestHandler: From<NamedWith<Q, I, R, F, MutableReq>>,
     {
@@ -658,7 +659,8 @@ impl AppState {
 #[doc(hidden)]
 pub fn create_app(agg: &ApiAggregator, access: ApiAccess) -> App {
     let state = AppState::new();
-    let mut app = App::with_state(state);
+    let mut app = App::with_state(state)
+        .middleware(middleware::DefaultHeaders::new().header("Access-Control-Allow-Origin", "*"));
     app = app.scope("api", |scope: Scope| agg.extend(access, scope));
     // app = app.resource("/test", |r| r.f(|r| "test aja"));
     app

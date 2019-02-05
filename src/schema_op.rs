@@ -173,6 +173,15 @@ impl<'a> Schema<'a> {
             Err(PaymentError::Unauthorized)?
         }
 
+        // apabila sudah exists di registered_accounts table
+        // kembalikan token-nya aja
+        if let Ok(ra) = dsl_ra::register_accounts
+            .filter(dsl_ra::email.eq(email).or(dsl_ra::phone_num.eq(phone_num)))
+            .first::<RegisterAccount>(self.db)
+        {
+            return Ok(ra.token);
+        }
+
         // check apakah akun dengan email/phone sama sudah ada
         let exists = dsl_account::accounts
             .filter(
@@ -283,6 +292,19 @@ impl<'a> Schema<'a> {
 
         diesel::delete(dsl::register_accounts.filter(dsl::token.eq(token)))
             .execute(self.db)
+            .map_err(From::from)
+    }
+
+    /// Get multiple accounts
+    pub fn get_accounts(&self, offset: i64, limit: i64) -> Result<Vec<Account>> {
+        use crate::schema::accounts;
+        use crate::schema::accounts::dsl;
+
+        dsl::accounts
+            .filter(dsl::id.ne(0))
+            .offset(offset)
+            .limit(limit)
+            .load(self.db)
             .map_err(From::from)
     }
 }
