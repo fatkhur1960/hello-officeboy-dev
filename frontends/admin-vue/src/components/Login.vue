@@ -5,9 +5,7 @@
         <img alt="Payment logo" src="../assets/retro-coin-icon.png">
 
         <h1>{{ title }}</h1>
-
-        <h2>Welcome to Ansvia Payment Framework</h2>
-
+        
         <p>an Easy Payment Solution</p>
       </div>
       <div class="seven wide column left aligned">
@@ -19,11 +17,11 @@
           <form class="ui form" method="POST">
             <div class="field">
               <label>User Name:</label>
-              <input type="text" name="email" placeholder="User Name">
+              <input type="text" name="email" placeholder="User Name" ref="inputEmail">
             </div>
             <div class="field">
               <label>Password:</label>
-              <input type="password" name="password" placeholder="Password">
+              <input type="password" name="password" placeholder="Password" ref="inputPassword">
             </div>
             <div class="field">
               <div class="ui checkbox">
@@ -31,7 +29,7 @@
                 <label>Remember me</label>
               </div>
             </div>
-            <button v-on:click="warn($event, 'I warn you!')" class="ui button" type="submit">Masuk</button>
+            <button v-on:click="doLogin($event)" class="ui button" type="submit">Masuk</button>
           </form>
         </div>
       </div>
@@ -43,12 +41,29 @@
 export default {
   name: "Login",
   props: {
-    msg: String
+    title: String
+  },
+  data(){
+    return {
+      token: this.token
+    }
   },
   methods: {
-    warn: function(event, msg) {
+    doLogin: function(event) {
+      var self = this;
       if (event) event.preventDefault();
-      alert(msg);
+      this.$apf.login(this.$refs.inputEmail.value, null, this.$refs.inputPassword.value)
+        .then((resp) => {
+          if (resp.data.token){
+            // self.token = resp.data.token;
+            // self.$session.set("token", self.token);
+            this.$apf.getMeInfo()
+              .then(self._handleGetMeInfo);
+          }
+        })
+    },
+    _handleGetMeInfo(_resp){
+      this.$router.push("/dashboard")
     }
   }
 };

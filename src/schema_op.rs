@@ -72,6 +72,24 @@ impl<'a> Schema<'a> {
         Self { db }
     }
 
+    /// Mendapatkan akun berdasarkan emailnya.
+    pub fn get_account_by_email(&self, email: &str) -> Result<Account> {
+        use crate::schema::accounts::{self, dsl};
+        dsl::accounts
+            .filter(dsl::email.eq(email))
+            .first(self.db)
+            .map_err(From::from)
+    }
+
+    /// Mendapatkan akun berdasarkan nomor telp-nya.
+    pub fn get_account_by_phone_num(&self, phone: &str) -> Result<Account> {
+        use crate::schema::accounts::{self, dsl};
+        dsl::accounts
+            .filter(dsl::phone_num.eq(phone))
+            .first(self.db)
+            .map_err(From::from)
+    }
+
     /// Mentransfer sejumlah uang dari satu akun ke akun lainnya.
     pub fn transfer(&self, from: ID, to: ID, amount: f64) -> Result<()> {
         use crate::schema::accounts::{self, dsl};

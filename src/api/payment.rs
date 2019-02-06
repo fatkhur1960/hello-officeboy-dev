@@ -9,8 +9,9 @@ use serde_json::Value as JsonValue;
 
 use crate::api::SuccessReturn;
 use crate::crypto::{self, SecretKey};
-use crate::models::Account;
+// use crate::models::Account;
 use crate::{
+    api::payment::models::*,
     api::{Error as ApiError, HttpRequest as ApiHttpRequest, Result as ApiResult},
     auth,
     prelude::*,
@@ -57,7 +58,8 @@ pub struct Pay {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Authorize {
-    pub account_id: ID,
+    pub email: Option<String>,
+    pub phone: Option<String>,
     pub passhash: String,
 }
 
@@ -168,6 +170,12 @@ pub mod models {
         /// Nama lengkap akun.
         pub full_name: String,
 
+        /// Alamat email kun.
+        pub email: String,
+
+        /// Nomor telpon akun.
+        pub phone_num: String,
+
         /// Waktu kapan akun ini didaftarkan.
         pub register_time: NaiveDateTime,
     }
@@ -177,6 +185,8 @@ pub mod models {
             Account {
                 id: a.id,
                 full_name: a.full_name,
+                email: a.email,
+                phone_num: a.phone_num,
                 register_time: a.register_time,
             }
         }
@@ -238,25 +248,29 @@ impl PublicApi {
         Ok(AccountInfo::new(&query.account, 0.0f64))
     }
 
-    /// Mengaktifkan user yang telah teregister
+    /// Meng-otorisasi akun yang telah teregister
+    /// User bisa melakukan otorisasi menggunakan email / nomor telp.
     pub fn authorize(state: &mut AppState, query: Authorize) -> ApiResult<AccessToken> {
-        {
+        let account = {
             let schema = Schema::new(state.db());
-            let account = schema.get_account(query.account_id);
-        }
+            if let Some(email) = query.email {
+                schema.get_account_by_email(&email)?
+            } else if let Some(phone) = query.phone {
+                schema.get_account_by_phone_num(&phone)?
+            } else {
+                Err(ApiError::InvalidParameter("No email/phone parameter".to_string()))?
+            }
+        };
 
         {
             let schema = auth::Schema::new(state.db());
 
-            if !schema.valid_passhash(query.account_id, &query.passhash) {
-                warn!(
-                    "account `{}` try to authorize using wrong password",
-                    &query.account_id
-                );
+            if !schema.valid_passhash(account.id, &query.passhash) {
+                warn!("account `{}` try to authorize using wrong password", &account.id);
                 Err(ApiError::Unauthorized)?
             }
 
-            schema.generate_access_token(query.account_id).map_err(From::from)
+            schema.generate_access_token(account.id).map_err(From::from)
         }
     }
 
@@ -267,6 +281,12 @@ impl PublicApi {
         JsonValue,
         (|s, q| Ok(json!({ "version": env!("CARGO_PKG_VERSION") })))
     );
+
+    /// Mendapatkan informasi current account.
+    #[authorized_only(user)]
+    pub fn me_info(state: &AppState, query: (), req: &ApiHttpRequest) -> ApiResult<Account> {
+        Ok(current_account.into())
+    }
 
     /// API endpoint untuk mem-publish invoice (membuat invoice baru).
     #[authorized_only(user)]
@@ -335,6 +355,8 @@ impl PublicApi {
     }
 }
 
+use crate::models as db;
+
 /// Holder untuk implementasi API endpoint privat.
 pub struct PrivateApi;
 
@@ -362,7 +384,7 @@ impl PrivateApi {
     }
 
     /// Listing account
-    pub fn list_account(state: &AppState, query: ListAccount) -> ApiResult<EntriesResult<Account>> {
+    pub fn list_account(state: &AppState, query: ListAccount) -> ApiResult<EntriesResult<db::Account>> {
         let schema = Schema::new(state.db());
 
         let offset = query.page * query.limit;
@@ -375,7 +397,7 @@ impl PrivateApi {
     }
 
     /// Mencari akun berdasarkan kata kunci
-    pub fn search_accounts(state: &AppState, query: ListAccount) -> ApiResult<EntriesResult<Account>> {
+    pub fn search_accounts(state: &AppState, query: ListAccount) -> ApiResult<EntriesResult<db::Account>> {
         let schema = Schema::new(state.db());
 
         let offset = query.page * query.limit;

@@ -2,8 +2,8 @@
 
 use actix_web::{
     actix::System,
-    http::header,
-    middleware,
+    http::{header, Method},
+    middleware::{self, cors::Cors},
     server::{self, HttpServer},
     AsyncResponder, FromRequest, HttpMessage, HttpResponse, Query,
 };
@@ -660,9 +660,9 @@ impl AppState {
 pub fn create_app(agg: &ApiAggregator, access: ApiAccess) -> App {
     let state = AppState::new();
     let mut app = App::with_state(state)
-        .middleware(middleware::DefaultHeaders::new().header("Access-Control-Allow-Origin", "*"));
+        .middleware(middleware::DefaultHeaders::new().header("Access-Control-Allow-Origin", "*"))
+        .middleware(Cors::default());
     app = app.scope("api", |scope: Scope| agg.extend(access, scope));
-    // app = app.resource("/test", |r| r.f(|r| "test aja"));
     app
 }
 

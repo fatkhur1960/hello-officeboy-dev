@@ -59,6 +59,10 @@ impl<'a> Schema<'a> {
         use crate::schema::access_tokens::{self, dsl};
 
         let now = chrono::Utc::now().naive_utc();
+
+        // hapus token lama kalau ada
+        diesel::delete(dsl::access_tokens.filter(dsl::account_id.eq(account_id))).execute(self.db)?;
+
         let token = NewAccessToken {
             token: &token::generate_access_token(),
             account_id,

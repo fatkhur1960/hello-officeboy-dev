@@ -40,6 +40,7 @@ impl Service for PaymentService {
         builder
             .public_scope()
             .endpoint("v1/info", PublicApi::info)
+            .endpoint_req("v1/me/info", PublicApi::me_info)
             .endpoint_req_mut("v1/transfer", PublicApi::transfer)
             .endpoint_req_mut("v1/invoice/publish", PublicApi::publish_invoice)
             .endpoint_req_mut("v1/pay", PublicApi::pay)

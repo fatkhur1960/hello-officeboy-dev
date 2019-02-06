@@ -74,6 +74,16 @@ macro_rules! api_endpoint {
     };
 }
 
+macro_rules! api_endpoint_req {
+    ($name:ident, $qt:ty, $rv:ty, (|$schema:ident, $query:ident| $( $cs:tt )+ ) ) => {
+        pub fn $name(state: &AppState, $query: $qt, req: &ApiHttpRequest) -> ApiResult<$rv> {
+            let $schema = Schema::new(state.db());
+
+            {$($cs)+}
+        }
+    };
+}
+
 macro_rules! api_endpoint_mut {
     ($name:ident, $qt:ty, $rv:ty, (|$schema:ident, $query:ident| $( $cs:tt )+ ) ) => {
         pub fn $name(state: &mut AppState, $query: $qt) -> ApiResult<$rv> {
