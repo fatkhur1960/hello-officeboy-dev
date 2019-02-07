@@ -1,8 +1,11 @@
 <template>
   <div>
-    
     <div class="ui grid">
-      <div class="eight wide column">
+      <div class="ten wide column">
+        <div v-if="searchable" class="ui icon input">
+          <input type="text" placeholder="Search..." v-on:keyup.13="doSearch" ref="inputSearch">
+          <i class="search icon"></i>
+        </div>
 
         <table class="ui celled table">
           <thead>
@@ -16,10 +19,11 @@
               <td data-label="FullName">{{item.full_name}}</td>
               <td data-label="Email">{{item.email}}</td>
               <td data-label="Phone">{{item.phone_num}}</td>
+              <td data-label="Active">{{item.active ? "Yes" : "No"}}</td>
+              <td data-label="Registered">{{item.register_time}}</td>
             </tr>
           </tbody>
         </table>
-
       </div>
     </div>
   </div>
@@ -28,25 +32,48 @@
 <script>
 export default {
   name: "AnsTable",
-  // visible: true,
-  // items: [],
   props: {
     dataSourceUrl: String,
-    columns: Array
+    columns: Array,
+    searchable: Boolean
   },
   data() {
     return {
-      items: this.items
+      items: this.items,
+      // searchable: false
     };
   },
   methods: {
+    doSearch() {
+      var url =
+        this.dataSourceUrl +
+        `?query=${this.$refs.inputSearch.value}&page=${this.page}&limit=${this.limit}`;
+      this.$apf
+        .api()
+        .privateApi.get(url)
+        .then(resp => {
+          this.items = resp.data.entries;
+        });
+    }
   },
-  created(){
-    console.log("created")
-    this.items = []
+  created() {
+    console.log("created");
+    this.items = [];
+    this.page = 0;
+    this.limit = 5;
     var self = this;
-    this.$apf.api().privateApi.get(this.dataSourceUrl + "?page=0&limit=10")
-      .then((resp) => {
+    var url;
+
+    if (this.searchable && this.query) {
+      url = this.dataSourceUrl + "?q=" + this.query + "&page=0&limit=10";
+    } else {
+      url = this.dataSourceUrl + "?page=0&limit=10";
+    }
+
+    this.$apf
+      .api()
+      .privateApi.get(url)
+      .then(resp => {
         self.items = resp.data.entries;
       });
   }

@@ -6,7 +6,9 @@
 
     <div class="dashboard-inner" v-bind:style="customMargin">
       <h1>Dashboard</h1>
-      <AnsTable v-if="currentPage['/dashboard/accounts']" :columns="['ID', 'Name', 'Email', 'Phone']" dataSourceUrl="/accounts" />
+      <AnsTable v-if="currentPage['/dashboard/accounts']" :columns="['ID', 'Name', 'Email', 'Phone', 'Active', 'Register']"
+         dataSourceUrl="/accounts"
+         :searchable="true" />
     </div>
   </div>
 </template>
@@ -133,6 +135,7 @@ export default {
 
 <style lang="less" scoped>
 .dashboard-inner {
+  width: 100%;
   transition: all 0.1s ease-in-out;
     -webkit-transition: all 0.1s ease-in-out; /** Chrome & Safari **/
     -moz-transition: all 0.1s ease-in-out; /** Firefox **/
