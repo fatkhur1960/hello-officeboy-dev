@@ -10,7 +10,8 @@
          dataSourceUrl="/accounts"
          :columns="['ID', 'Name', 'Email', 'Phone', 'Active', 'Register']"
          :itemMap="['id', 'full_name', 'email', 'phone_num', 'active', 'register_time']"
-         :searchable="true" />
+         :searchable="true"
+         :withActionButton="true" />
     </div>
   </div>
 </template>

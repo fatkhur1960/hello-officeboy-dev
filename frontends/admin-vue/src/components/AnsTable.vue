@@ -13,7 +13,11 @@
               <th v-for="col in columns" v-bind:key="col">{{col}}</th>
             </tr>
           </thead>
-          <tbody v-html="buildRow()">
+          <tbody>
+            <tr v-for="item in items" v-bind:key="item.id">
+              <td v-for="td in item" v-bind:key="td">{{td}}</td>
+              <td><button v-on:click="showDetail(item)">detail</button></td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -28,6 +32,7 @@ export default {
     dataSourceUrl: String,
     columns: Array,
     searchable: Boolean,
+    withActionButton: Boolean,
     itemMap: {
       type: Array,
       default: () => {
@@ -50,15 +55,12 @@ export default {
         .api()
         .privateApi.get(url)
         .then(resp => {
-          this.items = resp.data.entries;
+          this.items = resp.data.entries.map(this.mapItem);
         });
     },
-    buildRow(){
-      return this.items.map(item => {
-        return '<tr>' + this.itemMap.map(col => {
-          return `<td>${item[col]}</td>`;
-        }).join("") + '</tr>';
-      }).join("");
+    mapItem(item){
+      delete item['balance'];
+      return item;
     }
   },
   created() {
@@ -75,13 +77,18 @@ export default {
       url = this.dataSourceUrl + "?page=0&limit=10";
     }
 
+    if (this.withActionButton){
+      this.columns.push('Action');
+    }
+
     this.$apf
       .api()
       .privateApi.get(url)
       .then(resp => {
-        self.items = resp.data.entries;
+        self.items = resp.data.entries.map(this.mapItem);
       });
   }
+
 };
 </script>
 
