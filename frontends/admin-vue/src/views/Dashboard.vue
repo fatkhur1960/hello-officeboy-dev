@@ -6,8 +6,10 @@
 
     <div class="dashboard-inner" v-bind:style="customMargin">
       <h1>Dashboard</h1>
-      <AnsTable v-if="currentPage['/dashboard/accounts']" :columns="['ID', 'Name', 'Email', 'Phone', 'Active', 'Register']"
+      <AnsTable v-if="currentPage['/dashboard/accounts']" 
          dataSourceUrl="/accounts"
+         :columns="['ID', 'Name', 'Email', 'Phone', 'Active', 'Register']"
+         :itemMap="['id', 'full_name', 'email', 'phone_num', 'active', 'register_time']"
          :searchable="true" />
     </div>
   </div>

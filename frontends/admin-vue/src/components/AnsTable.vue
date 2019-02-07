@@ -13,15 +13,7 @@
               <th v-for="col in columns" v-bind:key="col">{{col}}</th>
             </tr>
           </thead>
-          <tbody>
-            <tr v-for="item in items" v-bind:key="item.id">
-              <td data-label="ID">{{item.id}}</td>
-              <td data-label="FullName">{{item.full_name}}</td>
-              <td data-label="Email">{{item.email}}</td>
-              <td data-label="Phone">{{item.phone_num}}</td>
-              <td data-label="Active">{{item.active ? "Yes" : "No"}}</td>
-              <td data-label="Registered">{{item.register_time}}</td>
-            </tr>
+          <tbody v-html="buildRow()">
           </tbody>
         </table>
       </div>
@@ -35,7 +27,13 @@ export default {
   props: {
     dataSourceUrl: String,
     columns: Array,
-    searchable: Boolean
+    searchable: Boolean,
+    itemMap: {
+      type: Array,
+      default: () => {
+        return [];
+      }
+    }
   },
   data() {
     return {
@@ -54,6 +52,13 @@ export default {
         .then(resp => {
           this.items = resp.data.entries;
         });
+    },
+    buildRow(){
+      return this.items.map(item => {
+        return '<tr>' + this.itemMap.map(col => {
+          return `<td>${item[col]}</td>`;
+        }).join("") + '</tr>';
+      }).join("");
     }
   },
   created() {
