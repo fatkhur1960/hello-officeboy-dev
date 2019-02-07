@@ -1,4 +1,5 @@
 FORMAT: 1A
+HOST: http://localhost:8081/
 
 # APF rest API documentation
 
@@ -8,6 +9,24 @@ Dokumen ini berisi spesifikasi setiap endpoint untuk beroperasi dengan akun.
 Beberapa operasi berupa CRUD operation seperti mendaftarkan akun baru, mengaktifkan, dan menonaktifkan.
 
 ## Group Account
+
+### Mendapatkan Daftar Akun [GET /api/payment/v1/accounts]
+
+Mendapatkan daftar akun yang telah teregister dan teraktivasi di dalam sistem payment.
+
++ Response 200 (application/json)
+
+        {
+            "count": 1,
+            "entries": [
+                {
+                "id":123,
+                "full_name": "Robin",
+                "email": "robin@email.com",
+                "phone_num": "+62123123"
+                }
+            ]
+        }
 
 ### Register New Account [POST /api/payment/v1/account/register]
 
@@ -68,3 +87,4 @@ Operasi ini tidak dapat dikembalikan.
             "status": "success",
             "description": ""
         }
+
