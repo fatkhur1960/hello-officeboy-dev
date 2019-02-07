@@ -390,8 +390,7 @@ impl PrivateApi {
         let offset = query.page * query.limit;
 
         let entries = schema.get_accounts(offset, query.limit)?;
-        // .map(SuccessReturn::new)?;
-        // .map_err(From::from)
+        
         let count = schema.get_account_count()?;
         Ok(EntriesResult { count, entries })
     }

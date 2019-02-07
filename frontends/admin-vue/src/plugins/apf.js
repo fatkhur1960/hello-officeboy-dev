@@ -33,17 +33,19 @@ export default class Apf {
           })
           ;
       },
-      logout() {
+      unauthorize() {
+        Vue.prototype.$session.remove("token");
+        updateSession();
         return api.publicApi.post("/unauthorize", {});
       },
       isLoggedIn(cb){
         this.getMeInfo().then((resp) => {
-          if (resp.status != 200){
+          if (resp.status != 200 || (resp.data.status == "error" && resp.data.code != 0) ){
             cb(false)
           }else{
             cb(true)
           }
-        }).catch((e) => cb(false))
+        }).catch((_e) => cb(false))
       },
       getMeInfo(){
         return api.publicApi.get("/me/info");

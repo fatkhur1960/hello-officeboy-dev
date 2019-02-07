@@ -118,7 +118,7 @@ impl ResponseError for Error {
                 // HttpResponse::Unauthorized().finish()
                 HttpResponse::Unauthorized().json(ApiResult::error(401, "Unauthorized".to_owned()))
             }
-            Error::Expired(d) => HttpResponse::Ok().json(ApiResult::error(4001, d.to_string())),
+            Error::Expired(d) => HttpResponse::Ok().json(ApiResult::error(4001, format!("{}", self))),
         }
     }
 }

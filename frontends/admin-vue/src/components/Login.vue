@@ -1,7 +1,7 @@
 <template>
   <div class="login">
     <div class="ui grid">
-      <div class="eight wide column">
+      <div class="eight wide column center aligned">
         <img alt="Payment logo" src="../assets/retro-coin-icon.png">
 
         <h1>{{ title }}</h1>
