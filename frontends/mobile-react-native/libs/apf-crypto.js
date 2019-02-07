@@ -1,6 +1,5 @@
-import './shim';
-
-import crypto from "crypto";
+// import './shim';
+// import crypto from "crypto";
 
 
 export default {

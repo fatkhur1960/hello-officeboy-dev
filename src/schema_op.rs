@@ -236,7 +236,7 @@ impl<'a> Schema<'a> {
         use crate::schema::account_keys::{self, dsl as ak_dsl};
         use crate::schema::{accounts, register_accounts};
 
-        assert!(initial_balance == 0.0f64 || initial_balance > 0f64, "Invalid");
+        assert!(initial_balance >= 0f64, "Invalid");
 
         self.db.build_transaction().read_write().run(|| {
             let reg_acc: RegisterAccount = register_accounts::dsl::register_accounts

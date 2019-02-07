@@ -4,8 +4,12 @@ extern crate apf_testkit;
 extern crate env_logger;
 extern crate log;
 extern crate sodiumoxide;
+#[macro_use]
+extern crate serde_json;
 
-use apf::api::SuccessReturn;
+use serde_json::Value as JsonValue;
+
+// use apf::api::SuccessReturn;
 use apf_testkit::ApiKind;
 
 mod common;
@@ -18,10 +22,8 @@ fn test_get_info() {
     let api = testkit.api();
 
     assert_eq!(
-        api.public(ApiKind::Payment)
-            .get::<SuccessReturn<String>>("v1/info")
-            .unwrap(),
-        SuccessReturn::new("success".to_string())
+        api.public(ApiKind::Payment).get::<JsonValue>("v1/info").unwrap(),
+        json!({ "version": env!("CARGO_PKG_VERSION") })
     );
 }
 
