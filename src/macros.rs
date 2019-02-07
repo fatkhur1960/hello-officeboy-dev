@@ -64,15 +64,15 @@ macro_rules! implement_crypto_wrapper {
     };
 }
 
-macro_rules! api_endpoint {
-    ($name:ident, $qt:ty, $rv:ty, (|$schema:ident, $query:ident| $( $cs:tt )+ ) ) => {
-        pub fn $name(state: &AppState, $query: $qt) -> ApiResult<$rv> {
-            let $schema = Schema::new(state.db());
+// macro_rules! api_endpoint {
+//     ($name:ident, $qt:ty, $rv:ty, (|$schema:ident, $query:ident| $( $cs:tt )+ ) ) => {
+//         pub fn $name(state: &AppState, $query: $qt) -> ApiResult<$rv> {
+//             let $schema = Schema::new(state.db());
 
-            {$($cs)+}
-        }
-    };
-}
+//             {$($cs)+}
+//         }
+//     };
+// }
 
 macro_rules! api_endpoint_req {
     ($name:ident, $qt:ty, $rv:ty, (|$schema:ident, $query:ident| $( $cs:tt )+ ) ) => {
@@ -100,6 +100,23 @@ macro_rules! api_tx_endpoint {
             let $schema = Schema::new(state.db());
 
             {$($cs)+}
+        }
+    };
+}
+
+macro_rules! api_endpoint {
+    ( #[authorized_only(user)] fn $name:ident ($state:ident, $query:ident : $query_type:ty, $req: ident) -> $rettype:ty { $($cs:tt)+ } ) => {
+
+        #[authorized_only_macro(user)]
+        pub fn $name($state: &AppState, $query: $query_type, $req: &ApiHttpRequest) -> ApiResult<$rettype> {
+            $($cs)+
+        }
+    };
+    ( $(#[$attr:meta])* fn $name:ident ($state:ident, $query:ident : $query_type:ty, $req: ident) -> $rettype:ty { $($cs:tt)+ } ) => {
+
+        $(#[$attr])*
+        pub fn $name($state: &AppState, $query: $query_type, $req: &ApiHttpRequest) -> ApiResult<$rettype> {
+            $($cs)+
         }
     };
 }

@@ -275,12 +275,11 @@ impl PublicApi {
     }
 
     /// Hanya digunakan untuk testing
-    api_endpoint!(
-        info,
-        (),
-        JsonValue,
-        (|s, q| Ok(json!({ "version": env!("CARGO_PKG_VERSION") })))
-    );
+    #[api_endpoint2(path="/info", auth=(user))]
+    pub fn info() -> JsonValue {
+        dbg!(req);
+        Ok(json!({ "version": env!("CARGO_PKG_VERSION") }))
+    }
 
     /// Mendapatkan informasi current account.
     #[authorized_only(user)]

@@ -21,6 +21,7 @@ api-docs: prepare api-docs/public-api.md
 
 fmt:
 	cd testkit && cargo fmt
+	cd macros/apf_proc_macro && cargo fmt
 	cargo fmt
 
 test:
