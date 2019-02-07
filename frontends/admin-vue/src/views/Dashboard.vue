@@ -5,7 +5,7 @@
     </div>
 
     <div class="dashboard-inner" v-bind:style="customMargin">
-      <h1>Dashboard</h1>
+      <h1>{{ pageTitle }}</h1>
       <AnsTable v-if="currentPage['/dashboard/accounts']" 
          dataSourceUrl="/accounts"
          :columns="['ID', 'Name', 'Email', 'Phone', 'Active', 'Register']"
@@ -20,7 +20,7 @@
 import AnsTable from "@/components/AnsTable.vue";
 
 export default {
-  name: "dashboard",
+  name: "Dashboard",
   components: {
     AnsTable
   },
@@ -32,6 +32,7 @@ export default {
       collapsed: true,
       customMargin: {},
       currentPage: {},
+      pageTitle: this.pageTitle,
       // accountVisibility: false,
       menu: [
         {
@@ -71,16 +72,18 @@ export default {
     };
   },
   created() {
-    // console.log("created");
+      
     this.customMargin = {
       "left": "70px",
       "position": "absolute"
     };
 
     this.currentPage = {};
+    // console.log(this.$router.history.current);
     // this.currentPage['/dashboard/accounts'] = false;
     // this.currentPage[this.$router.history.current.path] = true;
     this.$set(this.currentPage, this.$router.history.current.path, true);
+    this.pageTitle = this.$router.history.current.name;
     // this.accountVisibility = this.$router.history.current.path == "/dashboard/accounts";
 
     this.startLoginChecker();
@@ -121,6 +124,7 @@ export default {
       }
       // currentPage[item.href] = true;
       this.$set(currentPage, item.href, true);
+      this.pageTitle = item.title;
 
       // this.currentPage = currentPage;
 
