@@ -1,5 +1,5 @@
 //! Koleksi query yang digunakan untuk operasi pada rest API.
- #![allow(missing_docs)]
+#![allow(missing_docs)]
 
 use actix_web::{HttpRequest, HttpResponse};
 use chrono::NaiveDateTime;
