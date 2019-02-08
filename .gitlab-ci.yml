@@ -3,7 +3,8 @@ before_script:
   - rustup default stable
 
 stable:cargo:
-  image: rustdocker/rust:stable
-  stage: test
+  # image: rustdocker/rust:stable
+  # stage: test
   script:
-    - cargo test --verbose --jobs 1
+    - make test
+
