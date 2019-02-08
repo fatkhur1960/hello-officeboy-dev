@@ -215,7 +215,7 @@ pub struct PublicApi;
 
 impl PublicApi {
     /// Rest API endpoint untuk mendaftarkan akun baru.
-    #[api_endpoint(path = "/account/register", mutable)]
+    #[api_endpoint(path = "/account/register", mutable, auth = "none")]
     pub fn register_account(state: &mut AppState, query: RegisterAccount) -> SuccessReturn<String> {
         let schema = Schema::new(state.db());
 

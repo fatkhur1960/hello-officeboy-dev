@@ -156,18 +156,20 @@ pub fn api_endpoint(attr: proc_macro::TokenStream, item: proc_macro::TokenStream
     let mut in_path = false;
     let mut in_auth = false;
     let mut path = "".to_string();
-    let mut auth = 1;
-    let mut auth_str = "";
+    let mut auth = 2;
+    let mut auth_str = "required";
     let mut func_name = "".to_string();
     let mut is_mutable = false;
     let mut debug = false;
+
+    // dbg!(&attr);
 
     for item in attr {
         match item {
             TokenTree::Ident(ident) => {
                 in_path = ident.to_string() == "path";
                 in_auth = ident.to_string() == "auth";
-                is_mutable = ident.to_string() == "mutable";
+                is_mutable = is_mutable || ident.to_string() == "mutable";
             }
             TokenTree::Punct(_) => {}
             TokenTree::Literal(lit) => {
@@ -202,10 +204,12 @@ pub fn api_endpoint(attr: proc_macro::TokenStream, item: proc_macro::TokenStream
         }
     }
 
+    // dbg!((in_path, in_auth, auth_str, is_mutable));
+
     // println!("========= PATH: {} ============", path);
     // debug = path == "/account/register";
     // debug = path == "/transfer";
-    debug = false;
+    // debug = false;
 
     // proses inner function
     // convert ke proc_macro2 dulu
