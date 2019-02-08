@@ -2,11 +2,11 @@
 //!
 //!
 
+use crate::crypto;
 use byteorder::{BigEndian, LittleEndian, ReadBytesExt, WriteBytesExt};
 use hex;
-use rsnowflake::SnowflakeIdGenerator;
 use rand::{thread_rng, Rng, RngCore};
-use crate::crypto;
+use rsnowflake::SnowflakeIdGenerator;
 use std::io::Cursor;
 
 /// Generate random token
@@ -73,8 +73,8 @@ mod tests {
     }
 
     #[test]
-    fn test_random_bytes(){
-        let random_data1:Vec<Vec<u8>> = (0..20).map(|_| super::rand_bytes(32)).collect();
+    fn test_random_bytes() {
+        let random_data1: Vec<Vec<u8>> = (0..20).map(|_| super::rand_bytes(32)).collect();
         let random_data2 = random_data1.clone();
         let mut map = HashMap::new();
         for rd1 in random_data1 {
