@@ -14,9 +14,11 @@ fn main() {
     sodiumoxide::init().expect("Cannot initialize NaCl");
 
     println!(
-        "\nAPF server {}\nBuild {} - GIT: {}\n",
+        "\nAPF server {}\n\n\
+        {}\n\
+        git: {}\n",
         env!("CARGO_PKG_VERSION"),
-        env!("BUILD_DATE"),
+        env!("BUILD_INFO"),
         env!("GIT_REV")
     );
 

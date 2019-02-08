@@ -3,12 +3,7 @@ extern crate protoc_rust;
 
 use chrono::Local;
 use protoc_rust::{Args, Customize};
-use std::{
-    env,
-    fs,
-    process, // fs::File,
-             // io::{BufRead, BufReader, BufWriter}
-};
+use std::{env, fs, process};
 
 fn main() {
     let out_dir = env::var("OUT_DIR").expect("Cannot get OUT_DIR");
@@ -49,6 +44,15 @@ fn main() {
     let git_rev = git_rev.trim();
 
     println!("cargo:rerun-if-changed={}", "src/protos/apf.proto");
-    println!("cargo:rustc-env=BUILD_DATE={}", Local::today());
     println!("cargo:rustc-env=GIT_REV={}", git_rev);
+
+    if env::var("BUILD_FOR") == Ok("nightly".to_string()) {
+        println!("cargo:rustc-env=BUILD_INFO=ngihtly build {} @ {}", env::var("TARGET").unwrap(), Local::now());
+    } else {
+        println!(
+            "cargo:rustc-env=BUILD_INFO={} build {}",
+            env::var("PROFILE").unwrap(),
+            Local::now()
+        );
+    }
 }

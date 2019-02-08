@@ -9,9 +9,10 @@ stable:cargo:
   # stage: test
   variables:
     DATABASE_URL: postgresql://postgres:123123@localhost/apf_test?sslmode=disable
+    BUILD_FOR: nightly
   script:
     - make test
     - cargo build --release --bin restapi
-    - cp target/release/restapi /home/gitlab-runner/releases/apf-restapi-build-`date +"%Y-%m-%d"`
+    - cp target/release/restapi /home/gitlab-runner/releases/apf-server_build-`date +"%Y-%m-%d"`
 
 
