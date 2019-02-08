@@ -1,4 +1,5 @@
 #![recursion_limit = "128"]
+#![allow(unused_imports, unused_assignments)]
 
 extern crate proc_macro;
 
@@ -148,10 +149,7 @@ pub fn authorized_only(
 }
 
 #[proc_macro_attribute]
-pub fn api_endpoint(
-    attr: proc_macro::TokenStream,
-    item: proc_macro::TokenStream,
-) -> proc_macro::TokenStream {
+pub fn api_endpoint(attr: proc_macro::TokenStream, item: proc_macro::TokenStream) -> proc_macro::TokenStream {
     // proses atribut
     let attr = proc_macro2::TokenStream::from(attr);
 
@@ -161,12 +159,15 @@ pub fn api_endpoint(
     let mut auth = 1;
     let mut auth_str = "";
     let mut func_name = "".to_string();
+    let mut is_mutable = false;
+    let mut debug = false;
 
     for item in attr {
         match item {
             TokenTree::Ident(ident) => {
                 in_path = ident.to_string() == "path";
                 in_auth = ident.to_string() == "auth";
+                is_mutable = ident.to_string() == "mutable";
             }
             TokenTree::Punct(_) => {}
             TokenTree::Literal(lit) => {
@@ -178,16 +179,20 @@ pub fn api_endpoint(
                     in_auth = false;
                     match lit.to_string().as_ref() {
                         "\"optional\"" => {
-                            auth = 0;
+                            auth = 1;
                             auth_str = "optional";
                         }
                         "\"required\"" => {
-                            auth = 1;
+                            auth = 2;
                             auth_str = "required";
                         }
-                        _ => {
-                            auth = 1;
-                            auth_str = "required";
+                        "\"none\"" => {
+                            auth = 0;
+                            auth_str = "none";
+                        }
+                        x => {
+                            panic!("kebutuhan auth tidak dipahami: {}, \
+                            hanya bisa salah satu dari: `optional`, `required`, dan `none`.", x)
                         }
                     }
                 }
@@ -196,11 +201,18 @@ pub fn api_endpoint(
         }
     }
 
+    // println!("========= PATH: {} ============", path);
+    // debug = path == "/account/register";
+    // debug = path == "/transfer";
+    debug = false;
+
     // proses inner function
     // convert ke proc_macro2 dulu
     let item2 = proc_macro2::TokenStream::from(item);
 
-    // dbg!(&item2);
+    if debug {
+        dbg!(&item2);
+    }
 
     let items = item2.into_iter();
 
@@ -211,15 +223,45 @@ pub fn api_endpoint(
     let mut after_fn = false;
     let mut group_cnt = 0;
     let mut in_open_fn = false;
-    let mut tb = vec![];
-    let mut prev_token = TokenTree::Ident(Ident::new("a", Span::call_site()));
+    let mut return_wrapped = false;
+    let mut tb: Vec<TokenTree> = vec![];
+    // let mut prev_token = TokenTree::Ident(Ident::new("a", Span::call_site()));
+    let mut begin_capture_result_type = false;
+    let mut result_type: Vec<TokenTree> = vec![];
 
     for item in items {
         no_add = false;
 
+        if begin_capture_result_type {
+            // println!("{}", &item);
+            match &item {
+                TokenTree::Group(ref group) => {
+                    let end_capture = group.delimiter() == Delimiter::Brace;
+                    begin_capture_result_type = !end_capture;
+                    if end_capture {
+                        //     result_type.push(item.clone());
+                        // }else if end_capture {
+                        let rettype = TokenStream::from_iter(result_type.clone().into_iter());
+                        let new_return_type = quote! {
+                            api::Result<#rettype>
+                        };
+                        // dbg!(&result_type);
+                        for r in new_return_type {
+                            tb.push(r);
+                        }
+                        return_wrapped = true;
+                    }
+                }
+                _ => {
+                    result_type.push(item.clone());
+                    continue;
+                }
+            }
+        }
+
         if item.to_string() == "fn" {
             in_fn = 1;
-            prev_token = item.clone();
+            // prev_token = item.clone();
             tb.push(item);
             continue;
         }
@@ -227,7 +269,7 @@ pub fn api_endpoint(
         if in_fn == 1 && !after_fn {
             after_fn = true;
             func_name = item.to_string();
-            prev_token = item.clone();
+            // prev_token = item.clone();
             tb.push(item);
             continue;
         }
@@ -273,7 +315,7 @@ pub fn api_endpoint(
         }
 
         if after_fn {
-            let mut query_type = "".to_string();
+            let mut query_type: Vec<TokenTree> = vec![];
             match item {
                 TokenTree::Group(ref group) => {
                     group_cnt += 1;
@@ -282,6 +324,7 @@ pub fn api_endpoint(
                     if group_cnt == 1 {
                         if let TokenTree::Group(ref group) = item {
                             let mut in_query = false;
+                            let mut begin_capture_query_type = false;
                             for inner in group.stream() {
                                 match inner {
                                     TokenTree::Ident(ref ident) => {
@@ -289,13 +332,30 @@ pub fn api_endpoint(
                                             in_query = true;
                                         } else if in_query {
                                             in_query = false;
-                                            query_type = ident.to_string();
+                                            begin_capture_query_type = true;
+                                            query_type.push(inner.clone());
+                                        } else if begin_capture_query_type {
+                                            query_type.push(inner.clone());
                                         }
                                     }
-                                    TokenTree::Group(g) => {
-                                        if in_query && g.delimiter() == Delimiter::Parenthesis {
+                                    TokenTree::Group(ref g) => {
+                                        if in_query
+                                            && g.delimiter() == Delimiter::Parenthesis
+                                            && !begin_capture_query_type
+                                        {
                                             in_query = false;
-                                            query_type = "()".to_string()
+                                            query_type.push(inner.clone());
+                                        } else if begin_capture_query_type {
+                                            query_type.push(inner.clone());
+                                        }
+                                    }
+                                    TokenTree::Punct(ref punct) => {
+                                        if begin_capture_query_type {
+                                            if punct.to_string() == "," {
+                                                begin_capture_query_type = false;
+                                            } else {
+                                                query_type.push(inner.clone());
+                                            }
                                         }
                                     }
                                     _ => (),
@@ -303,7 +363,7 @@ pub fn api_endpoint(
                             }
                         }
 
-                        if query_type == "" {
+                        if query_type.is_empty() {
                             panic!(
                                 "API endpoint `{}` pada fungsi `{}` perlu ada `query` parameter-nya, \
                                  contoh: `pub {}(query: Query) -> JsonValue`.",
@@ -311,42 +371,54 @@ pub fn api_endpoint(
                             );
                         }
 
-                        let query_type = {
-                            if query_type == "()" {
-                                TokenTree::Group(Group::new(Delimiter::Parenthesis, TokenStream::new()))
-                            } else {
-                                TokenTree::Ident(Ident::new(&query_type, Span::call_site()))
-                            }
-                        };
+                        // let query_type = {
+                        //     if query_type == "()" {
+                        //         TokenTree::Group(Group::new(Delimiter::Parenthesis, TokenStream::new()))
+                        //     } else {
+                        //         TokenTree::Ident(Ident::new(&query_type, Span::call_site()))
+                        //     }
+                        // };
+
+                        // for ttq in query_type {
+                        //     tb.push(ttq);
+                        // }
+
+                        let query_type = TokenStream::from_iter(query_type.into_iter());
+
+                        if debug {
+                            dbg!(&query_type);
+                        }
 
                         let group = Group::new(
                             Delimiter::Parenthesis,
                             TokenStream::from_iter(
-                                quote! {
-                                    state: &AppState, query: #query_type, req: &ApiHttpRequest
-                                }
+                                (if is_mutable {
+                                    quote! {
+                                        state: &mut AppState, query: #query_type, req: &api::HttpRequest
+                                    }
+                                } else {
+                                    quote! {
+                                        state: &AppState, query: #query_type, req: &api::HttpRequest
+                                    }
+                                })
                                 .into_iter(),
                             ),
                         );
                         let tt: TokenTree = TokenTree::Group(group);
                         tb.push(tt);
-                        prev_token = item.clone();
+                        // prev_token = item.clone();
                         continue;
                     }
                 }
                 _ => (),
             }
-
-            if group_cnt == 1 {
-                // dbg!(&prev_token);
+            if group_cnt >= 1 && !return_wrapped {
                 // wrap return value menggunakan ApiResult<>
-                match &prev_token {
-                    &TokenTree::Punct(ref punct) => {
-                        if punct.as_char() == '>' {
-                            tb.push(TokenTree::Ident(Ident::new("ApiResult", Span::call_site())));
-                            tb.push(TokenTree::Punct(Punct::new('<', Spacing::Alone)));
-                            tb.push(item.clone());
-                            tb.push(TokenTree::Punct(Punct::new('>', Spacing::Alone)));
+                match (&tb.get(tb.len() - 2), &tb.last()) {
+                    (Some(&TokenTree::Punct(ref punct1)), Some(&TokenTree::Punct(ref punct2))) => {
+                        if punct1.as_char() == '-' && punct2.as_char() == '>' {
+                            begin_capture_result_type = true;
+                            result_type.push(item.clone());
                             continue;
                         }
                     }
@@ -359,44 +431,53 @@ pub fn api_endpoint(
 
                 if let TokenTree::Group(ref group) = item {
                     let mut new_stream = vec![];
-                    let access_token_guard: TokenStream = quote! {
 
-                        let current_account = req.headers().get("X-Access-Token")
-                            .map(|at| {
-                                let schema = auth::Schema::new(state.db());
-                                schema.get_access_token(at.to_str().unwrap())
-                                    .map(|at|{
-                                        if !at.expired(){
-                                            let account_schema = schema_op::Schema::new(state.db());
-                                            account_schema.get_account(at.account_id)
-                                                .map_err(ApiError::from)
-                                        }else{
-                                            Err(ApiError::Expired("access token"))
-                                        }
-                                    }).map_err(ApiError::from)
-                            });
-                    };
-
-                    new_stream.push(access_token_guard);
-
-                    if auth == 1 {
-                        // required
-                        let access_token_unwraper = quote! {
-                            let current_account = match current_account {
-                                Some(r) => r??,
-                                None => Err(ApiError::Unauthorized)?
-                            };
+                    if auth != 0 {
+                        // selain `none`
+                        let access_token_guard: TokenStream = quote! {
+                            use crate::valid::Expirable;
+                            let current_account = req.headers().get("X-Access-Token")
+                                .map(|at| {
+                                    let schema = auth::Schema::new(state.db());
+                                    schema.get_access_token(at.to_str().unwrap())
+                                        .map(|at|{
+                                            if !at.expired(){
+                                                let account_schema = schema_op::Schema::new(state.db());
+                                                account_schema.get_account(at.account_id)
+                                                    .map_err(api::Error::from)
+                                            }else{
+                                                Err(api::Error::Expired("access token"))
+                                            }
+                                        })
+                                        .map_err(|_| api::Error::Unauthorized)
+                                });
                         };
-                        new_stream.push(access_token_unwraper);
-                    } else if auth == 0 {
-                        // optional
-                        let access_token_unwraper = quote! {
-                            let current_account = match current_account {
-                                Some(Ok(Ok(a))) => Some(a),
-                                _ => None
+
+                        new_stream.push(access_token_guard);
+                    }
+
+                    match auth {
+                        2 => {
+                            // required
+                            let access_token_unwraper = quote! {
+                                let current_account = match current_account {
+                                    Some(r) => r??,
+                                    None => Err(api::Error::Unauthorized)?
+                                };
                             };
-                        };
-                        new_stream.push(access_token_unwraper);
+                            new_stream.push(access_token_unwraper);
+                        }
+                        1 => {
+                            // optional
+                            let access_token_unwraper = quote! {
+                                let current_account = match current_account {
+                                    Some(Ok(Ok(a))) => Some(a),
+                                    _ => None
+                                };
+                            };
+                            new_stream.push(access_token_unwraper);
+                        }
+                        _ => (), // none
                     }
 
                     new_stream.push(group.stream());
@@ -405,18 +486,20 @@ pub fn api_endpoint(
                     let tt: TokenTree = TokenTree::Group(group);
                     tb.push(tt);
                 }
-                prev_token = item.clone();
+                // prev_token = item.clone();
                 continue;
             }
         }
 
         if !no_add {
-            prev_token = item.clone();
+            // prev_token = item.clone();
             tb.push(item);
         }
     }
 
-    // dbg!(&tb);
+    if debug {
+        dbg!(&tb);
+    }
 
     proc_macro::TokenStream::from(TokenStream::from_iter(tb.into_iter()))
 }

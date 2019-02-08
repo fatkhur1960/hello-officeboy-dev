@@ -15,9 +15,9 @@ mod error;
 pub mod payment;
 mod with;
 
-pub use self::{error::Error, with::Result};
-
 use self::with::{Immutable, ImmutableReq, Mutable, MutableReq, NamedWith, With};
+pub use self::{error::Error, with::Result};
+pub use crate::{auth, schema_op};
 
 use crate::{db, service::Service};
 
@@ -404,28 +404,28 @@ impl ServiceApiScope {
         self
     }
 
-    /// Adds the given endpoint handler to the API scope. These endpoints
-    /// are designed for reading operations.
-    ///
-    /// For now there is only web backend and it has the following requirements:
-    ///
-    /// - Query parameters should be decodable via `serde_urlencoded`, i.e. from the
-    ///   "first_param=value1&second_param=value2" form.
-    /// - Response items should be encodable via `serde_json` crate.
-    pub fn endpoint<Q, I, R, F, E>(&mut self, name: &'static str, endpoint: E) -> &mut Self
-    where
-        Q: DeserializeOwned + 'static,
-        I: Serialize + 'static,
-        // F: Into<FuncHandler<Func2<Q, R>>>,
-        E: Into<With<Q, I, R, F>>,
-        RequestHandler: From<NamedWith<Q, I, R, F, Immutable>>,
-    {
-        self.endpoint_internal(name, endpoint);
-        self
-    }
+    // /// Adds the given endpoint handler to the API scope. These endpoints
+    // /// are designed for reading operations.
+    // ///
+    // /// For now there is only web backend and it has the following requirements:
+    // ///
+    // /// - Query parameters should be decodable via `serde_urlencoded`, i.e. from the
+    // ///   "first_param=value1&second_param=value2" form.
+    // /// - Response items should be encodable via `serde_json` crate.
+    // pub fn endpoint<Q, I, R, F, E>(&mut self, name: &'static str, endpoint: E) -> &mut Self
+    // where
+    //     Q: DeserializeOwned + 'static,
+    //     I: Serialize + 'static,
+    //     // F: Into<FuncHandler<Func2<Q, R>>>,
+    //     E: Into<With<Q, I, R, F>>,
+    //     RequestHandler: From<NamedWith<Q, I, R, F, Immutable>>,
+    // {
+    //     self.endpoint_internal(name, endpoint);
+    //     self
+    // }
 
     /// Add endpoint with additional `HttpRequest` object as third parameter.
-    pub fn endpoint_req<Q, I, R, F, E>(&mut self, name: &'static str, endpoint: E) -> &mut Self
+    pub fn endpoint<Q, I, R, F, E>(&mut self, name: &'static str, endpoint: E) -> &mut Self
     where
         Q: DeserializeOwned + 'static,
         I: Serialize + 'static,
@@ -448,24 +448,24 @@ impl ServiceApiScope {
         self
     }
 
-    /// Adds the given mutable endpoint handler to the API scope. These endpoints
-    /// are designed for modification operations.
-    ///
-    /// For now there is only web backend and it has the following requirements:
-    ///
-    /// - Query parameters should be decodable via `serde_json`.
-    /// - Response items also should be encodable via `serde_json` crate.
-    pub fn endpoint_mut<Q, I, R, F, E>(&mut self, name: &'static str, endpoint: E) -> &mut Self
-    where
-        Q: DeserializeOwned + 'static,
-        I: Serialize + 'static,
-        F: for<'r> Fn(&'r mut AppState, Q) -> R + 'static + Clone,
-        E: Into<With<Q, I, R, F>>,
-        RequestHandler: From<NamedWith<Q, I, R, F, Mutable>>,
-    {
-        self.endpoint_internal_mut(name, endpoint);
-        self
-    }
+    // /// Adds the given mutable endpoint handler to the API scope. These endpoints
+    // /// are designed for modification operations.
+    // ///
+    // /// For now there is only web backend and it has the following requirements:
+    // ///
+    // /// - Query parameters should be decodable via `serde_json`.
+    // /// - Response items also should be encodable via `serde_json` crate.
+    // pub fn endpoint_mut<Q, I, R, F, E>(&mut self, name: &'static str, endpoint: E) -> &mut Self
+    // where
+    //     Q: DeserializeOwned + 'static,
+    //     I: Serialize + 'static,
+    //     F: for<'r> Fn(&'r mut AppState, Q) -> R + 'static + Clone,
+    //     E: Into<With<Q, I, R, F>>,
+    //     RequestHandler: From<NamedWith<Q, I, R, F, Mutable>>,
+    // {
+    //     self.endpoint_internal_mut(name, endpoint);
+    //     self
+    // }
 
     /// Adds the given mutable endpoint handler to the API scope. These endpoints
     /// are designed for modification operations.
@@ -476,7 +476,7 @@ impl ServiceApiScope {
     ///
     /// - Query parameters should be decodable via `serde_json`.
     /// - Response items also should be encodable via `serde_json` crate.
-    pub fn endpoint_req_mut<Q, I, R, F, E>(&mut self, name: &'static str, endpoint: E) -> &mut Self
+    pub fn endpoint_mut<Q, I, R, F, E>(&mut self, name: &'static str, endpoint: E) -> &mut Self
     where
         Q: DeserializeOwned + 'static,
         I: Serialize + 'static,

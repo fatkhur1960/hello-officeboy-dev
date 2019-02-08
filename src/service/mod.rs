@@ -4,7 +4,8 @@ mod payment;
 
 pub use self::payment::PaymentService;
 
-use crate::api::{self, AppState, ServiceApiBuilder};
+use crate::api;
+use crate::api::*;
 use actix_web::{http::Method, App, AsyncResponder, Error, Path, Result};
 
 ///! Base service interface
@@ -34,7 +35,8 @@ impl Service for ExampleService {
 struct PublicApi {}
 
 impl PublicApi {
-    pub fn info(state: &AppState, query: ()) -> api::Result<String> {
+    #[api_endpoint(path = "/info")]
+    pub fn info(state: &AppState, query: ()) -> String {
         Ok(concat!("version: ", env!("CARGO_PKG_VERSION")).to_owned())
     }
 
@@ -59,8 +61,8 @@ impl PublicApi {
         builder
             .public_scope()
             .endpoint("v1/info", Self::info)
-            .endpoint_req("v1/info_req", Self::info_req)
-            .endpoint_req_mut("v1/update", Self::update)
+            .endpoint("v1/info_req", Self::info_req)
+            .endpoint_mut("v1/update", Self::update)
             .with_scope(|scope| {
                 scope
                     .resource("v1/coba", |r| r.method(Method::GET).h(Self::resource_test))

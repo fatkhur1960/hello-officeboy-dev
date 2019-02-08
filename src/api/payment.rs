@@ -11,6 +11,7 @@ use crate::api::SuccessReturn;
 use crate::crypto::{self, SecretKey};
 // use crate::models::Account;
 use crate::{
+    api,
     api::payment::models::*,
     api::{Error as ApiError, HttpRequest as ApiHttpRequest, Result as ApiResult},
     auth,
@@ -201,10 +202,8 @@ pub struct PublicApi;
 
 impl PublicApi {
     /// Rest API endpoint untuk mendaftarkan akun baru.
-    pub fn register_account(
-        state: &mut AppState,
-        query: RegisterAccount,
-    ) -> ApiResult<SuccessReturn<String>> {
+    #[api_endpoint(path = "/account/register", mutable)]
+    pub fn register_account(state: &mut AppState, query: RegisterAccount) -> SuccessReturn<String> {
         let schema = Schema::new(state.db());
 
         schema
@@ -215,20 +214,17 @@ impl PublicApi {
 
     /// Mengaktifkan user yang telah teregister.
     /// Ini nantinya dijadikan link yang akan dikirimkan ke email pendaftar.
-    api_endpoint_mut!(
-        activate_account,
-        ActivateAccount,
-        models::Account,
-        (|schema, query| {
-            let account = schema.activate_registered_account(query.token, 0.0f64)?;
-            schema.set_password(account.id, &query.password)?;
-            Ok(account.into())
-        })
-    );
+    #[api_endpoint(path = "/account/activate", auth = "none", mutable)]
+    pub fn activate_account(query: ActivateAccount) -> Account {
+        let schema = Schema::new(state.db());
+        let account = schema.activate_registered_account(query.token, 0.0f64)?;
+        schema.set_password(account.id, &query.password)?;
+        Ok(account.into())
+    }
 
     /// Rest API endpoint untuk transfer
-    #[authorized_only(user)]
-    pub fn transfer(state: &mut AppState, query: TxQuery<Transfer>, req: &ApiHttpRequest) -> ApiResult<()> {
+    #[api_endpoint(path = "/transfer", auth = "required", mutable)]
+    pub fn transfer(query: TxQuery<Transfer>) -> () {
         trace!("transfer: {:?}", query);
         trace!("current_account: {}", current_account);
 
@@ -243,14 +239,16 @@ impl PublicApi {
     }
 
     /// Rest API endpoint untuk mendapatkan informasi balance pada akun.
-    pub fn balance(state: &AppState, query: BalanceQuery) -> ApiResult<AccountInfo> {
+    #[api_endpoint(path = "/balance", auth = "required")]
+    pub fn balance(state: &AppState, query: BalanceQuery) -> AccountInfo {
         // @TODO(*): Code here
         Ok(AccountInfo::new(&query.account, 0.0f64))
     }
 
     /// Meng-otorisasi akun yang telah teregister
     /// User bisa melakukan otorisasi menggunakan email / nomor telp.
-    pub fn authorize(state: &mut AppState, query: Authorize) -> ApiResult<AccessToken> {
+    #[api_endpoint(path = "/authorize", auth = "none", mutable)]
+    pub fn authorize(state: &mut AppState, query: Authorize) -> AccessToken {
         let account = {
             let schema = Schema::new(state.db());
             if let Some(email) = query.email {
@@ -383,7 +381,8 @@ impl PrivateApi {
     }
 
     /// Listing account
-    pub fn list_account(state: &AppState, query: ListAccount) -> ApiResult<EntriesResult<db::Account>> {
+    #[api_endpoint(path = "/accounts", auth = "none")]
+    pub fn list_account(query: ListAccount) -> EntriesResult<db::Account> {
         let schema = Schema::new(state.db());
 
         let offset = query.page * query.limit;
@@ -395,13 +394,14 @@ impl PrivateApi {
     }
 
     /// Mencari akun berdasarkan kata kunci
-    pub fn search_accounts(state: &AppState, query: ListAccount) -> ApiResult<EntriesResult<db::Account>> {
+    #[api_endpoint(path = "/account/search", auth = "none")]
+    pub fn search_accounts(query: ListAccount) -> EntriesResult<db::Account> {
         let schema = Schema::new(state.db());
 
         let offset = query.page * query.limit;
 
         if query.query.is_none() {
-            return Self::list_account(&state, query);
+            return Self::list_account(&state, query, req);
         }
 
         let keyword = query.query.unwrap();
@@ -412,7 +412,8 @@ impl PrivateApi {
     }
 
     /// Mendapatkan jumlah akun secara keseluruhan
-    pub fn account_count(state: &AppState, query: ()) -> ApiResult<SuccessReturn<i64>> {
+    #[api_endpoint(path = "/account/count")]
+    pub fn account_count(state: &AppState, query: ()) -> SuccessReturn<i64> {
         let schema = Schema::new(state.db());
 
         schema
