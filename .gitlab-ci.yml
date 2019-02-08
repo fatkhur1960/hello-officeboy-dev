@@ -12,7 +12,7 @@ stable:cargo:
     BUILD_FOR: nightly
   script:
     - make test
-    - cargo build --release --bin restapi
-    - cp target/release/restapi /home/gitlab-runner/releases/apf-server_build-`date +"%Y-%m-%d"`
+    - cargo build --release --bin apf_server
+    - cp target/release/apf_server /home/gitlab-runner/releases/apf_server_build-`date +"%Y-%m-%d"`
 
 
