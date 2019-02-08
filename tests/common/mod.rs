@@ -18,7 +18,7 @@ pub fn setup() {
 
 pub fn create_testkit() -> TestKit {
     setup();
-    env::set_var("DATABASE_URL", "postgresql://localhost/apf_test?sslmode=disable");
+    // env::set_var("DATABASE_URL", "postgresql://localhost/apf_test?sslmode=disable");
 
     TestKit::new()
 }
