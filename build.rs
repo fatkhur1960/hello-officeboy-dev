@@ -47,7 +47,11 @@ fn main() {
     println!("cargo:rustc-env=GIT_REV={}", git_rev);
 
     if env::var("BUILD_FOR") == Ok("nightly".to_string()) {
-        println!("cargo:rustc-env=BUILD_INFO=ngihtly build {} @ {}", env::var("TARGET").unwrap(), Local::now());
+        println!(
+            "cargo:rustc-env=BUILD_INFO=ngihtly build {} @ {}",
+            env::var("TARGET").unwrap(),
+            Local::now()
+        );
     } else {
         println!(
             "cargo:rustc-env=BUILD_INFO={} build {}",
