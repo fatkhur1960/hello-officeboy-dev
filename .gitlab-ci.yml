@@ -1,0 +1,8 @@
+before_script:
+  - rustup update stable
+  - rustup default stable
+
+test:
+  script:
+    - make test
+
