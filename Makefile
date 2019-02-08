@@ -55,4 +55,4 @@ test-env:
 
 .PHONY: prepare docs lib-docs api-docs fmt \
 		test test-dev lint audit commit \
-		test-env release
+		release test-env
