@@ -274,10 +274,10 @@ impl PublicApi {
         }
     }
 
-    /// Hanya digunakan untuk testing
-    #[api_endpoint2(path="/info", auth=(user))]
-    pub fn info() -> JsonValue {
-        dbg!(req);
+    /// Hanya digunakan untuk testing.
+    #[api_endpoint2(path = "/info", auth = "optional")]
+    pub fn info(query: BalanceQuery) -> JsonValue {
+        dbg!(query);
         Ok(json!({ "version": env!("CARGO_PKG_VERSION") }))
     }
 
