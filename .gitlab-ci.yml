@@ -1,12 +1,16 @@
 before_script:
   - rustup update stable
   - rustup default stable
+  - diesel migration run
 
 stable:cargo:
   # image: rustdocker/rust:stable
   # stage: test
+  variables:
+    DATABASE_URL=postgresql://postgres:123123@localhost/apf_test?sslmode=disable
   script:
     - make test
     - cargo build --release --bin restapi
+    - cp target/release/restapi /home/gitlab-runner/releases/apf-restapi-build-`date +"%Y-%m-%d"`
 
 

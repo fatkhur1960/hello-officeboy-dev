@@ -17,7 +17,16 @@ Berikut kebutuhan pokok untuk bisa mem-build library:
 5. [Rustfmt](https://github.com/rust-lang/rustfmt)
 5. [Cargo clippy](https://github.com/rust-lang/rust-clippy)
 6. [Cargo audit](https://github.com/RustSec/cargo-audit)
+7. [Protocol Buffer](https://developers.google.com/protocol-buffers/)
 
+Build
+-----------
+
+Sebelum melakukan build pastikan dulu Libpq (Library-nya PostgreSQL) telah tersedia, di Ubuntu bisa menggunakan perintah `apt install libpq-dev` atau di Debian `apt install libpq-devel`, di OSX bisa menggunakan perintah: `brew install libpq`.
+
+Setelah semua dependensi tersedia, ketikkan:
+
+    $ cargo build
 
 Testing
 ----------

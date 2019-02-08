@@ -260,7 +260,7 @@ where
 
 pub fn setup() {
     let _ = env_logger::try_init();
-    env::set_var("DATABASE_URL", "postgresql://localhost/apf_test?sslmode=disable");
+    // env::set_var("DATABASE_URL", "postgresql://localhost/apf_test?sslmode=disable");
 }
 
 pub fn create_test_server() -> TestServer {
