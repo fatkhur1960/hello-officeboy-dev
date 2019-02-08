@@ -54,8 +54,9 @@ fn main() {
         );
     } else {
         println!(
-            "cargo:rustc-env=BUILD_INFO={} build {}",
+            "cargo:rustc-env=BUILD_INFO={} build {} @ {}",
             env::var("PROFILE").unwrap(),
+            env::var("TARGET").unwrap(),
             Local::now()
         );
     }

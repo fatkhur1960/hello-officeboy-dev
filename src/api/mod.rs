@@ -690,6 +690,8 @@ pub fn start(agg: ApiAggregator, config: ServiceApiConfig) {
 
         trace!("starting server...");
 
+        println!("\nSystem Ready.");
+
         // Starts actix-web runtime.
         let code = system.run();
 
