@@ -41,9 +41,8 @@ extern crate hex;
 extern crate rand;
 extern crate rsnowflake;
 extern crate sha2;
-pub(crate) extern crate sodiumoxide;
-
-pub(crate) use sodiumoxide as crypto_impl;
+#[macro_use]
+extern crate lazy_static;
 
 #[macro_use]
 mod macros;
@@ -78,3 +77,4 @@ pub mod prelude {
         valid::{Expirable, Validable},
     };
 }
+

@@ -4,14 +4,12 @@ extern crate apf;
 extern crate log;
 extern crate dotenv;
 extern crate env_logger;
-extern crate sodiumoxide;
 
 use apf::prelude::*;
 
 fn main() {
     dotenv::dotenv().ok();
     env_logger::init();
-    sodiumoxide::init().expect("Cannot initialize NaCl");
 
     println!(
         r#"

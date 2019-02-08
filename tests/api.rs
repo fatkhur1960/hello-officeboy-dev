@@ -3,7 +3,7 @@
 extern crate apf_testkit;
 extern crate env_logger;
 extern crate log;
-extern crate sodiumoxide;
+// extern crate sodiumoxide;
 #[macro_use]
 extern crate serde_json;
 

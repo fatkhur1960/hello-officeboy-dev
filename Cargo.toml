@@ -18,9 +18,10 @@ futures = "0.1"
 failure = "=0.1.5"
 log = "0.4"
 env_logger = "0.6"
+lazy_static = "1.2"
 
 # ---- crypto deps -----
-sodiumoxide = "0.2"
+# sodiumoxide = "0.2"
 ed25519-dalek = "=0.9.1"
 sha2 = "0.8"
 

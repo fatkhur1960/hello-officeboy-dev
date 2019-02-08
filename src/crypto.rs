@@ -105,6 +105,28 @@ pub fn sha256_hash(bytes: &[u8]) -> Hash {
     Hash(fixed)
 }
 
+/// Get hash sha256 from bytes
+pub fn sha256_hash_raw(bytes: &[u8]) -> [u8; HASH_SIZE] {
+    let mut hasher = Sha256::new();
+    hasher.input(bytes);
+    let hash = hasher.result().to_vec();
+
+    let mut fixed: [u8; HASH_SIZE] = Default::default();
+    fixed.copy_from_slice(hash.as_slice());
+    fixed
+}
+
+/// Get hash sha512 from bytes
+pub fn sha512_hash_raw(bytes: &[u8]) -> [u8; 64] {
+    let mut hasher = Sha512::new();
+    hasher.input(bytes);
+    let hash = hasher.result().to_vec();
+
+    let mut fixed: [u8; 64] = [0u8; 64];
+    fixed.copy_from_slice(hash.as_slice());
+    fixed
+}
+
 /// Sign a data in bytes, return Signature.
 pub fn sign(bytes: &[u8], secret_key: &SecretKey) -> Signature {
     let keypair = get_raw_keypair_from_secret(secret_key);
