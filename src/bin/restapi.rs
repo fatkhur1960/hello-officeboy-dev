@@ -13,6 +13,13 @@ fn main() {
     env_logger::init();
     sodiumoxide::init().expect("Cannot initialize NaCl");
 
+    println!(
+        "\nAPF server {}\nBuild {} - GIT: {}\n",
+        env!("CARGO_PKG_VERSION"),
+        env!("BUILD_DATE"),
+        env!("GIT_REV")
+    );
+
     trace!("starting up...");
 
     let service = PaymentService::new();

@@ -1,11 +1,13 @@
+extern crate chrono;
 extern crate protoc_rust;
 
+use chrono::Local;
 use protoc_rust::{Args, Customize};
 use std::{
     env,
     fs,
-    // fs::File,
-    // io::{BufRead, BufReader, BufWriter},
+    process, // fs::File,
+             // io::{BufRead, BufReader, BufWriter}
 };
 
 fn main() {
@@ -37,5 +39,16 @@ fn main() {
 
     let _ = fs::write(&path, new_content);
 
+    let output = process::Command::new("git")
+        .arg("rev-parse")
+        .arg("HEAD")
+        .output()
+        .expect("Cannot get git_rev");
+
+    let git_rev = String::from_utf8_lossy(&output.stdout);
+    let git_rev = git_rev.trim();
+
     println!("cargo:rerun-if-changed={}", "src/protos/apf.proto");
+    println!("cargo:rustc-env=BUILD_DATE={}", Local::today());
+    println!("cargo:rustc-env=GIT_REV={}", git_rev);
 }

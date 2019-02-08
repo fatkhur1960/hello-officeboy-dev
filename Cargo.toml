@@ -42,3 +42,4 @@ apf-testkit = { version = "0.1.0", path = "./testkit" }
 
 [build-dependencies]
 protoc-rust = "2.0"
+chrono = { version = "0.4" }

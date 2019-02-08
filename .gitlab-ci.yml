@@ -10,7 +10,6 @@ stable:cargo:
   variables:
     DATABASE_URL: postgresql://postgres:123123@localhost/apf_test?sslmode=disable
   script:
-    - echo $DATABASE_URL
     - make test
     - cargo build --release --bin restapi
     - cp target/release/restapi /home/gitlab-runner/releases/apf-restapi-build-`date +"%Y-%m-%d"`
