@@ -6,14 +6,18 @@ macro_rules! implement_crypto_wrapper {
     };
     ( $(#[$attr:meta])* struct $name:ident, $source:path, $source_name:ident, $size:expr) => {
         /// Crypto object wrapper
-        #[derive(Clone, PartialEq, Eq)]
+        #[derive(Clone)]
         $(#[$attr])*
-        pub struct $name($source);
+        pub struct $name([u8; $size]);
 
         impl $name {
             #[doc(hidden)]
             pub fn new(bytes_array: [u8; $size]) -> Self {
-                $name($source(bytes_array))
+                let a = {
+                    use $source;
+                    $source_name::from_bytes(&bytes_array).expect("from bytes")
+                };
+                $name(a.to_bytes())
             }
 
             /// Creates new instance from bytes slice.
@@ -24,11 +28,12 @@ macro_rules! implement_crypto_wrapper {
                 // kemungkinan kalau nanti Rust stable sudah bisa menghandle
                 // macro type path agar bisa langsung digunakan untuk memanggil
                 // fungsi statis-nya kode ini akan dirubah.
+
                 let a = {
                     use $source;
-                    $source_name::from_slice(bytes)
+                    $source_name::from_bytes(bytes)
                 };
-                a.map($name)
+                a.map(|a| $name(a.to_bytes())).ok()
             }
 
             /// Convert to hex string

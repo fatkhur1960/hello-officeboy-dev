@@ -36,9 +36,11 @@ extern crate regex;
 extern crate apf_proc_macro;
 
 extern crate byteorder;
+extern crate ed25519_dalek;
 extern crate hex;
 extern crate rand;
 extern crate rsnowflake;
+extern crate sha2;
 pub(crate) extern crate sodiumoxide;
 
 pub(crate) use sodiumoxide as crypto_impl;

@@ -3,71 +3,131 @@
 //! menggenerasikan pasangan kunci (keypair) asimetris,
 //! melakukan signing pada data, dll.
 
-pub(crate) use crate::crypto_impl::crypto::sign::ed25519 as ds;
-use crate::crypto_impl::crypto::{self, hash::sha256};
+// pub(crate) use crate::crypto_impl::crypto::sign::ed25519 as ds;
+// use crate::crypto_impl::crypto::{self, hash::sha256};
+use ed25519_dalek::Keypair;
 use hex;
+use rand::thread_rng;
+use sha2::{Digest, Sha256, Sha512};
 
 /// Number of bytes in a public key.
-pub const PUBLIC_KEY_LENGTH: usize = ds::PUBLICKEYBYTES;
+pub const PUBLIC_KEY_LENGTH: usize = ed25519_dalek::PUBLIC_KEY_LENGTH;
 /// Number of bytes in a secret key.
-pub const SECRET_KEY_LENGTH: usize = ds::SECRETKEYBYTES;
+pub const SECRET_KEY_LENGTH: usize = ed25519_dalek::SECRET_KEY_LENGTH; //ds::SECRETKEYBYTES;
 /// Number of bytes in a `Hash`.
-pub const HASH_SIZE: usize = sha256::DIGESTBYTES;
+pub const HASH_SIZE: usize = 32; //sha256::DIGESTBYTES;
 /// Number of bytes in a signature.
-pub const SIGNATURE_LENGTH: usize = ds::SIGNATUREBYTES;
+pub const SIGNATURE_LENGTH: usize = ed25519_dalek::SIGNATURE_LENGTH;
 
 // Buatkan wrapper untuk object-object internal dari crypto_impl
 // agar lebih flexibel kita bisa menambahkan implementasi sendiri.
 
 implement_crypto_wrapper!(
-    struct PublicKey, PUBLIC_KEY_LENGTH
+    struct PublicKey, ed25519_dalek::PublicKey, PublicKey, PUBLIC_KEY_LENGTH
 );
 implement_crypto_wrapper!(
-    struct SecretKey, SECRET_KEY_LENGTH
+    struct SecretKey, ed25519_dalek::SecretKey, SecretKey, SECRET_KEY_LENGTH
 );
 implement_crypto_wrapper!(
-    struct Signature, SIGNATURE_LENGTH
+    struct Signature, ed25519_dalek::Signature, Signature, SIGNATURE_LENGTH
 );
-implement_crypto_wrapper!(
-    struct Hash, crate::crypto::sha256::Digest, Digest, HASH_SIZE
-);
+// implement_crypto_wrapper!(
+//     struct Hash, sha2::Digest, Digest, HASH_SIZE
+// );
+
+/// Hash
+pub struct Hash([u8; HASH_SIZE]);
+
+impl Hash {
+    /// Encode to hex string
+    pub fn to_hex(&self) -> String {
+        hex::encode(self.0)
+    }
+}
+
+impl AsRef<[u8; HASH_SIZE]> for Hash {
+    fn as_ref(&self) -> &[u8; HASH_SIZE] {
+        &self.0
+    }
+}
+
+impl PublicKey {
+    /// Memastikan signature valid untuk message dengan cara memverifikasi
+    /// digital signature menggunakan public-key ini.
+    pub fn valid(&self, message: &[u8], signature: &Signature) -> bool {
+        let raw_pubkey =
+            ed25519_dalek::PublicKey::from_bytes(&self.0).expect("Cannot parse bytes for public key");
+        raw_pubkey.verify::<Sha512>(message, &signature.into()).is_ok()
+    }
+}
+
+impl<'a> std::convert::Into<ed25519_dalek::Signature> for &'a Signature {
+    fn into(self) -> ed25519_dalek::Signature {
+        ed25519_dalek::Signature::from_bytes(&self.0).unwrap()
+    }
+}
 
 /// Mendapatkan passhash dari sebuah password.
 /// Kalkulasi passhash ini menggunakan sha256 yang diproses
 /// sebanyak 9 kali.
 pub fn get_passhash(password: &str) -> String {
-    let mut hash = sha256::hash(password.as_bytes());
+    let mut hash = sha256_hash(password.as_bytes());
     for i in 0..9 {
-        hash = sha256::hash(hash.as_ref());
+        hash = sha256_hash(hash.as_ref());
     }
-    hex::encode(hash)
+    hex::encode(hash.as_ref())
 }
 
 /// Generate key pair
 pub fn gen_keypair() -> (PublicKey, SecretKey) {
-    let (p, s) = ds::gen_keypair();
-    (PublicKey::new(p.0), SecretKey::new(s.0))
+    let mut csprng = thread_rng();
+    let keypair = Keypair::generate::<Sha512, _>(&mut csprng);
+
+    (
+        PublicKey::new(keypair.public.to_bytes()),
+        SecretKey::new(keypair.secret.to_bytes()),
+    )
 }
 
 /// Hash some str text
 pub fn hash_str(text: &str) -> Hash {
-    hash_bytes(&text.as_bytes())
+    sha256_hash(&text.as_bytes())
 }
 
-/// Hash byte data
-pub fn hash_bytes(bytes: &[u8]) -> Hash {
-    Hash(sha256::hash(bytes))
+/// Get hash sha256 from bytes
+pub fn sha256_hash(bytes: &[u8]) -> Hash {
+    let mut hasher = Sha256::new();
+    hasher.input(bytes);
+    let hash = hasher.result().to_vec();
+
+    let mut fixed: [u8; HASH_SIZE] = Default::default();
+    fixed.copy_from_slice(hash.as_slice());
+    Hash(fixed)
 }
 
 /// Sign a data in bytes, return Signature.
 pub fn sign(bytes: &[u8], secret_key: &SecretKey) -> Signature {
-    let signature = ds::sign_detached(bytes, &secret_key.0);
-    Signature(signature)
+    let keypair = get_raw_keypair_from_secret(secret_key);
+    let raw_signature = keypair.sign::<Sha512>(bytes);
+
+    Signature(raw_signature.to_bytes())
+}
+
+fn get_raw_keypair_from_secret(secret_key: &SecretKey) -> ed25519_dalek::Keypair {
+    let raw_secret_key = ed25519_dalek::SecretKey::from_bytes(&secret_key.0).expect("to raw secret key");
+    let public_key = ed25519_dalek::PublicKey::from_secret::<Sha512>(&raw_secret_key);
+    ed25519_dalek::Keypair {
+        secret: raw_secret_key,
+        public: public_key,
+    }
 }
 
 /// Memverifikasi digital signature apakah cocok dengan data dan public key-nya.
-pub fn verify(bytes: &[u8], signature: &Signature, pub_key: &PublicKey) -> bool {
-    ds::verify_detached(&signature.0, bytes, &pub_key.0)
+pub fn is_verified(message: &[u8], signature: &Signature, pub_key: &PublicKey) -> bool {
+    // ds::verify_detached(&signature.0, bytes, &pub_key.0)
+    // @TODO(robin): Code here
+    // unimplemented!();
+    pub_key.valid(message, signature)
 }
 
 #[cfg(test)]
@@ -104,9 +164,12 @@ mod tests {
 
     fn get_preset_keypair() -> (PublicKey, SecretKey) {
         (
-            "db70a045a13645e1c0e227f0c4097e58880d5c4b227fb4d5ff448425ebf7b90d".parse::<PublicKey>().unwrap(),
-            "fa1c6ed8bd8d3e88a84561fc60ae3f205a3c6538f9d2883597524a374f1aa969\
-             db70a045a13645e1c0e227f0c4097e58880d5c4b227fb4d5ff448425ebf7b90d".parse::<SecretKey>().unwrap()
+            "db70a045a13645e1c0e227f0c4097e58880d5c4b227fb4d5ff448425ebf7b90d"
+                .parse::<PublicKey>()
+                .unwrap(),
+            "fa1c6ed8bd8d3e88a84561fc60ae3f205a3c6538f9d2883597524a374f1aa969"
+                .parse::<SecretKey>()
+                .unwrap(),
         )
     }
 
@@ -130,6 +193,6 @@ mod tests {
         let (p, _) = get_preset_keypair();
         let signature = create_signature();
 
-        assert!(super::verify(DATA, &signature, &p));
+        assert!(super::is_verified(DATA, &signature, &p));
     }
 }

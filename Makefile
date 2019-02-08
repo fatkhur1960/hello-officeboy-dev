@@ -26,7 +26,7 @@ fmt:
 
 test:
 	@@echo Testing...
-	@@cargo test
+	@@source .env && cargo test
 
 test-dev:
 	@@echo Testing...
