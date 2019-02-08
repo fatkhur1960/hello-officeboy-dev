@@ -190,10 +190,11 @@ pub fn api_endpoint(attr: proc_macro::TokenStream, item: proc_macro::TokenStream
                             auth = 0;
                             auth_str = "none";
                         }
-                        x => {
-                            panic!("kebutuhan auth tidak dipahami: {}, \
-                            hanya bisa salah satu dari: `optional`, `required`, dan `none`.", x)
-                        }
+                        x => panic!(
+                            "kebutuhan auth tidak dipahami: {}, hanya bisa salah satu dari: `optional`, \
+                             `required`, dan `none`.",
+                            x
+                        ),
                     }
                 }
             }

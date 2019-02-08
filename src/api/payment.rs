@@ -19,6 +19,19 @@ use crate::{
     schema_op, tx,
 };
 
+#[derive(Serialize)]
+pub struct EntriesResult<T> {
+    pub entries: Vec<T>,
+    pub count: i64,
+}
+
+#[derive(Deserialize)]
+pub struct ListAccount {
+    pub query: Option<String>,
+    pub page: i64,
+    pub limit: i64,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Credit {
     pub account: ID,
@@ -272,10 +285,9 @@ impl PublicApi {
         }
     }
 
-    /// Hanya digunakan untuk testing.
+    /// Hanya digunakan untuk testing sahaja.
     #[api_endpoint(path = "/info", auth = "optional")]
-    pub fn info(query: BalanceQuery) -> JsonValue {
-        dbg!(query);
+    pub fn info(query: ()) -> JsonValue {
         Ok(json!({ "version": env!("CARGO_PKG_VERSION") }))
     }
 
@@ -421,17 +433,4 @@ impl PrivateApi {
             .map(SuccessReturn::new)
             .map_err(From::from)
     }
-}
-
-#[derive(Deserialize)]
-pub struct ListAccount {
-    pub query: Option<String>,
-    pub page: i64,
-    pub limit: i64,
-}
-
-#[derive(Serialize)]
-pub struct EntriesResult<T> {
-    pub entries: Vec<T>,
-    pub count: i64,
 }
