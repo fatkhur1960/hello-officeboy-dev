@@ -11,7 +11,7 @@ stable:cargo:
     DATABASE_URL: postgresql://postgres:123123@localhost/apf_test?sslmode=disable
     BUILD_FOR: nightly
   script:
-    - make test
+    - cargo test --verbose
     - cargo build --release --bin apf_server
     - cp target/release/apf_server /home/gitlab-runner/releases/apf_server_build-`date +"%Y-%m-%d"`
 
