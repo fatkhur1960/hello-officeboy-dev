@@ -304,13 +304,17 @@ pub fn api_endpoint2(
                         }
 
                         if query_type == "" {
-                            panic!("API endpoint `{}` pada fungsi `{}` perlu ada `query` parameter-nya, contoh: `pub {}(query: Query) -> JsonValue`.", path, func_name, func_name);
+                            panic!(
+                                "API endpoint `{}` pada fungsi `{}` perlu ada `query` parameter-nya, \
+                                 contoh: `pub {}(query: Query) -> JsonValue`.",
+                                path, func_name, func_name
+                            );
                         }
 
                         let query_type = {
                             if query_type == "()" {
                                 TokenTree::Group(Group::new(Delimiter::Parenthesis, TokenStream::new()))
-                            }else {
+                            } else {
                                 TokenTree::Ident(Ident::new(&query_type, Span::call_site()))
                             }
                         };
@@ -328,7 +332,6 @@ pub fn api_endpoint2(
                         tb.push(tt);
                         prev_token = item.clone();
                         continue;
-
                     }
                 }
                 _ => (),
