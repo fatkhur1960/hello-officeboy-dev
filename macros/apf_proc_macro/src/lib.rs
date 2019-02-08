@@ -216,7 +216,7 @@ pub fn api_endpoint(attr: proc_macro::TokenStream, item: proc_macro::TokenStream
     let item2 = proc_macro2::TokenStream::from(item);
 
     if debug {
-        dbg!(&item2);
+        // dbg!(&item2);
     }
 
     let items = item2.into_iter();
@@ -375,7 +375,7 @@ pub fn api_endpoint(attr: proc_macro::TokenStream, item: proc_macro::TokenStream
                         let query_type = TokenStream::from_iter(query_type.into_iter());
 
                         if debug {
-                            dbg!(&query_type);
+                            // dbg!(&query_type);
                         }
 
                         let group = Group::new(
@@ -487,7 +487,7 @@ pub fn api_endpoint(attr: proc_macro::TokenStream, item: proc_macro::TokenStream
     }
 
     if debug {
-        dbg!(&tb);
+        // dbg!(&tb);
     }
 
     proc_macro::TokenStream::from(TokenStream::from_iter(tb.into_iter()))
