@@ -6,7 +6,7 @@ before_script:
 stable:cargo:
   # image: rustdocker/rust:stable
   # stage: test
-  environment:
+  variables:
     DATABASE_URL: postgresql://postgres:123123@localhost/apf_test?sslmode=disable
   script:
     - make test
