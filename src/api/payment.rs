@@ -275,15 +275,15 @@ impl PublicApi {
     }
 
     /// Hanya digunakan untuk testing.
-    #[api_endpoint2(path = "/info", auth = "optional")]
+    #[api_endpoint(path = "/info", auth = "optional")]
     pub fn info(query: BalanceQuery) -> JsonValue {
         dbg!(query);
         Ok(json!({ "version": env!("CARGO_PKG_VERSION") }))
     }
 
     /// Mendapatkan informasi current account.
-    #[authorized_only(user)]
-    pub fn me_info(state: &AppState, query: (), req: &ApiHttpRequest) -> ApiResult<Account> {
+    #[api_endpoint(path = "/me/info", auth = "required")]
+    pub fn me_info(state: &AppState, query: (), req: &ApiHttpRequest) -> Account {
         Ok(current_account.into())
     }
 

@@ -148,7 +148,7 @@ pub fn authorized_only(
 }
 
 #[proc_macro_attribute]
-pub fn api_endpoint2(
+pub fn api_endpoint(
     attr: proc_macro::TokenStream,
     item: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
@@ -248,7 +248,7 @@ pub fn api_endpoint2(
                             TokenTree::Literal(lit) => {
                                 if in_doc {
                                     let text = format!(
-                                        " API endpoint: `{}`<br/>Auth: {}<br/>.<br/> {}",
+                                        " API endpoint: `{}`<br/>Auth: {}<br/>Deskripsi: {}",
                                         path,
                                         auth_str,
                                         lit.to_string().replace("\"", "")
