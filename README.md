@@ -1,6 +1,8 @@
 Ansvia Payment Framework
 ============================
 
+[![pipeline status](https://gitlab.com/anvie/payment/badges/master/pipeline.svg)](https://gitlab.com/anvie/payment/commits/master)
+
 Merupakan framework untuk membuat aplikasi _Payment_, dibuat dan ditulis menggunakan [Rust](https://rust-lang.org).
 
 Kebutuhan

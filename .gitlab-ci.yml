@@ -7,6 +7,6 @@ stable:cargo:
   # stage: test
   script:
     - make test
+    - cargo build --release --bin restapi
 
 
-    
