@@ -1,7 +1,7 @@
 before_script:
   - rustup update stable
   - rustup default stable
-  - diesel migration run
+  - /usr/bin/diesel migration run
 
 stable:cargo:
   # image: rustdocker/rust:stable
