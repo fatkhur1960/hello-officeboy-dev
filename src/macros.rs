@@ -17,12 +17,22 @@ macro_rules! implement_crypto_wrapper {
             }
 
             /// Creates new instance from bytes slice.
+            #[inline]
             pub fn from_slice(bytes: &[u8]) -> Option<Self> {
-                use $source;
-                $source_name::from_slice(bytes).map(Self)
+                // kode ini kelihatan aneh, tapi hanya dengan cara inilah
+                // kode bagian ini bisa dicompile di Rust stable.
+                // kemungkinan kalau nanti Rust stable sudah bisa menghandle
+                // macro type path agar bisa langsung digunakan untuk memanggil
+                // fungsi statis-nya kode ini akan dirubah.
+                let a = {
+                    use $source;
+                    $source_name::from_slice(bytes)
+                };
+                a.map($name)
             }
 
             /// Convert to hex string
+            #[inline]
             pub fn to_hex(&self) -> String {
                 hex::encode(&self.0[..])
             }

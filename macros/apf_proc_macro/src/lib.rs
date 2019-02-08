@@ -1,5 +1,5 @@
 #![recursion_limit = "128"]
-#![allow(unused_imports, unused_assignments)]
+#![allow(unused_imports, unused_assignments, unused_mut)]
 
 extern crate proc_macro;
 
@@ -238,19 +238,15 @@ pub fn api_endpoint(attr: proc_macro::TokenStream, item: proc_macro::TokenStream
         no_add = false;
 
         if begin_capture_result_type {
-            // println!("{}", &item);
             match &item {
                 TokenTree::Group(ref group) => {
                     let end_capture = group.delimiter() == Delimiter::Brace;
                     begin_capture_result_type = !end_capture;
                     if end_capture {
-                        //     result_type.push(item.clone());
-                        // }else if end_capture {
                         let rettype = TokenStream::from_iter(result_type.clone().into_iter());
                         let new_return_type = quote! {
                             api::Result<#rettype>
                         };
-                        // dbg!(&result_type);
                         for r in new_return_type {
                             tb.push(r);
                         }
@@ -375,18 +371,6 @@ pub fn api_endpoint(attr: proc_macro::TokenStream, item: proc_macro::TokenStream
                                 path, func_name, func_name
                             );
                         }
-
-                        // let query_type = {
-                        //     if query_type == "()" {
-                        //         TokenTree::Group(Group::new(Delimiter::Parenthesis, TokenStream::new()))
-                        //     } else {
-                        //         TokenTree::Ident(Ident::new(&query_type, Span::call_site()))
-                        //     }
-                        // };
-
-                        // for ttq in query_type {
-                        //     tb.push(ttq);
-                        // }
 
                         let query_type = TokenStream::from_iter(query_type.into_iter());
 
