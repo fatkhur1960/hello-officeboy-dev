@@ -1,0 +1,16 @@
+version: '3'
+services:
+  postgre_server:
+    environment:
+      - POSTGRES_DB=apf
+#    image: "postgres:alpine"
+    build: ./postgre_server
+  apf_server:
+    #build: .
+    environment:
+      - APF_PUBLIC_LISTENING=0.0.0.0:8080
+      - APF_PRIVATE_LISTENING=0.0.0.0:9090
+    image: "apf_server:latest"
+    ports:
+     - "8080:8080"
+     - "9090:9090"
