@@ -1,8 +1,9 @@
 before_script:
+  - echo $USER
+  - echo $DATABASE_URL
   - rustup update stable
   - rustup default stable
   - diesel migration run
-  - echo $DATABASE_URL
 
 # stable:cargo:
 #   # image: rustdocker/rust:stable
@@ -26,15 +27,15 @@ musl-build:cargo:
     - cp target/x86_64-unknown-linux-musl/release/apf_server /home/gitlab-runner/releases/linux-x86_64-musl/apf_server-nightly-`date +"%Y-%m-%d"`
     - cp target/x86_64-unknown-linux-musl/release/apf_server /home/gitlab-runner/releases/linux-x86_64-musl/apf_server-nightly-latest
 
-musl-build:cargo:
-  # image: anvie/rust-musl-build
-  # stage: test
-  variables:
-    DATABASE_URL: postgresql://postgres:123123@localhost/apf_test?sslmode=disable
-    BUILD_FOR: nightly
-  script:
-    - cargo test --verbose
-    - docker run -it --rm -v $PWD:/workdir -v ~/.cargo/git:/root/.cargo/git -v ~/.cargo/registry:/root/.cargo/registry anvie/rust-musl-build:latest cargo build --release --target=x86_64-unknown-linux-musl
-    - cp target/release/apf_server /home/gitlab-runner/releases/apf_server_build-`date +"%Y-%m-%d"`
+# musl-build:cargo:
+#   # image: anvie/rust-musl-build
+#   # stage: test
+#   variables:
+#     DATABASE_URL: postgresql://postgres:123123@localhost/apf_test?sslmode=disable
+#     BUILD_FOR: nightly
+#   script:
+#     - cargo test --verbose
+#     - docker run -it --rm -v $PWD:/workdir -v ~/.cargo/git:/root/.cargo/git -v ~/.cargo/registry:/root/.cargo/registry anvie/rust-musl-build:latest cargo build --release --target=x86_64-unknown-linux-musl
+#     - cp target/release/apf_server /home/gitlab-runner/releases/apf_server_build-`date +"%Y-%m-%d"`
 
 
