@@ -3,7 +3,21 @@ Ansvia Payment Framework
 
 [![pipeline status](https://gitlab.com/anvie/payment/badges/master/pipeline.svg)](https://gitlab.com/anvie/payment/commits/master)
 
-Merupakan framework untuk membuat aplikasi _Payment_, dibuat dan ditulis menggunakan [Rust](https://rust-lang.org).
+Merupakan full stack framework untuk membuat aplikasi. Ini bisa digunakan sebagai library atau juga digunakan sebagai base project template. 
+APF telah dipersiapkan dengan komponen-komponen penting dalam membangun aplikasi full stack dari A-Z.
+
+Frabework ini didesain dengan memperhatikan beberapa aspek seperti: kemudahan, fleksibelitas, kecepatan, performa, produktivitas, 
+dan psilkologi programmer.
+
+Berikut daftar komponen/fitur yang tersedia:
+
+1. Backend, ditulis menggunakan Rust dengan database bawaan PostgreSQL.
+2. Frontend, tersedia beberapa framework untuk: web React dan Vue, mobile: React Native dan Flutter.
+3. Dokumentasi, tersedia lib-docs untuk membuat dokumentasi library inti dan api-docs untuk membangun dokumentasi API dengan menggunakan standar Blueprint API.
+4. Test, tersedia testkit library yang didesain untuk mempermudah membuat unittest dan integration test.
+5. Deployment, tersedia dukungan Docker untuk mempermudah deployment dan development local.
+6. Migration, untuk mempermudah mengelola skema database, APF menggunakan diesel CLI yang bisa digunakan sebagai database control management.
+7. Messaging, untuk kebutuhan distributed computing maka telah disediakan Protocol buffer untuk komunikasi antar node.
 
 Kebutuhan
 ----------------
