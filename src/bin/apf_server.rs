@@ -7,6 +7,8 @@ extern crate env_logger;
 
 use apf::prelude::*;
 
+use std::env;
+
 fn main() {
     dotenv::dotenv().ok();
     env_logger::init();
@@ -18,8 +20,9 @@ ____________    __      ____________,
 \_____     /   /_ \     \     _____/
  \_____    \____/__\____/    _____/
   \_____      | APF |       _____/
-     \________\__  _/_________/
-               /____\
+     \________\__|__/_________/
+               /___\
+            ._//___\\_.
     "#
     );
 
@@ -34,9 +37,12 @@ ____________    __      ____________,
 
     let service = PaymentService::new();
 
+    let public_listening_address = env::var("APF_PUBLIC_LISTENING").unwrap_or("0.0.0.0:8080".to_string());
+    let private_listening_address = env::var("APF_PRIVATE_LISTENING").unwrap_or("127.0.0.1:9090".to_string());
+
     let config = ServiceApiConfig::new(vec![
-        ApiServer::new(ApiAccess::Public, "127.0.0.1:8080".to_string()),
-        ApiServer::new(ApiAccess::Private, "127.0.0.1:9090".to_string()),
+        ApiServer::new(ApiAccess::Public, public_listening_address),
+        ApiServer::new(ApiAccess::Private, private_listening_address),
     ]);
 
     api::start(ApiAggregator::new(vec![service]), config);
