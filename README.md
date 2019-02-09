@@ -6,10 +6,9 @@ Ansvia Payment Framework
 Merupakan full stack framework untuk membuat aplikasi. Ini bisa digunakan sebagai library atau juga digunakan sebagai base project template. 
 APF telah dipersiapkan dengan komponen-komponen penting dalam membangun aplikasi full stack dari A-Z.
 
-Frabework ini didesain dengan memperhatikan beberapa aspek seperti: kemudahan, fleksibelitas, kecepatan, performa, produktivitas, 
-dan psilkologi programmer.
+Framework ini didesain dengan memperhatikan beberapa aspek seperti: kemudahan, fleksibelitas, performa, produktivitas, dan psikologi programmer :D.
 
-Berikut daftar komponen/fitur yang tersedia:
+Daftar komponen & fitur yang ditawarkan:
 
 1. Backend, ditulis menggunakan Rust dengan database bawaan PostgreSQL.
 2. Frontend, tersedia beberapa framework untuk: web React dan Vue, mobile: React Native dan Flutter.
