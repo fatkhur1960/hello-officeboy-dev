@@ -8,7 +8,8 @@ Merupakan framework untuk membuat aplikasi _Payment_, dibuat dan ditulis menggun
 Kebutuhan
 ----------------
 
-Berikut kebutuhan pokok untuk bisa mem-build library:
+Daftar kebutuhan berikut dibutuhkan apabila kita ingin melakukan build di mesin environment lokal, kamu bisa juga melakukan build menggunakan Docker sehingga tidak perlu menginstall satu-per-satu kebutuhan ini. Untuk build menggunakan Docker lihat bagian *Build menngunakan Docker*.
+Berikut kebutuhan pokok untuk bisa melakukan build di mesin lokal:
 
 1. [Rust](https://www.rust-lang.org/)
 2. PostgreSQL >= 9.x
@@ -27,6 +28,24 @@ Sebelum melakukan build pastikan dulu Libpq (Library-nya PostgreSQL) telah terse
 Setelah semua dependensi tersedia, ketikkan:
 
     $ cargo build
+
+Build menggunakan Docker
+----------------------------
+
+Cara paling mudah untuk melakukan build adalah menggunakan Docker:
+
+    $ docker run -it --rm -v $(pwd):/workdir \
+        -v /tmp:/root/.cargo/git \
+        -v /tmp:/root/.cargo/registry \
+        anvie/rust-musl-build:latest \
+        cargo build --release --target=x86_64-unknown-linux-musl
+
+Docker image `anvie/rust-musl-build` adalah container berbasis Linux dan sudah berisi semua kebutuhan development untuk build project ini, setelah build selesai
+output bisa didapatkan di `target/x86_64-unknown-linux-musl`.
+
+Kamu bisa juga menjalankan perintah tersebut menggunakan make:
+
+    $ make release-linux
 
 Testing
 ----------

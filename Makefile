@@ -50,9 +50,20 @@ release:
 	@@echo Build release mode...
 	@@cargo build --release
 
+release-linux:
+	@@echo ""
+	@@echo Ini akan melakukan build menggunakan Docker, 
+	@@echo nantinya output binary bisa ditemukan di target/x86_64-unknown-linux-musl/release
+	@@echo Building for musl Linux...
+	@@@docker run -it --rm -v $(PROJ_DIR):/workdir \
+					-v /tmp:/root/.cargo/git \
+					-v /tmp:/root/.cargo/registry \
+					anvie/rust-musl-build:latest \
+					cargo build --release --target=x86_64-unknown-linux-musl
+
 test-env:
 	diesel setup --database-url postgresql://localhost/apf_test?sslmode=disable
 
 .PHONY: prepare docs lib-docs api-docs fmt \
 		test test-dev lint audit commit \
-		release test-env
+		release test-env release-linux
