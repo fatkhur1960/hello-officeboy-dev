@@ -60,14 +60,22 @@ impl fmt::Display for ApiAccess {
 
 use serde::{de::DeserializeOwned, Serialize};
 
+/// Struktur data ketika pemanggilan api sukses.
 #[derive(Serialize, Deserialize)]
-pub(crate) struct ApiResult {
-    code: i32,
-    status: String,
-    description: String,
+pub struct ApiResult {
+    /// Error code untuk memberikan informasi hasil pengembalian,
+    /// apabila tidak ada error terjadi maka code harus berisi 0.
+    pub code: i32,
+
+    /// Status bisa berisi: "success" atau "error".
+    pub status: String,
+
+    /// Deskripsi error apabila terjadi error.
+    pub description: String,
 }
 
 impl ApiResult {
+    #[doc(hidden)]
     pub fn new(code: i32, status: String, description: String) -> Self {
         ApiResult {
             code,
@@ -76,10 +84,12 @@ impl ApiResult {
         }
     }
 
+    /// Buat hasil sukses
     pub fn success() -> Self {
         Self::new(0, "success".to_owned(), "".to_owned())
     }
 
+    /// Buat hasil error
     pub fn error(code: i32, description: String) -> Self {
         Self::new(code, "error".to_owned(), description)
     }

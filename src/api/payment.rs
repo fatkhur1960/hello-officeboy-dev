@@ -32,12 +32,14 @@ pub struct ListAccount {
     pub limit: i64,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Credit {
-    pub account: ID,
-    pub amount: f64,
-    pub timestamp: u64,
-}
+// #[derive(Debug, Serialize, Deserialize)]
+// pub struct Credit {
+//     pub account: ID,
+//     pub amount: f64,
+//     pub timestamp: u64,
+// }
+
+pub use crate::protos::Credit;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Debit {
@@ -112,6 +114,14 @@ impl<T> TxQuery<T>
 where
     T: protobuf::Message + Serialize + Clone,
 {
+    /// Create new tx query instance.
+    pub fn new(body: T) -> Self {
+        Self {
+            body,
+            signature: Default::default(),
+        }
+    }
+
     /// Lakukan signing pada data di `body`.
     /// Operasi signing dilakukan dengan cara men-serialize data pada `body` ke dalam
     /// bentuk protobuf bytes lalu di-sign menggunakan `secret_key`.
@@ -371,7 +381,8 @@ pub struct PrivateApi;
 
 impl PrivateApi {
     /// Rest API endpoint for topup
-    pub fn credit(state: &mut AppState, query: TxQuery<Credit>, req: &ApiHttpRequest) -> ApiResult<()> {
+    #[api_endpoint(path = "/credit", auth = "required", mutable)]
+    pub fn credit(state: &mut AppState, query: TxQuery<Credit>, req: &ApiHttpRequest) -> () {
         trace!("topup account: {:?}", query);
 
         let schema = Schema::new(state.db());

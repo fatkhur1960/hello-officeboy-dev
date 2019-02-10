@@ -15,7 +15,11 @@ extern crate serde;
 extern crate serde_json;
 extern crate serde_urlencoded;
 
-use actix_web::{test::TestServer, App};
+use actix_web::{
+    http::{header::HeaderValue, HeaderMap},
+    test::TestServer,
+    App,
+};
 use reqwest::{Client, Response, StatusCode};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
@@ -23,12 +27,13 @@ use std::{env, fmt};
 
 use apf::{
     api::{self, ApiAccess, ApiAggregator},
+    schema_op::ID,
     service,
 };
 
 pub mod helper;
 
-pub use helper::TestHelper;
+pub use helper::{ApiHelper, TestHelper};
 
 /// Kind of API service.
 ///
@@ -61,22 +66,28 @@ impl TestKit {
     }
 
     pub fn api(&self) -> TestKitApi {
-        TestKitApi::new()
+        TestKitApi::new(self)
     }
 
     pub fn helper(&self) -> TestHelper {
         TestHelper::new(self)
     }
+
+    pub fn api_helper(&self) -> ApiHelper {
+        ApiHelper::new(self)
+    }
 }
 
 pub struct TestKitApi {
+    testkit: TestKit,
     test_server: TestServer,
     test_client: Client,
 }
 
 impl TestKitApi {
-    pub fn new() -> Self {
+    pub fn new(testkit: &TestKit) -> Self {
         TestKitApi {
+            testkit: testkit.clone(),
             test_server: create_test_server(),
             test_client: Client::new(),
         }
@@ -100,6 +111,29 @@ impl TestKitApi {
             ApiAccess::Private,
             kind.to_string(),
         )
+    }
+
+    /// Cara pintas untuk meng-otorisasi account,
+    /// atau dengan kata lain me-login-kan sehingga
+    /// nanti http client akan meng-embed X-Access-Token secara otomatis.
+    pub fn authorize(&mut self, account_id: ID) {
+        let mut headers = HeaderMap::new();
+        let token = self
+            .testkit
+            .helper()
+            .gen_access_token_for(account_id)
+            .expect("Cannot generate access token");
+        headers.insert("X-Access-Token", HeaderValue::from_str(&token.token).unwrap());
+        self.test_client = Client::builder()
+            .default_headers(headers)
+            .build()
+            .expect("Cannot build http client");
+    }
+
+    /// Assert json result from API,
+    /// akan gagal apabila hasil dari ApResult berisi kode error / status="error".
+    pub fn assert_success(&self, rv: &serde_json::Value) {
+        assert_eq!(rv, &json!({"code": 0, "status":"success", "description":""}));
     }
 }
 
