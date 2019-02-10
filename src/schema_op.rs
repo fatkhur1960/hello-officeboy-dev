@@ -90,11 +90,17 @@ impl<'a> Schema<'a> {
             .map_err(From::from)
     }
 
+    // @TODO(*): ini perlu pindah ke tx schema.
     /// Mentransfer sejumlah uang dari satu akun ke akun lainnya.
     pub fn transfer(&self, from: ID, to: ID, amount: f64) -> Result<()> {
         use crate::schema::accounts::{self, dsl};
 
         self.db.build_transaction().read_write().run(|| {
+            // pengirim dan penerima tidak boleh sama
+            if from == to {
+                Err(PaymentError::BadRequest("Invalid target".to_string()))?
+            }
+
             let from = self.get_account(from)?;
             let to = self.get_account(to)?;
 
@@ -104,6 +110,10 @@ impl<'a> Schema<'a> {
 
             if !from.active || !to.active {
                 Err(PaymentError::BadRequest("Account inactive".to_owned()))?
+            }
+
+            if amount <= 0.0f64 {
+                Err(PaymentError::InvalidParameter("Invalid amount".to_string()))?
             }
 
             debug!("transfer {} -> {} amount of {}", from, to, amount);

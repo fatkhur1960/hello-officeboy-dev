@@ -14,6 +14,8 @@ extern crate serde;
 #[macro_use]
 extern crate serde_json;
 extern crate serde_urlencoded;
+#[macro_use]
+extern crate lazy_static;
 
 use actix_web::{
     http::{header::HeaderValue, HeaderMap},

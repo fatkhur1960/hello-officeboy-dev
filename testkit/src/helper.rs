@@ -11,7 +11,10 @@ use diesel::{connection::Connection, pg::PgConnection};
 
 use crate::{ApiKind, TestKit, TestKitApi};
 
-use std::env;
+use std::{
+    env,
+    sync::{Arc, Mutex, MutexGuard},
+};
 
 pub struct AccountWithKey {
     pub account: Account,
@@ -29,6 +32,7 @@ impl AccountWithKey {
     }
 }
 
+#[allow(dead_code)]
 pub struct TestHelper {
     testkit: TestKit,
 }
@@ -40,8 +44,14 @@ impl TestHelper {
         }
     }
 
-    fn get_db() -> PgConnection {
-        PgConnection::establish(&env::var("DATABASE_URL").unwrap()).expect("Cannot connect to db")
+    fn get_db<'a>() -> MutexGuard<'a, PgConnection> {
+        lazy_static! {
+            static ref PG_CONN_FOR_TEST: Arc<Mutex<PgConnection>> = Arc::new(Mutex::new(
+                PgConnection::establish(&env::var("DATABASE_URL").unwrap()).expect("Cannot connect to db")
+            ));
+        }
+
+        PG_CONN_FOR_TEST.lock().unwrap()
     }
 
     pub fn get_account_by_id(&self, id: ID) -> Result<models::Account> {

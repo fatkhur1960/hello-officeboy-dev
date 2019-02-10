@@ -269,6 +269,13 @@ impl PublicApi {
             Err(ApiError::Unauthorized)?
         }
 
+        if query.body.amount > 1_000_000_000f64 {
+            // batas maksimal transfer sementara dibatasi
+            // untuk menghindari human error
+            // sampai jelas mekanismenya
+            Err(ApiError::InvalidParameter("Max limit reached".to_string()))?
+        }
+
         let schema = Schema::new(state.db());
 
         // verifikasi digital signature
