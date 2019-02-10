@@ -37,8 +37,10 @@ ____________    __      ____________,
 
     let service = PaymentService::new();
 
-    let public_listening_address = env::var("APF_PUBLIC_LISTENING").unwrap_or("0.0.0.0:8080".to_string());
-    let private_listening_address = env::var("APF_PRIVATE_LISTENING").unwrap_or("127.0.0.1:9090".to_string());
+    let public_listening_address =
+        env::var("APF_PUBLIC_LISTENING").unwrap_or_else(|_| "0.0.0.0:8080".to_string());
+    let private_listening_address =
+        env::var("APF_PRIVATE_LISTENING").unwrap_or_else(|_| "127.0.0.1:9090".to_string());
 
     let config = ServiceApiConfig::new(vec![
         ApiServer::new(ApiAccess::Public, public_listening_address),
