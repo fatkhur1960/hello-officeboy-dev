@@ -4,16 +4,13 @@ before_script:
   - diesel migration run
   - echo $DATABASE_URL
 
-# stable:cargo:
-#   # image: rustdocker/rust:stable
-#   # stage: test
-#   variables:
-#     DATABASE_URL: postgresql://postgres:123123@localhost/apf_test?sslmode=disable
-#     BUILD_FOR: nightly
-#   script:
-#     - cargo test --verbose
-#     - cargo build --release --bin apf_server
-#     - cp target/release/apf_server /home/gitlab-runner/releases/apf_server_build-`date +"%Y-%m-%d"`
+stable:cargo:
+  stage: test
+  variables:
+    DATABASE_URL: postgresql://postgres:123123@localhost/apf_test?sslmode=disable
+    BUILD_FOR: nightly
+  script:
+    - cargo test --verbose
 
 musl-build:cargo:
   image: anvie/rust-musl-build
