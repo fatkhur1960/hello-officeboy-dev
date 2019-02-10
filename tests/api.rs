@@ -12,11 +12,10 @@ use serde_json::Value as JsonValue;
 // use apf::api::SuccessReturn;
 use apf_testkit::ApiKind;
 
-use apf::api::{
-    payment::{Credit, Transfer, TxQuery},
-    ApiResult,
+use apf::{
+    api::payment::{Transfer, TxQuery},
+    util,
 };
-use apf::util;
 
 mod common;
 
@@ -138,7 +137,6 @@ fn test_transfer_valid() {
     // agar bisa transfer ke akun 2
     ah.credit_account_balance(ac1.id, 20.0, &ac1key);
 
-    let h = testkit.helper();
     let mut transfer = Transfer::new();
     transfer.set_from(ac1.id);
     transfer.set_to(ac2.id);
