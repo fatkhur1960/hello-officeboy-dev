@@ -21,7 +21,8 @@ fn test_register_and_activate_account() {
     let helper = testkit.helper();
     let api_helper = testkit.api_helper();
     let name = helper.generate_full_name();
-    let reg_token = api_helper.register_account(&name, &helper.generate_email(), &helper.generate_phone_num());
+    let reg_token =
+        api_helper.register_account(&name, &helper.generate_email(), &helper.generate_phone_num());
     let account = api_helper.activate_account(reg_token, "123");
     assert_eq!(account.full_name, name);
     helper.cleanup_account(account);
@@ -36,7 +37,8 @@ fn test_activate_account_invalid_token() {
 
     let name = helper.generate_full_name();
 
-    let reg_token = api_helper.register_account(&name, &helper.generate_email(), &helper.generate_phone_num());
+    let reg_token =
+        api_helper.register_account(&name, &helper.generate_email(), &helper.generate_phone_num());
     // this should panic
     let _ = api_helper.activate_account(reg_token + "invalid", "123");
 }

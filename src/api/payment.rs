@@ -8,13 +8,14 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 
 use crate::api::SuccessReturn;
-use crate::crypto::{self, SecretKey};
+use crate::crypto::{self, PublicKey, SecretKey, Signature};
 // use crate::models::Account;
 use crate::{
     api,
     api::payment::models::*,
     api::{Error as ApiError, HttpRequest as ApiHttpRequest, Result as ApiResult},
     auth,
+    error::Error,
     prelude::*,
     schema_op, tx,
 };
@@ -136,6 +137,19 @@ where
             signature: signature.to_hex(),
         }
     }
+
+    /// Untuk memverifikasi signature pada body ini.
+    pub fn verify(&self, public_key: &PublicKey) -> Result<()> {
+        if self.signature.is_empty() {
+            Err(Error::BadRequest("message has no signature.".to_string()))?
+        }
+        let bytes = self.body.write_to_bytes().expect("Cannot write to bytes");
+        let signature: Signature = self.signature.parse::<Signature>()?;
+        if !crypto::is_verified(bytes.as_slice(), &signature, public_key) {
+            Err(Error::Unauthorized)?
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -256,6 +270,12 @@ impl PublicApi {
         }
 
         let schema = Schema::new(state.db());
+
+        // verifikasi digital signature
+        let acc_key = schema.get_account_key(current_account.id)?;
+        let public_key = acc_key.pub_key.parse::<PublicKey>()?;
+        query.verify(&public_key)?;
+
         schema.transfer(query.body.from, query.body.to, query.body.amount)?;
 
         Ok(())

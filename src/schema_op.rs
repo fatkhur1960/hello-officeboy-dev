@@ -277,6 +277,17 @@ impl<'a> Schema<'a> {
         })
     }
 
+    /// Mendapatkan informasi key untuk akun.
+    pub fn get_account_key(&self, account_id: ID) -> Result<AccountKey> {
+        use crate::schema::account_keys::{self, dsl as ak_dsl};
+        use crate::schema::accounts;
+
+        ak_dsl::account_keys
+            .filter(ak_dsl::account_id.eq(account_id))
+            .first(self.db)
+            .map_err(From::from)
+    }
+
     /// Buat akun baru secara langsung.
     pub fn create_account(&self, new_account: &NewAccount) -> Result<(Account, (PublicKey, SecretKey))> {
         use crate::schema::account_keys::{self, dsl as ak_dsl};

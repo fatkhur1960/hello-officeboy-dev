@@ -59,3 +59,9 @@ impl From<diesel::result::Error> for Error {
         Error::Storage(e)
     }
 }
+
+impl From<hex::FromHexError> for Error {
+    fn from(e: hex::FromHexError) -> Self {
+        Error::BadRequest("Invalid data".to_string())
+    }
+}

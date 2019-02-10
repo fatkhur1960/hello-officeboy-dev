@@ -74,7 +74,8 @@ fn test_credit_account_balance() {
 }
 
 #[test]
-fn test_transfer() {
+#[should_panic(expected = "transfer: BadRequest(\"Bad request: message has no signature.\")")]
+fn test_transfer_without_signature() {
     let testkit = create_testkit();
     let h = testkit.helper();
     let ah = testkit.api_helper();
@@ -100,6 +101,51 @@ fn test_transfer() {
     transfer.set_timestamp(util::current_time_millis());
     transfer.set_seed(util::current_time_millis());
     let data = TxQuery::new(transfer);
+
+    let mut api = testkit.api();
+    api.authorize(ac1.id);
+
+    api.assert_success(
+        &api.public(ApiKind::Payment)
+            .query(&data)
+            .post::<JsonValue>("v1/transfer")
+            .expect("transfer"),
+    );
+
+    // check
+    let ac1 = h.get_account_by_id(ac1.id).unwrap();
+    let ac2 = h.get_account_by_id(ac2.id).unwrap();
+    assert_eq!(ac1.balance, 5.0);
+    assert_eq!(ac2.balance, 15.0);
+}
+
+#[test]
+fn test_transfer_valid() {
+    let testkit = create_testkit();
+    let h = testkit.helper();
+    let ah = testkit.api_helper();
+    let accounts = h.generate_accounts(2, false);
+    let mut iter = accounts.iter();
+    let ac1 = iter.next().unwrap();
+    let ac2 = iter.next().unwrap();
+    let ac1key = &ac1.secret_key;
+    let ac1 = h.get_account_by_id(ac1.account.id).unwrap();
+    let ac2 = h.get_account_by_id(ac2.account.id).unwrap();
+    assert_eq!(ac1.balance, 0.0);
+    assert_eq!(ac2.balance, 0.0);
+
+    // lakukan topup dulu ke akun 1
+    // agar bisa transfer ke akun 2
+    ah.credit_account_balance(ac1.id, 20.0, &ac1key);
+
+    let h = testkit.helper();
+    let mut transfer = Transfer::new();
+    transfer.set_from(ac1.id);
+    transfer.set_to(ac2.id);
+    transfer.set_amount(15.0);
+    transfer.set_timestamp(util::current_time_millis());
+    transfer.set_seed(util::current_time_millis());
+    let data = TxQuery::new(transfer).sign(&ac1key);
 
     let mut api = testkit.api();
     api.authorize(ac1.id);

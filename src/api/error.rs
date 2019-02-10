@@ -73,6 +73,12 @@ impl From<failure::Error> for Error {
     }
 }
 
+impl From<hex::FromHexError> for Error {
+    fn from(e: hex::FromHexError) -> Self {
+        Error::BadRequest("Invalid data".to_string())
+    }
+}
+
 use diesel::result::DatabaseErrorKind;
 
 impl From<PaymentError> for Error {
