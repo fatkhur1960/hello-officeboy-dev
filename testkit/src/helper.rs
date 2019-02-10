@@ -130,10 +130,11 @@ impl TestHelper {
         self.cleanup_account_by_id(account.id);
     }
 
-    pub fn cleanup_accounts(&self, accounts: Vec<AccountWithKey>) {
+    /// Bersihkan data akun berdasarkan list dari ID-nya.
+    pub fn cleanup_accounts(&self, account_ids: Vec<ID>) {
         let db = Self::get_db();
         let schema = TestSchema::new(&db);
-        schema.cleanup_accounts(accounts.iter().map(|a| a.account.id).collect());
+        schema.cleanup_accounts(account_ids);
     }
 }
 

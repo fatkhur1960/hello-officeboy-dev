@@ -403,6 +403,7 @@ impl<'a> TestSchema<'a> {
 
     /// Menghapus akun secara batch
     pub fn cleanup_accounts(&self, account_ids: Vec<ID>) {
+        use crate::schema::account_passhash::dsl as acp_dsl;
         use crate::schema::accounts;
         use crate::schema::accounts::dsl;
 
@@ -412,6 +413,8 @@ impl<'a> TestSchema<'a> {
             .read_write()
             .run::<(), diesel::result::Error, _>(|| {
                 for id in account_ids {
+                    diesel::delete(acp_dsl::account_passhash.filter(acp_dsl::account_id.eq(id)))
+                        .execute(self.db)?;
                     diesel::delete(dsl::accounts.filter(dsl::id.eq(id))).execute(self.db)?;
                 }
                 Ok(())

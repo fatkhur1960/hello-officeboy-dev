@@ -26,11 +26,11 @@ fmt:
 
 test:
 	@@echo Testing...
-	@@source .env && cargo test
+	@@DATABASE_URL=postgresql://localhost/apf_test?sslmode=disable cargo test
 
 test-dev:
 	@@echo Testing...
-	@@cargo test -- --nocapture
+	@@DATABASE_URL=postgresql://localhost/apf_test?sslmode=disable cargo test -- --nocapture
 
 lint:
 	@@echo Linting...
@@ -55,7 +55,7 @@ release-linux:
 	@@echo Ini akan melakukan build menggunakan Docker, 
 	@@echo nantinya output binary bisa ditemukan di target/x86_64-unknown-linux-musl/release
 	@@echo Building for musl Linux...
-	@@@docker run -it --rm -v $(PROJ_DIR):/workdir \
+	@@docker run -it --rm -v $(PROJ_DIR):/workdir \
 					-v /tmp:/root/.cargo/git \
 					-v /tmp:/root/.cargo/registry \
 					anvie/rust-musl-build:latest \

@@ -71,6 +71,8 @@ fn test_credit_account_balance() {
 
     let acc = h.get_account_by_id(acc.id).unwrap();
     assert_eq!(acc.balance, 10.0);
+
+    h.cleanup_account_by_id(acc.id);
 }
 
 fn test_transfer<F>(func: F)
@@ -119,6 +121,8 @@ where
     let ac2 = h.get_account_by_id(ac2.id).unwrap();
     assert_eq!(ac1.balance, 5.0);
     assert_eq!(ac2.balance, 15.0);
+
+    h.cleanup_accounts(vec![ac1.id, ac2.id]);
 }
 
 #[test]
