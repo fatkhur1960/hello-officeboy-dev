@@ -1,7 +1,7 @@
-Ansvia Payment Framework
+Ansvia Project Framework
 ============================
 
-[![pipeline status](https://gitlab.com/anvie/payment/badges/master/pipeline.svg)](https://gitlab.com/anvie/payment/commits/master)
+[![pipeline status](https://gitlab.com/anvie/apf/badges/master/pipeline.svg)](https://gitlab.com/anvie/apf/commits/master)
 
 Merupakan full stack framework untuk membuat aplikasi. Ini bisa digunakan sebagai library atau juga digunakan sebagai base project template. 
 APF telah dipersiapkan dengan komponen-komponen penting dalam membangun aplikasi full stack dari A-Z.
