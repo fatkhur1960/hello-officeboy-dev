@@ -55,6 +55,7 @@ impl Service for PaymentService {
             .endpoint("v1/accounts", PrivateApi::search_accounts)
             .endpoint("v1/account/search", PrivateApi::search_accounts)
             .endpoint("v1/account/count", PrivateApi::account_count)
+            .endpoint("v1/account/info", PrivateApi::account_info)
             .endpoint("v1/transactions", PrivateApi::transactions);
     }
 }

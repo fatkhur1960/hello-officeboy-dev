@@ -59,13 +59,16 @@ export default {
           this.items = resp.data.entries.map(this.mapItemFunc);
         });
     },
+    showDetail(item){
+      this.$router.push("/dashboard/accounts/" + item.id);
+    }
     // mapItem(item){
     //   return this.mapItemFunc(item);
     //   // return item;
     // }
   },
   created() {
-    console.log("created");
+    // console.log("AnsTable created: " + this.$route.path);
     this.items = [];
     this.page = 0;
     this.limit = 5;

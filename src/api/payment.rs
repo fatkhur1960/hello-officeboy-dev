@@ -164,16 +164,22 @@ pub struct BalanceQuery {
     pub account: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AccountQuery {
+    pub id:ID,
+
+}
+
 #[derive(Debug, Serialize)]
 pub struct AccountInfo {
-    pub id: String,
+    pub id: ID,
     pub balance: f64,
 }
 
 impl AccountInfo {
-    pub fn new(id: &str, balance: f64) -> Self {
+    pub fn new(id: ID, balance: f64) -> Self {
         Self {
-            id: id.to_owned(),
+            id,
             balance,
         }
     }
@@ -299,7 +305,8 @@ impl PublicApi {
     #[api_endpoint(path = "/balance", auth = "required")]
     pub fn balance(state: &AppState, query: BalanceQuery) -> AccountInfo {
         // @TODO(*): Code here
-        Ok(AccountInfo::new(&query.account, 0.0f64))
+        // Ok(AccountInfo::new(&query.account, 0.0f64))
+        unimplemented!()
     }
 
     /// Meng-otorisasi akun yang telah teregister
@@ -473,6 +480,17 @@ impl PrivateApi {
 
         schema
             .get_account_count()
+            .map(SuccessReturn::new)
+            .map_err(From::from)
+    }
+
+    /// Mendapatkan jumlah akun secara keseluruhan
+    #[api_endpoint(path = "/account/info", auth="required")]
+    pub fn account_info(query: AccountQuery) -> SuccessReturn<db::Account> {
+        let schema = Schema::new(state.db());
+
+        schema
+            .get_account(query.id)
             .map(SuccessReturn::new)
             .map_err(From::from)
     }

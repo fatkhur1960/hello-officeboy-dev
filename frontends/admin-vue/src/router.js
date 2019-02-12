@@ -27,6 +27,11 @@ export default new Router({
       component: Dashboard
     },
     {
+      path: '/dashboard/accounts/:id',
+      name: 'Account',
+      component: Dashboard
+    },
+    {
       path: '/dashboard/transactions',
       name: 'Transactions',
       component: Dashboard
