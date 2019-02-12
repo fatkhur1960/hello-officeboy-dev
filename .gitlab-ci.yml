@@ -10,7 +10,8 @@ stable:cargo:
     DATABASE_URL: postgresql://postgres:123123@localhost/apf_test?sslmode=disable
     BUILD_FOR: nightly
   script:
-    - cargo test --verbose
+#    - cargo test --verbose
+    - docker run --rm -v $PWD:/workdir -v ~/.cargo/git:/root/.cargo/git -v ~/.cargo/registry:/root/.cargo/registry anvie/rust-musl-build:latest cargo build test --verbose
 
 musl-build:cargo:
   image: anvie/rust-musl-build
