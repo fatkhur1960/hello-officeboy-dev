@@ -136,36 +136,39 @@ Troubleshooting
 
 *Case*
 
-    docker-compose up
+    $ docker-compose up
     ERROR: Version in "./docker-compose.yml" is unsupported.
 
-versi docker-compose tidak support 
+Itu artinya versi `docker-compose` yang ada di sistem mu tidak support, maka perlu dilakukan install manual:
 
 *Fix (ubuntu 16.04)* 
 
-    sudo curl -L sudo curl -L "https://github.com/docker/compose/releases/download/1.22.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    sudo chmod +x /usr/local/bin/docker-compose
+    $ sudo curl -L sudo curl -L "https://github.com/docker/compose/releases/download/1.22.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    $ sudo chmod +x /usr/local/bin/docker-compose
 
 *Case*
  
-    On installing diesel with 
-    cargo install diesel_cli --no-default-features --features postgres 
+Ketika install diesel muncul error seperti berikut:
+
+    $ cargo install diesel_cli --no-default-features --features postgres 
      Error : cannot find lpg
 
-library postgres-devel belum diinstall. Dibutuhkan diesel.
+Itu artinya library postgres-devel belum diinstall, maka perlu intsall dulu libpq:
 
 *Fix (ubuntu 16.04)* 
     sudo apt install libpq-dev   
 
 *Case*
+
+Ketika sedang compile/test gagal dengan error kurang lebih seperti ini:
     
     ERROR apf::api::error] error: "relation \"transactions\" does not exist"
 
-Table relation belum di apply oleh diesel
+Itu artinya table schema mu yang digunakan untuk test belum up-to-date dengan schema terbaru, maka perlu dilakukan migration untuk apply patch-nya:
 
 *Fix (ubuntu 16.04)*
    
-    diesel migration run --database-url postgresql://localhost/apf_test?sslmode=disable
+    $ diesel migration run --database-url postgresql://localhost/apf_test?sslmode=disable
 
 
 ----
