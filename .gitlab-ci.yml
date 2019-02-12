@@ -12,7 +12,7 @@ stable:cargo:
     BUILD_FOR: nightly
   script:
 #    - cargo test --verbose
-    - docker run --rm -v $PWD:/workdir -v ~/.cargo/git:/root/.cargo/git -v ~/.cargo/registry:/root/.cargo/registry anvie/rust-musl-build:latest cargo build test --verbose
+    - docker run --rm -v $PWD:/workdir -v ~/.cargo/git:/root/.cargo/git -v ~/.cargo/registry:/root/.cargo/registry anvie/rust-musl-build:latest cargo test --verbose
 
 musl-build:cargo:
   image: anvie/rust-musl-build
