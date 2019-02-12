@@ -5,7 +5,7 @@
         <img alt="Payment logo" src="../assets/retro-coin-icon.png">
 
         <h1>{{ title }}</h1>
-        
+
         <p>an Easy Payment Solution</p>
       </div>
       <div class="seven wide column left aligned">
@@ -16,11 +16,11 @@
           <div class="ui divider"></div>
           <form class="ui form" method="POST">
             <div class="field">
-              <label>User Name:</label>
+              <label>Email/No telp:</label>
               <input type="text" name="email" placeholder="User Name" ref="inputEmail">
             </div>
             <div class="field">
-              <label>Password:</label>
+              <label>Kata kunci:</label>
               <input type="password" name="password" placeholder="Password" ref="inputPassword">
             </div>
             <div class="field">
@@ -43,27 +43,39 @@ export default {
   props: {
     title: String
   },
-  data(){
+  data() {
     return {
       token: this.token
-    }
+    };
   },
   methods: {
     doLogin: function(event) {
       var self = this;
       if (event) event.preventDefault();
-      this.$apf.login(this.$refs.inputEmail.value, null, this.$refs.inputPassword.value)
-        .then((resp) => {
-          if (resp.data.token){
+      this.$apf
+        .login(
+          this.$refs.inputEmail.value,
+          null,
+          this.$refs.inputPassword.value
+        )
+        .then(resp => {
+          if (resp.data.token) {
             // self.token = resp.data.token;
             // self.$session.set("token", self.token);
-            this.$apf.getMeInfo()
-              .then(self._handleGetMeInfo);
+            this.$apf.getMeInfo().then(self._handleGetMeInfo);
           }
         })
+        .catch(_e => {
+          self.$notify({
+            group: "auth",
+            title: "Login",
+            type: "warn",
+            text: "Gagal melakukan login, email/phone atau kata kunci salah."
+          });
+        });
     },
-    _handleGetMeInfo(_resp){
-      this.$router.push("/dashboard")
+    _handleGetMeInfo(_resp) {
+      this.$router.push("/dashboard");
     }
   }
 };

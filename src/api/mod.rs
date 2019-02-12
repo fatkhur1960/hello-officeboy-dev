@@ -311,6 +311,7 @@ where
     // @TODO(*): Regex ini mungkin perlu dibuat lazy_static?
     let re = Regex::new(r"missing field `(.*?)`").unwrap();
     let err_desc = format!("{}", e);
+    debug!("err_desc: {}", err_desc);
     let mut iter = re.captures_iter(&err_desc);
     if let Some(field) = iter.next() {
         Err(actix_web::Error::from(Error::InvalidParameter(format!(

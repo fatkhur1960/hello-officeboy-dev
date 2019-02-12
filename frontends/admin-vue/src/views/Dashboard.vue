@@ -13,7 +13,9 @@
          :itemMap="['id', 'balance']"
          :searchable="true"
          :withActionButton="true"
-         :mapItemFunc="userListAllMapper2" />
+         :mapItemFunc="userListAllMapper2">
+         
+      </AnsTable>
 
       <AnsTable v-if="currentPage['/dashboard/accounts']" 
          dataSourceUrl="/accounts"

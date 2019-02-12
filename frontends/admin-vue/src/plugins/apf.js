@@ -6,13 +6,13 @@ export default class Apf {
 
     var api;
 
-    if (Vue.config.runMode == "production"){
+    if (Vue.config.runMode == "prod"){
       api = new ApiClient("http://localhost:8080/api/payment/v1", 
         "http://localhost:9090/api/payment/v1");
     }else if (Vue.config.runMode == "dev"){
       api = new ApiClient("http://localhost:8080/api/payment/v1", 
         "http://localhost:9090/api/payment/v1");
-    }else if (Vue.config.runMode == "apiary"){
+    }else if (Vue.config.runMode == "mock"){
       api = new ApiClient("http://private-b1a4a4-anvie.apiary-mock.com/api/payment/v1", 
       "http://private-b1a4a4-anvie.apiary-mock.com/api/payment/v1");
     }else{
@@ -44,8 +44,7 @@ export default class Apf {
               updateSession(resp.data.token);
             }
             return resp;
-          })
-          ;
+          });
       },
       unauthorize() {
         Vue.prototype.$session.remove("token");
