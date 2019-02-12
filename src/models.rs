@@ -76,6 +76,7 @@ pub struct RegisterAccount {
     pub email: String,
     pub phone_num: String,
     pub register_time: NaiveDateTime,
+    pub code: String,
 }
 
 #[doc(hidden)]
