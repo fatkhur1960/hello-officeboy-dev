@@ -35,7 +35,7 @@ use apf::{
 
 pub mod helper;
 
-pub use helper::{ApiHelper, TestHelper};
+pub use crate::helper::{ApiHelper, TestHelper};
 
 /// Kind of API service.
 ///

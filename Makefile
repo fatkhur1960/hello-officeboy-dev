@@ -61,9 +61,15 @@ release-linux:
 					anvie/rust-musl-build:latest \
 					cargo build --release --target=x86_64-unknown-linux-musl
 
+DATABASE_TEST_URL=postgresql://localhost/apf_test?sslmode=disable
+
 test-env:
-	diesel setup --database-url postgresql://localhost/apf_test?sslmode=disable
+	diesel setup --database-url $(DATABASE_TEST_URL)
+  diesel migration run --database-url $(DATABASE_TEST_URL)
+
+test-env-redo:
+	diesel migration redo --database-url $(DATABASE_TEST_URL)
 
 .PHONY: prepare docs lib-docs api-docs fmt \
 		test test-dev lint audit commit \
-		release test-env release-linux
+		release test-env test-env-redo release-linux

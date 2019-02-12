@@ -20,7 +20,7 @@ use apf::{
 
 mod common;
 
-use common::create_testkit;
+use crate::common::create_testkit;
 
 #[test]
 fn test_get_info() {
@@ -38,8 +38,8 @@ fn test_float_compare() {
     let a = 1.234f64;
     let b = 1.235f64;
 
-    dbg!((a - b).abs());
-    dbg!((a - b).abs() < 0.1);
+    // dbg!((a - b).abs());
+    // dbg!((a - b).abs() < 0.1);
 
     assert!((a - b).abs() < 0.01);
 }

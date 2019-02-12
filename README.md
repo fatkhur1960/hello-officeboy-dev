@@ -132,3 +132,43 @@ Sebelum melakukan commit harus:
 
 ----
 Apabila ada yang perlu ditanyakan contact: r@ansvia.com
+
+
+Troubleshooting
+-----------------
+
+
+*Case*
+
+    docker-compose up
+    ERROR: Version in "./docker-compose.yml" is unsupported.
+
+versi docker-compose tidak support 
+
+*Fix (ubuntu 16.04)* 
+
+    sudo curl -L sudo curl -L "https://github.com/docker/compose/releases/download/1.22.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    sudo chmod +x /usr/local/bin/docker-compose
+
+*Case*
+ 
+    On installing diesel with 
+    cargo install diesel_cli --no-default-features --features postgres 
+     Error : cannot find lpg
+
+library postgres-devel belum diinstall. Dibutuhkan diesel.
+
+*Fix (ubuntu 16.04)* 
+    sudo apt install libpq-dev   
+
+*Case*
+    
+    ERROR apf::api::error] error: "relation \"transactions\" does not exist"
+
+Table relation belum di apply oleh diesel
+
+*Fix (ubuntu 16.04)*
+   
+    diesel migration run --database-url postgresql://localhost/apf_test?sslmode=disable
+
+

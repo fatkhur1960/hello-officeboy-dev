@@ -146,8 +146,6 @@ pub struct AccountKey {
 #[derive(Queryable, Serialize)]
 pub struct Transaction {
     pub id: ID,
-    pub business_cycle: i64,
-    pub stan: i64,
     pub dbcr_flag: i32,
     pub ttype: i32,
     pub subtype: i32,
