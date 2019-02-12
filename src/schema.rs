@@ -114,6 +114,7 @@ table! {
         email -> Varchar,
         phone_num -> Varchar,
         register_time -> Timestamp,
+        code -> Varchar,
     }
 }
 

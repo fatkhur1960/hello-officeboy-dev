@@ -25,6 +25,7 @@ pub struct NewRegisterAccount<'a> {
     pub email: &'a str,
     pub phone_num: &'a str,
     pub register_time: NaiveDateTime,
+    pub code: &'a str,
 }
 
 #[derive(Insertable)]
@@ -231,6 +232,7 @@ impl<'a> Schema<'a> {
             email,
             phone_num,
             register_time: Utc::now().naive_utc(),
+            code: &token::generate_activation_code(),
         };
 
         diesel::insert_into(register_accounts::table)
