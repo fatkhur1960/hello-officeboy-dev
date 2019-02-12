@@ -130,13 +130,9 @@ Sebelum melakukan commit harus:
 * Memastikan kodenya telah aman dari dependensi yang bermasalah dengan menjalankan perintah: `make audit`.
 * Menggunakan tata bahasa yang mudah dipahami dan menjelaskan perubahan mendasar pada commit message-nya.
 
-----
-Apabila ada yang perlu ditanyakan contact: r@ansvia.com
-
 
 Troubleshooting
 -----------------
-
 
 *Case*
 
@@ -171,4 +167,7 @@ Table relation belum di apply oleh diesel
    
     diesel migration run --database-url postgresql://localhost/apf_test?sslmode=disable
 
+
+----
+Apabila ada yang perlu ditanyakan contact: r@ansvia.com
 
