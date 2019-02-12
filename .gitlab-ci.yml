@@ -1,6 +1,7 @@
 before_script:
   - rustup update stable
   - rustup default stable
+  - diesel database reset
   - diesel migration run
   - echo $DATABASE_URL
 
