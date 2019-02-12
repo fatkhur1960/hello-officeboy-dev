@@ -206,8 +206,11 @@ mod tests {
 
         println!("signature: {}", signature.to_hex());
 
-        assert_eq!(signature.to_hex(), "e5628fac8dfd4d61da9bdca8c63e1ba81447d6151d0017daee4b35146df688f1\
-                                        889f7ee7b06fe87bb1a385bbe1f6437aa3463566fbf32d31c267e1f6717c7f0d");
+        assert_eq!(
+            signature.to_hex(),
+            "e5628fac8dfd4d61da9bdca8c63e1ba81447d6151d0017daee4b35146df688f1\
+             889f7ee7b06fe87bb1a385bbe1f6437aa3463566fbf32d31c267e1f6717c7f0d"
+        );
     }
 
     #[test]

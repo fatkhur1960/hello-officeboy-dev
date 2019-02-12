@@ -1,8 +1,6 @@
 
 CREATE TABLE IF NOT EXISTS transactions (
   id                BIGSERIAL PRIMARY KEY NOT NULL,
-  business_cycle    BIGINT                NOT NULL DEFAULT 0, -- untuk kepentingan cut off, rekonsiliasi dan settlement dengan entity luar
-  stan              BIGINT                NOT NULL DEFAULT 0, -- untuk kepentingan rekonsiliasi dan settlement dengan entity luar
   dbcr_flag         INT                   NOT NULL, --1 debit(ex. pay service yang bukan melalui merchant bukan doi, disburse),
                                                     --2 credit(ex. top up dr atm),
                                                     --3 debit credit(ex. transfer or pay wallet atau merchant doi)
@@ -16,8 +14,6 @@ CREATE TABLE IF NOT EXISTS transactions (
   from_wallet       BIGINT,
   to_wallet         BIGINT,
   merchant_id         BIGINT,
-  notes             TEXT,                 -- berisi catatan - catatan dari transaksi ini. Misal nomor debit card yang dipakai top up, kode voucher ketika isi pulsa dll
-  CONSTRAINT trx_bc_st UNIQUE (business_cycle, stan)
+  notes             TEXT                 -- berisi catatan - catatan dari transaksi ini. Misal nomor debit card yang dipakai top up, kode voucher ketika isi pulsa dll
 );
-CREATE INDEX trx_bc_idx ON transactions(business_cycle, stan);
 

@@ -120,8 +120,6 @@ table! {
 table! {
     transactions (id) {
         id -> Int8,
-        business_cycle -> Int8,
-        stan -> Int8,
         dbcr_flag -> Int4,
         ttype -> Int4,
         subttype -> Int4,
@@ -142,7 +140,6 @@ joinable!(account_keys -> accounts (account_id));
 joinable!(account_passhash -> accounts (account_id));
 joinable!(addresses -> accounts (account_id));
 joinable!(invoice_items -> invoices (invoice_id));
-joinable!(invoices -> accounts (paid_by));
 joinable!(merchant -> accounts (account_id));
 joinable!(merchant -> bank (account_inst_id));
 joinable!(payment_history -> accounts (payer));

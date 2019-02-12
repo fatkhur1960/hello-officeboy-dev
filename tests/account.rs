@@ -1,6 +1,6 @@
 mod common;
 
-use common::prelude::*;
+use crate::common::prelude::*;
 
 #[test]
 fn test_new_account_has_keypair() {

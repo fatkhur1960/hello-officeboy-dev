@@ -43,8 +43,6 @@ pub struct NewInvoiceItem<'a> {
 #[table_name = "transactions"]
 #[doc(hidden)]
 pub struct NewTransaction<'a> {
-    pub business_cycle: ID,
-    pub stan: i64,
     pub dbcr_flag: i32,
     pub ttype: i32,
     pub subttype: i32,
@@ -103,8 +101,6 @@ impl<'a> Schema<'a> {
             use crate::schema::transactions::{self, dsl};
             diesel::insert_into(transactions::table)
                 .values(&NewTransaction {
-                    business_cycle: 1,
-                    stan: 1, // @TODO(*): fix this
                     dbcr_flag: 2,
                     ttype: 1,
                     subttype: 1,
