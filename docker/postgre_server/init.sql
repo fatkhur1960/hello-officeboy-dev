@@ -77,7 +77,7 @@ CREATE TABLE account_keys (
 
 CREATE TABLE access_tokens (
     token TEXT PRIMARY KEY,
-    account_id BIGINT NOT NULL REFERENCES accounts (id),
+    account_id BIGINT NOT NULL REFERENCES accounts (id) ON DELETE CASCADE,
     created TIMESTAMP NOT NULL,
     valid_thru TIMESTAMP NOT NULL
 );
@@ -99,7 +99,7 @@ CREATE TABLE invoices (
     notes TEXT NOT NULL DEFAULT '',
     created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     paid BOOLEAN NOT NULL DEFAULT FALSE,
-    paid_by BIGINT NOT NULL REFERENCES accounts (id) DEFAULT 0,
+    paid_by BIGINT NOT NULL DEFAULT 0,
     paid_at TIMESTAMP
 );
 
@@ -122,4 +122,20 @@ CREATE TABLE payment_history (
     via VARCHAR(32) NOT NULL, -- via client, eg: Browser, App, other devices, etc.
     ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+
+CREATE TABLE IF NOT EXISTS bank (
+  id                BIGSERIAL PRIMARY KEY NOT NULL,
+  name              VARCHAR(40)           UNIQUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS merchant (
+  id                BIGSERIAL PRIMARY KEY NOT NULL,
+  name              VARCHAR(40)           UNIQUE NOT NULL,
+  balance           NUMERIC(15, 6)        NOT NULL,
+  account_inst_id   BIGINT                REFERENCES bank(id),
+  account_no        VARCHAR(255),
+  account_id        BIGINT                NOT NULL REFERENCES accounts(id)
+);
+
 

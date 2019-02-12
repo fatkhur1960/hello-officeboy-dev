@@ -142,6 +142,26 @@ pub struct AccountKey {
     pub active: bool,
 }
 
+#[doc(hidden)]
+#[derive(Queryable, Serialize)]
+pub struct Transaction {
+    pub id: ID,
+    pub business_cycle: i64,
+    pub stan: i64,
+    pub dbcr_flag: i32,
+    pub ttype: i32,
+    pub subtype: i32,
+    pub amount: f64,
+    pub status: i32,
+    pub created: NaiveDateTime,
+    pub last_updated: NaiveDateTime,
+    pub invoice: Option<String>,
+    pub from_wallet: Option<ID>,
+    pub to_wallet: Option<ID>,
+    pub merchant_id: Option<ID>,
+    pub notes: Option<String>,
+}
+
 impl fmt::Display for Account {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Account({}, {})", self.id, self.full_name)

@@ -75,6 +75,15 @@ Untuk melakukan test ketikkan:
 
     $ make test
 
+Menjalankan
+-------------
+
+Cara menjalankan server APF cukup ketikkan:
+
+    $ cargo run --bin apf_server
+
+
+
 Frontend
 ------------
 

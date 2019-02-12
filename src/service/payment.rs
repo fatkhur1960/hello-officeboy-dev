@@ -45,6 +45,7 @@ impl Service for PaymentService {
             .endpoint_mut("v1/pay", PublicApi::pay)
             .endpoint_mut("v1/account/register", PublicApi::register_account)
             .endpoint_mut("v1/account/activate", PublicApi::activate_account)
+            // .endpoint_mut("v1/account/accounts", PublicApi::activate_account)
             .endpoint_mut("v1/authorize", PublicApi::authorize);
 
         builder
@@ -53,6 +54,7 @@ impl Service for PaymentService {
             .endpoint_mut("v1/debit", PrivateApi::debit)
             .endpoint("v1/accounts", PrivateApi::search_accounts)
             .endpoint("v1/account/search", PrivateApi::search_accounts)
-            .endpoint("v1/account/count", PrivateApi::account_count);
+            .endpoint("v1/account/count", PrivateApi::account_count)
+            .endpoint("v1/transactions", PrivateApi::transactions);
     }
 }

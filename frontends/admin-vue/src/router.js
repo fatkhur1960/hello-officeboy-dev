@@ -2,6 +2,8 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import Home from './views/Home.vue'
 import Dashboard from './views/Dashboard.vue'
+// import DashboardAccounts from './views/dashboard/Accounts.vue'
+// import DashboardTransactions from './views/dashboard/Transactions.vue'
 
 Vue.use(Router)
 
@@ -22,6 +24,11 @@ export default new Router({
     {
       path: '/dashboard/accounts',
       name: 'Accounts',
+      component: Dashboard
+    },
+    {
+      path: '/dashboard/transactions',
+      name: 'Transactions',
       component: Dashboard
     },
     {

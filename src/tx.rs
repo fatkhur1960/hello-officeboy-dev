@@ -10,7 +10,8 @@ use crate::{
     error::Error as PaymentError,
     models::{Account, Invoice, InvoiceItem},
     result::Result,
-    schema::{invoice_items, invoices, payment_history},
+    schema::{invoice_items, invoices, payment_history, transactions},
+    util,
 };
 
 use std::sync::Arc;
@@ -36,6 +37,26 @@ pub struct NewInvoiceItem<'a> {
     pub invoice_id: ID,
     pub name: &'a str,
     pub price: f64,
+}
+
+#[derive(Insertable)]
+#[table_name = "transactions"]
+#[doc(hidden)]
+pub struct NewTransaction<'a> {
+    pub business_cycle: ID,
+    pub stan: i64,
+    pub dbcr_flag: i32,
+    pub ttype: i32,
+    pub subttype: i32,
+    pub amount: f64,
+    pub status: i32,
+    pub created: NaiveDateTime,
+    pub last_updated: NaiveDateTime,
+    pub invoice: Option<&'a str>,
+    pub from_wallet: Option<ID>,
+    pub to_wallet: Option<ID>,
+    pub merchant_id: Option<ID>,
+    pub notes: Option<&'a str>,
 }
 
 impl<'a> NewInvoiceItem<'a> {
@@ -71,12 +92,34 @@ impl<'a> Schema<'a> {
 
     /// Meng-kredit akun sejumlah uang
     pub fn credit(&self, account: &Account, amount: f64) -> Result<()> {
-        use crate::schema::accounts::{self, dsl};
-
-        diesel::update(dsl::accounts.filter(dsl::id.eq(account.id)))
-            .set(dsl::balance.eq(dsl::balance + amount))
-            .execute(self.db)?;
-
+        // @TODO(hanky): fix this history transaction logic
+        {
+            use crate::schema::accounts::{self, dsl};
+            diesel::update(dsl::accounts.filter(dsl::id.eq(account.id)))
+                .set(dsl::balance.eq(dsl::balance + amount))
+                .execute(self.db)?;
+        }
+        {
+            use crate::schema::transactions::{self, dsl};
+            diesel::insert_into(transactions::table)
+                .values(&NewTransaction {
+                    business_cycle: 1,
+                    stan: 1, // @TODO(*): fix this
+                    dbcr_flag: 2,
+                    ttype: 1,
+                    subttype: 1,
+                    amount,
+                    status: 0,
+                    created: util::now(),
+                    last_updated: util::now(),
+                    invoice: None,
+                    from_wallet: None,
+                    to_wallet: Some(account.id),
+                    merchant_id: None,
+                    notes: None,
+                })
+                .execute(self.db)?;
+        }
         Ok(())
     }
 

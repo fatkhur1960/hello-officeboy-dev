@@ -347,6 +347,18 @@ impl<'a> Schema<'a> {
             .map_err(From::from)
     }
 
+    /// Get list of transactions
+    pub fn get_transactions(&self, offset: i64, limit: i64) -> Result<Vec<Transaction>> {
+        use crate::schema::transactions;
+        use crate::schema::transactions::dsl;
+
+        dsl::transactions
+            .offset(offset)
+            .limit(limit)
+            .load(self.db)
+            .map_err(From::from)
+    }
+
     /// Mendapatkan jumlah akun keseluruhan di dalam database.
     pub fn get_account_count(&self) -> Result<i64> {
         use crate::schema::accounts;

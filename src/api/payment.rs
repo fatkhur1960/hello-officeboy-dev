@@ -9,7 +9,7 @@ use serde_json::Value as JsonValue;
 
 use crate::api::SuccessReturn;
 use crate::crypto::{self, PublicKey, SecretKey, Signature};
-// use crate::models::Account;
+
 use crate::{
     api,
     api::payment::models::*,
@@ -28,6 +28,13 @@ pub struct EntriesResult<T> {
 
 #[derive(Deserialize)]
 pub struct ListAccount {
+    pub query: Option<String>,
+    pub page: i64,
+    pub limit: i64,
+}
+
+#[derive(Deserialize)]
+pub struct QueryEntries {
     pub query: Option<String>,
     pub page: i64,
     pub limit: i64,
@@ -374,12 +381,8 @@ impl PublicApi {
     }
 
     /// API endpoint untuk melakukan pembayaran.
-    #[authorized_only(user)]
-    pub fn pay(
-        state: &mut AppState,
-        query: TxQuery<Pay>,
-        req: &ApiHttpRequest,
-    ) -> ApiResult<SuccessReturn<ID>> {
+    #[api_endpoint(path = "/pay", auth = "required", mutable)]
+    pub fn pay(query: TxQuery<Pay>) -> SuccessReturn<ID> {
         let payer = {
             let schema = schema_op::Schema::new(state.db());
             let payer = schema.get_account(query.body.payer)?;
@@ -470,5 +473,14 @@ impl PrivateApi {
             .get_account_count()
             .map(SuccessReturn::new)
             .map_err(From::from)
+    }
+
+    #[api_endpoint(path = "/transactions", auth = "required", immutable)]
+    pub fn transactions(query: QueryEntries) -> EntriesResult<db::Transaction> {
+        let schema = Schema::new(state.db());
+
+        let entries = schema.get_transactions(query.page, query.limit)?;
+
+        Ok(EntriesResult { count: 0, entries })
     }
 }

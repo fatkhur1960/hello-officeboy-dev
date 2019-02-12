@@ -11,6 +11,7 @@ import './registerServiceWorker'
 
 
 Vue.config.productionTip = false
+Vue.config.runMode = "apiary";
 
 Vue.use(VueSession)
 Vue.use(Apf)

@@ -3,14 +3,28 @@ import crypto from './apf-crypto';
 
 export default class Apf {
   static install(Vue) {
-    var api = new ApiClient("http://localhost:8081/api/payment/v1", 
-      "http://localhost:8082/api/payment/v1");
+
+    var api;
+
+    if (Vue.config.runMode == "production"){
+      api = new ApiClient("http://localhost:8080/api/payment/v1", 
+        "http://localhost:9090/api/payment/v1");
+    }else if (Vue.config.runMode == "dev"){
+      api = new ApiClient("http://localhost:8080/api/payment/v1", 
+        "http://localhost:9090/api/payment/v1");
+    }else if (Vue.config.runMode == "apiary"){
+      api = new ApiClient("http://private-b1a4a4-anvie.apiary-mock.com/api/payment/v1", 
+      "http://private-b1a4a4-anvie.apiary-mock.com/api/payment/v1");
+    }else{
+      throw "Unknown mode: " + Vue.config.runMode
+    }
 
     updateSession();
 
     function updateSession(){
       var token = Vue.prototype.$session.get("token");
       api.publicApi.defaults.headers["X-Access-Token"] = token;
+      api.privateApi.defaults.headers["X-Access-Token"] = token;
     }
 
     Vue.prototype.$apf = {

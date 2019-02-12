@@ -6,12 +6,31 @@
 
     <div class="dashboard-inner" v-bind:style="customMargin">
       <h1>{{ pageTitle }}</h1>
+
+      <AnsTable v-if="currentPage['/dashboard']" 
+         dataSourceUrl="/accounts"
+         :columns="['ID', 'Balance']"
+         :itemMap="['id', 'balance']"
+         :searchable="true"
+         :withActionButton="true"
+         :mapItemFunc="userListAllMapper2" />
+
       <AnsTable v-if="currentPage['/dashboard/accounts']" 
          dataSourceUrl="/accounts"
          :columns="['ID', 'Name', 'Email', 'Phone', 'Active', 'Register']"
          :itemMap="['id', 'full_name', 'email', 'phone_num', 'active', 'register_time']"
          :searchable="true"
-         :withActionButton="true" />
+         :withActionButton="true"
+         :mapItemFunc="userListAllMapper" />
+
+      <AnsTable v-if="currentPage['/dashboard/transactions']" 
+         dataSourceUrl="/transactions"
+         :columns="['ID', 'Kind', 'Credit', 'Debit', 'Timestamp', 'Status']"
+         :itemMap="['id', 'aaa']"
+         :searchable="false"
+         :withActionButton="true"
+         :mapItemFunc="txItemMap" />
+
     </div>
   </div>
 </template>
@@ -66,6 +85,11 @@ export default {
           // ]
         },
         {
+          title: "Transactions",
+          icon: "fa fa-dollar-sign",
+          href: "/dashboard/transactions"
+        },
+        {
           title: "Logout",
           icon: "fa fa-sign-out-alt",
         }
@@ -95,6 +119,19 @@ export default {
     clearInterval(this.loginCheckerIval);
   },
   methods: {
+    txItemMap(item){
+      return item;
+    },
+    userListAllMapper(item){
+      delete item['balance'];
+      return item;
+    },
+    userListAllMapper2(item){
+      return {
+        "id": item['id'],
+        "balance": item['balance']
+      };
+    },
     isCurrentPage(title) {
       return this.currentPage == title;
     },
