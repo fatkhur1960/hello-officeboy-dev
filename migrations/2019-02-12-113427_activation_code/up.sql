@@ -1,0 +1,1 @@
+ALTER TABLE register_accounts ADD COLUMN code VARCHAR(10) NOT NULL;
