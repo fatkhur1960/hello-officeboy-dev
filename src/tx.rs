@@ -10,13 +10,53 @@ use crate::{
     error::Error as PaymentError,
     models::{Account, Invoice, InvoiceItem},
     result::Result,
-    schema::{invoice_items, invoices, payment_history, transactions},
+    schema::{invoice_items, invoices, payment_history, transaction_histories},
     util,
 };
 
 use std::sync::Arc;
 
 use crate::schema_op::ID;
+
+/// Debit credit flag
+pub enum DbcrFlag {
+    /// Pendiebitan
+    Debit = 1,
+    /// Pengkreditan
+    Credit = 2,
+}
+
+/// Tipe dari transaksi
+pub enum TxType {
+    /// Untuk topup
+    Topup = 1,
+    /// Untuk payment
+    Payment = 2,
+    /// Untuk recharge
+    Recharge = 3,
+    /// Untuk transfer
+    Transfer = 4,
+}
+
+/// Status transaksi
+pub enum TxStatus {
+    /// Apabila sukses
+    Success = 0,
+    /// Untuk sedang dalam proses
+    InProgress,
+    /// Apabila operasi timeout
+    Timeout,
+    /// Apabila terjadi error yang generic
+    GenericError,
+    /// Apabila gagal melakukan kontak ke remote server
+    CannotContactRemote,
+    /// Apabila akun di remote server tidak valid atau tidak exists
+    InvalidRemoteAccount,
+    /// Apabila akun di lokal kita tidak diijinkan di remote
+    InvalidLocalAccount,
+    /// Apabila balance tidak mencukupi
+    InsufficientBalance,
+}
 
 #[derive(Insertable)]
 #[table_name = "invoices"]
@@ -40,19 +80,19 @@ pub struct NewInvoiceItem<'a> {
 }
 
 #[derive(Insertable)]
-#[table_name = "transactions"]
+#[table_name = "transaction_histories"]
 #[doc(hidden)]
-pub struct NewTransaction<'a> {
+pub struct NewTransactionHistory<'a> {
     pub dbcr_flag: i32,
     pub ttype: i32,
-    pub subttype: i32,
+    // pub subttype: i32,
     pub amount: f64,
     pub status: i32,
     pub created: NaiveDateTime,
     pub last_updated: NaiveDateTime,
-    pub invoice: Option<&'a str>,
-    pub from_wallet: Option<ID>,
-    pub to_wallet: Option<ID>,
+    pub invoice_id: Option<ID>,
+    pub from_account_id: Option<ID>,
+    pub to_account_id: Option<ID>,
     pub merchant_id: Option<ID>,
     pub notes: Option<&'a str>,
 }
@@ -88,35 +128,37 @@ impl<'a> Schema<'a> {
         Self { db }
     }
 
-    /// Meng-kredit akun sejumlah uang
-    pub fn credit(&self, account: &Account, amount: f64) -> Result<()> {
-        // @TODO(hanky): fix this history transaction logic
-        {
-            use crate::schema::accounts::{self, dsl};
-            diesel::update(dsl::accounts.filter(dsl::id.eq(account.id)))
-                .set(dsl::balance.eq(dsl::balance + amount))
-                .execute(self.db)?;
-        }
-        {
-            use crate::schema::transactions::{self, dsl};
-            diesel::insert_into(transactions::table)
-                .values(&NewTransaction {
-                    dbcr_flag: 2,
-                    ttype: 1,
-                    subttype: 1,
-                    amount,
-                    status: 0,
-                    created: util::now(),
-                    last_updated: util::now(),
-                    invoice: None,
-                    from_wallet: None,
-                    to_wallet: Some(account.id),
-                    merchant_id: None,
-                    notes: None,
-                })
-                .execute(self.db)?;
-        }
-        Ok(())
+    /// Meng-kredit akun sejumlah uang ke sebuah akun.
+    /// Mengembalikan ID dari transaction histories `TransactionHistory`.
+    pub fn credit(&self, account: &Account, amount: f64) -> Result<ID> {
+        self.db.build_transaction().read_write().run(|| {
+            {
+                use crate::schema::accounts::{self, dsl};
+                diesel::update(dsl::accounts.filter(dsl::id.eq(account.id)))
+                    .set(dsl::balance.eq(dsl::balance + amount))
+                    .execute(self.db)?;
+            }
+            {
+                use crate::schema::transaction_histories::{self, dsl};
+                diesel::insert_into(transaction_histories::table)
+                    .values(&NewTransactionHistory {
+                        dbcr_flag: DbcrFlag::Credit as i32,
+                        ttype: TxType::Topup as i32,
+                        amount,
+                        status: TxStatus::Success as i32,
+                        created: util::now(),
+                        last_updated: util::now(),
+                        invoice_id: None,
+                        from_account_id: None,
+                        to_account_id: Some(account.id),
+                        merchant_id: None,
+                        notes: None,
+                    })
+                    .returning(dsl::id)
+                    .get_result(self.db)
+                    .map_err(From::from)
+            }
+        })
     }
 
     /// Publish invoice
@@ -156,7 +198,7 @@ impl<'a> Schema<'a> {
     /// * Penambahan saldo pada penerbit invoice (penjual).
     /// * Mencatat history pembayaran.
     ///
-    /// Apabila sukses/berhasil akan mengembalikan ID dari history payment-nya.
+    /// Apabila sukses/berhasil akan mengembalikan ID dari transaksinya.
     pub fn pay_invoice(&self, id: ID, payer: &Account, amount: f64, via: &str) -> Result<ID> {
         use crate::schema::accounts;
         use crate::schema::accounts::dsl as dsl_account;
@@ -205,15 +247,39 @@ impl<'a> Schema<'a> {
                 .execute(self.db)?;
 
             // catat history pembayarannya
+            // @TODO(robin): check ini payment_history sepertinya jadi redundant
+            // dengan transaction_histories
             diesel::insert_into(payment_history::table)
                 .values(NewPaymentHistory {
                     invoice_id: id,
                     payer: payer.id,
                     via,
                 })
-                .returning(dsl_history::id)
-                .get_result(self.db)
-                .map_err(From::from)
+                // .returning(dsl_history::id)
+                .execute(self.db)?;
+            // .map_err(From::from)?;
+
+            // Catat history transaksi local
+            {
+                use crate::schema::transaction_histories::{self, dsl};
+                diesel::insert_into(transaction_histories::table)
+                    .values(&NewTransactionHistory {
+                        dbcr_flag: DbcrFlag::Debit as i32,
+                        ttype: TxType::Payment as i32,
+                        amount,
+                        status: TxStatus::InProgress as i32,
+                        created: util::now(),
+                        last_updated: util::now(),
+                        invoice_id: None,
+                        from_account_id: None,
+                        to_account_id: Some(invoice.issuer_account),
+                        merchant_id: None,
+                        notes: None,
+                    })
+                    .returning(dsl::id)
+                    .get_result(self.db)
+                    .map_err(From::from)
+            }
         })
     }
 

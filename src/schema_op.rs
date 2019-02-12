@@ -351,10 +351,10 @@ impl<'a> Schema<'a> {
 
     /// Get list of transactions
     pub fn get_transactions(&self, offset: i64, limit: i64) -> Result<Vec<Transaction>> {
-        use crate::schema::transactions;
-        use crate::schema::transactions::dsl;
+        use crate::schema::transaction_histories;
+        use crate::schema::transaction_histories::dsl;
 
-        dsl::transactions
+        dsl::transaction_histories
             .offset(offset)
             .limit(limit)
             .load(self.db)

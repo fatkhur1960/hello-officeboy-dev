@@ -64,8 +64,8 @@ release-linux:
 DATABASE_TEST_URL=postgresql://localhost/apf_test?sslmode=disable
 
 test-env:
-	diesel setup --database-url $(DATABASE_TEST_URL)
-  diesel migration run --database-url $(DATABASE_TEST_URL)
+	diesel database reset --database-url $(DATABASE_TEST_URL)
+	diesel migration run --database-url $(DATABASE_TEST_URL)
 
 test-env-redo:
 	diesel migration redo --database-url $(DATABASE_TEST_URL)

@@ -70,6 +70,8 @@ dan mempersiapkan environment-nya, ini hanya perlu dijalankan sekali, ketikkan:
 
 **CATATAN**: Perintah `test-env` akan membuat database baru dengan nama `apf_test` dimana database ini akan digunakan
 sebagai storage ketika proses testing terjadi.
+Perintah `make test-env` ini juga perlu dijalankan ulang apabila ada perubahan schema untuk memastikan schema
+dalam database selalu up-to-date.
 
 Untuk melakukan test ketikkan:
 
@@ -81,7 +83,6 @@ Menjalankan
 Cara menjalankan server APF cukup ketikkan:
 
     $ cargo run --bin apf_server
-
 
 
 Frontend

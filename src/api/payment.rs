@@ -418,10 +418,12 @@ impl PrivateApi {
         let schema = Schema::new(state.db());
         let account = schema.get_account(query.body.account)?;
 
-        {
+        let tx_id = {
             let schema = tx::Schema::new(state.db());
-            schema.credit(&account, query.body.amount)?;
-        }
+            schema.credit(&account, query.body.amount)?
+        };
+
+        debug!("credit transaction processed with id `{}`", tx_id);
 
         Ok(())
     }
