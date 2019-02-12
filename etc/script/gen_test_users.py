@@ -3,7 +3,7 @@
 import requests
 import json
 
-BASE_URL = "http://localhost:8081/api/payment/v1"
+BASE_URL = "http://localhost:8080/api/payment/v1"
 HEADERS = {'Content-Type': 'application/json'}
 
 def api_url(path):
@@ -20,7 +20,7 @@ def register_account(full_name, email, phone_num):
         "email": email,
         "phone_num": phone_num
     })
-    # print(rv)
+    print(rv)
     rv = json.loads(rv.text)
     if rv.get("status") and rv['status'] == "error":
         print("ERROR: %s" % rv["description"])
