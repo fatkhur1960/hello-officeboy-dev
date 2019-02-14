@@ -15,7 +15,7 @@
 
       <AnsTable
         v-if="currentPage['/dashboard']"
-        data-source-url="/accounts"
+        data-source-url="/payment/v1/accounts"
         :columns="['ID', 'Balance']"
         :itemMap="['id', 'balance']"
         :searchable="true"
@@ -25,7 +25,7 @@
 
       <AnsTable
         v-if="currentPage['/dashboard/accounts']"
-        data-source-url="/accounts"
+        data-source-url="/payment/v1/accounts"
         :columns="['ID', 'Name', 'Email', 'Phone', 'Active', 'Register']"
         :itemMap="['id', 'full_name', 'email', 'phone_num', 'active', 'register_time']"
         :searchable="true"
@@ -35,7 +35,7 @@
 
       <AnsTable
         v-if="currentPage['/dashboard/transactions']"
-        data-source-url="/transactions"
+        data-source-url="/payment/v1/transactions"
         :columns="['ID', 'Kind', 'Credit', 'Debit', 'Timestamp', 'Status']"
         :itemMap="['id', 'aaa']"
         :searchable="false"
@@ -43,14 +43,10 @@
         :mapItemFunc="txItemMap"
       />
 
-      <div class="ui grid" v-if="$route.path.startsWith('/dashboard/accounts/')">
-        <div class="six wide column">
-          <AccountDetail
-            :accountId="$route.params.id"
-          />
-        </div>
-      </div>
+      <AccountDetail :accountId="$route.params.id"/>
     </div>
+
+    <notifications group="default" position="top center" classes="vue-notification" />
   </div>
 </template>
 
@@ -159,7 +155,7 @@ export default {
             self.$router.replace("/");
           }
         });
-      }, 1000);
+      }, 3000);
     },
     onCollapse(state) {
       this.collapsed = state;
@@ -168,7 +164,7 @@ export default {
         position: "absolute"
       };
     },
-    onItemClick(_event, _item) {
+    onItemClick(_event, item) {
       // console.log(this.$rout.path);
       // var currentPage = this.currentPage;
       // for (var _href in currentPage) {
@@ -181,9 +177,9 @@ export default {
       // this.pageTitle = item.title;
       // // this.currentPage = currentPage;
       // // this.accountVisibility = item.title == "Accounts";
-      // if (item.title == 'Logout'){
-      //   this.$apf.unauthorize();
-      // }
+      if (item.title == 'Logout'){
+        this.$apf.unauthorize();
+      }
     }
   }
 };

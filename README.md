@@ -80,7 +80,12 @@ Untuk melakukan test ketikkan:
 Menjalankan
 -------------
 
-Cara menjalankan server APF cukup ketikkan:
+Untuk menjalankan service apf perlu dipastikan service PostgreSQL sudah jalan terlebih dahulu, dan telah disetup database-nya,, 
+untuk men-setup database bisa menggunakan perintah:
+
+    $ make reset-db
+
+Selanjutkan jalankan APF servernya:
 
     $ cargo run --bin apf_server
 
@@ -88,16 +93,23 @@ Cara menjalankan server APF cukup ketikkan:
 Frontend
 ------------
 
-Stack frontend kita menggunakan React, base ada di direktori `/frontends`.
+Stack frontend kita bisa menggunakan React atau Vue.js, base ada di direktori `/frontends`.
 
-Apabila ingin mencoba menjalankannya bisa check frontend untuk admin:
+Apabila ingin mencoba menjalankannya bisa check frontend untuk admin-react:
 
-    $ cd frontends/admin
+    $ cd frontends/admin-react
     $ npm install
     $ npm start
 
 Buka http://localhost:3000/
 
+Untuk Vue.js ada di `/frontends/admin-vue`:
+
+    $ cd frontends/admin-vue
+    $ yarn install
+    $ yarn serve
+
+**CATATAN**: Kamu bisa menggunakan npm maupun yarn, tapi direkomendasikan menggunakan yarn.
 
 Dokumentasi
 -------------

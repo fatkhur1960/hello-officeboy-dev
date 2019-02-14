@@ -180,7 +180,9 @@ impl<'a> ApiHelper<'a> {
             .expect("activate account")
     }
 
-    pub fn credit_account_balance(&self, account_id: ID, amount: f64, secret_key: &SecretKey) {
+    /// Mengkredit saldo akun
+    /// Mengembalikan saldo terbaru setelah di-credit.
+    pub fn credit_account_balance(&self, account_id: ID, amount: f64, secret_key: &SecretKey) -> f64 {
         let mut api = self.testkit.api();
 
         // login-kan
@@ -194,12 +196,10 @@ impl<'a> ApiHelper<'a> {
 
         let data = TxQuery::new(credit).sign(secret_key);
 
-        let result = api
-            .private(ApiKind::Payment)
+        api.private(ApiKind::Payment)
             .query(&data)
-            .post::<api::ApiResult>("v1/credit")
-            .expect("credit account");
-
-        assert_eq!(result.code, 0);
+            .post::<api::SuccessReturn<f64>>("v1/credit")
+            .expect("credit account")
+            .result
     }
 }

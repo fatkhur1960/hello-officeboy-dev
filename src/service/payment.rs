@@ -44,9 +44,7 @@ impl Service for PaymentService {
             .endpoint_mut("v1/invoice/publish", PublicApi::publish_invoice)
             .endpoint_mut("v1/pay", PublicApi::pay)
             .endpoint_mut("v1/account/register", PublicApi::register_account)
-            .endpoint_mut("v1/account/activate", PublicApi::activate_account)
-            // .endpoint_mut("v1/account/accounts", PublicApi::activate_account)
-            .endpoint_mut("v1/authorize", PublicApi::authorize);
+            .endpoint_mut("v1/account/activate", PublicApi::activate_account);
 
         builder
             .private_scope()

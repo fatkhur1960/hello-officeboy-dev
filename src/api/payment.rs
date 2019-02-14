@@ -80,13 +80,6 @@ pub struct Pay {
     pub via: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Authorize {
-    pub email: Option<String>,
-    pub phone: Option<String>,
-    pub passhash: String,
-}
-
 /// Definisi query untuk mendaftarkan akun baru via rest API.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RegisterAccount {
@@ -146,13 +139,18 @@ where
     }
 
     /// Untuk memverifikasi signature pada body ini.
-    pub fn verify(&self, public_key: &PublicKey) -> Result<()> {
+    pub fn verify(&self, public_key: &PublicKey, secret_key: &SecretKey) -> Result<()> {
         if self.signature.is_empty() {
             Err(Error::BadRequest("message has no signature.".to_string()))?
         }
         let bytes = self.body.write_to_bytes().expect("Cannot write to bytes");
         let signature: Signature = self.signature.parse::<Signature>()?;
+        debug!("verify sig `{}` using pubkey: `{}`", &signature, public_key);
         if !crypto::is_verified(bytes.as_slice(), &signature, public_key) {
+            // let bytes = self.body.write_to_bytes().expect("Cannot write to bytes");
+            let real_signature = crypto::sign(&bytes, &secret_key);
+            debug!("  - expected signature: `{}`", real_signature);
+            debug!("  - data: `{}`", hex::encode(bytes));
             Err(Error::Unauthorized)?
         }
         Ok(())
@@ -166,8 +164,7 @@ pub struct BalanceQuery {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AccountQuery {
-    pub id:ID,
-
+    pub id: ID,
 }
 
 #[derive(Debug, Serialize)]
@@ -178,10 +175,7 @@ pub struct AccountInfo {
 
 impl AccountInfo {
     pub fn new(id: ID, balance: f64) -> Self {
-        Self {
-            id,
-            balance,
-        }
+        Self { id, balance }
     }
 }
 
@@ -293,8 +287,9 @@ impl PublicApi {
 
         // verifikasi digital signature
         let acc_key = schema.get_account_key(current_account.id)?;
+        let secret_key = acc_key.secret_key.parse::<SecretKey>()?;
         let public_key = acc_key.pub_key.parse::<PublicKey>()?;
-        query.verify(&public_key)?;
+        query.verify(&public_key, &secret_key)?;
 
         schema.transfer(query.body.from, query.body.to, query.body.amount)?;
 
@@ -307,33 +302,6 @@ impl PublicApi {
         // @TODO(*): Code here
         // Ok(AccountInfo::new(&query.account, 0.0f64))
         unimplemented!()
-    }
-
-    /// Meng-otorisasi akun yang telah teregister
-    /// User bisa melakukan otorisasi menggunakan email / nomor telp.
-    #[api_endpoint(path = "/authorize", auth = "none", mutable)]
-    pub fn authorize(state: &mut AppState, query: Authorize) -> AccessToken {
-        let account = {
-            let schema = Schema::new(state.db());
-            if let Some(email) = query.email {
-                schema.get_account_by_email(&email)?
-            } else if let Some(phone) = query.phone {
-                schema.get_account_by_phone_num(&phone)?
-            } else {
-                Err(ApiError::InvalidParameter("No email/phone parameter".to_string()))?
-            }
-        };
-
-        {
-            let schema = auth::Schema::new(state.db());
-
-            if !schema.valid_passhash(account.id, &query.passhash) {
-                warn!("account `{}` try to authorize using wrong password", &account.id);
-                Err(ApiError::Unauthorized)?
-            }
-
-            schema.generate_access_token(account.id).map_err(From::from)
-        }
     }
 
     /// Hanya digunakan untuk testing sahaja.
@@ -418,11 +386,19 @@ pub struct PrivateApi;
 
 impl PrivateApi {
     /// Rest API endpoint for topup
+    /// Mengembalikan jumlah balance akun setelah dikredit.
     #[api_endpoint(path = "/credit", auth = "required", mutable)]
-    pub fn credit(state: &mut AppState, query: TxQuery<Credit>, req: &ApiHttpRequest) -> () {
+    pub fn credit(state: &mut AppState, query: TxQuery<Credit>, req: &ApiHttpRequest) -> SuccessReturn<f64> {
         trace!("topup account: {:?}", query);
 
         let schema = Schema::new(state.db());
+
+        // verifikasi digital signature
+        let acc_key = schema.get_account_key(current_account.id)?;
+        let secret_key = acc_key.secret_key.parse::<SecretKey>()?;
+        let public_key = acc_key.pub_key.parse::<PublicKey>()?;
+        query.verify(&public_key, &secret_key)?;
+
         let account = schema.get_account(query.body.account)?;
 
         let tx_id = {
@@ -432,7 +408,9 @@ impl PrivateApi {
 
         debug!("credit transaction processed with id `{}`", tx_id);
 
-        Ok(())
+        let account = schema.get_account(query.body.account)?;
+
+        Ok(SuccessReturn::new(account.balance))
     }
 
     /// Rest API endpoint untuk debit
@@ -485,7 +463,7 @@ impl PrivateApi {
     }
 
     /// Mendapatkan jumlah akun secara keseluruhan
-    #[api_endpoint(path = "/account/info", auth="required")]
+    #[api_endpoint(path = "/account/info", auth = "required")]
     pub fn account_info(query: AccountQuery) -> SuccessReturn<db::Account> {
         let schema = Schema::new(state.db());
 

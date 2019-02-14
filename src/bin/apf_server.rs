@@ -1,4 +1,4 @@
-extern crate apf;
+// extern crate apf;
 
 #[macro_use]
 extern crate log;
@@ -6,6 +6,7 @@ extern crate dotenv;
 extern crate env_logger;
 
 use apf::prelude::*;
+use apf::service::AuthService;
 
 use std::env;
 
@@ -35,7 +36,8 @@ ____________    __      ____________,
 
     trace!("starting up...");
 
-    let service = PaymentService::new();
+    let auth_service = AuthService::new();
+    let payment_service = PaymentService::new();
 
     let public_listening_address =
         env::var("APF_PUBLIC_LISTENING").unwrap_or_else(|_| "0.0.0.0:8080".to_string());
@@ -47,5 +49,5 @@ ____________    __      ____________,
         ApiServer::new(ApiAccess::Private, private_listening_address),
     ]);
 
-    api::start(ApiAggregator::new(vec![service]), config);
+    api::start(ApiAggregator::new(vec![auth_service, payment_service]), config);
 }

@@ -70,6 +70,10 @@ test-env:
 test-env-redo:
 	diesel migration redo --database-url $(DATABASE_TEST_URL)
 
+reset-db:
+	diesel database reset
+
 .PHONY: prepare docs lib-docs api-docs fmt \
 		test test-dev lint audit commit \
-		release test-env test-env-redo release-linux
+		release test-env test-env-redo release-linux \
+		reset-db

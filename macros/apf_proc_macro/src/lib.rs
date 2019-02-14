@@ -111,7 +111,7 @@ pub fn authorized_only(
                                 .map_err(|_| ApiError::Unauthorized)?;
 
                             // periksa akses token
-                            let schema = auth::Schema::new(state.db());
+                            let schema = crate::auth::Schema::new(state.db());
                             let access_token = schema.get_access_token(&access_token)
                                 .map_err(|_| ApiError::Unauthorized)?;
 
@@ -427,11 +427,11 @@ pub fn api_endpoint(attr: proc_macro::TokenStream, item: proc_macro::TokenStream
                             use crate::valid::Expirable;
                             let current_account = req.headers().get("X-Access-Token")
                                 .map(|at| {
-                                    let schema = auth::Schema::new(state.db());
+                                    let schema = crate::auth::Schema::new(state.db());
                                     schema.get_access_token(at.to_str().unwrap())
                                         .map(|at|{
                                             if !at.expired(){
-                                                let account_schema = schema_op::Schema::new(state.db());
+                                                let account_schema = crate::schema_op::Schema::new(state.db());
                                                 account_schema.get_account(at.account_id)
                                                     .map_err(api::Error::from)
                                             }else{

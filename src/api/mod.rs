@@ -539,13 +539,22 @@ impl ApiAggregator {
 
         inner.insert("system".to_owned(), Self::system_api());
 
+        let mut service_names: Vec<String> = vec![];
+
         inner.extend(services.iter().map(|service| {
-            let prefix = service.name();
+            let prefix = service.name().to_string();
+
+            if service_names.contains(&prefix) {
+                panic!("Service with name `{}` already exists.", prefix);
+            }
+
             let mut builder = ServiceApiBuilder::new();
 
             service.wire_api(&mut builder);
 
-            (prefix.to_string(), builder)
+            service_names.push(prefix.to_owned());
+
+            (prefix, builder)
         }));
 
         Self { inner }

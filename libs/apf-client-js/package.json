@@ -1,0 +1,9 @@
+{
+  "name": "apf-client-js",
+  "version": "1.0.0",
+  "description": "APF Javascript Driver",
+  "main": "index.js",
+  "author": "Robin",
+  "license": "ISC",
+  "private": true
+}

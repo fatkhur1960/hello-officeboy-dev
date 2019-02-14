@@ -43,6 +43,8 @@ pub use crate::helper::{ApiHelper, TestHelper};
 pub enum ApiKind {
     /// `api/system` endpoints
     System,
+    /// `api/auth` endpoints. Mengarah ke servis [Auth].
+    Auth,
     /// `api/payment` endpoints. Mengarah ke servis [Payment].
     Payment,
     /// Gunakan ini apabila ada servis khusus (user).
@@ -53,6 +55,7 @@ impl fmt::Display for ApiKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             ApiKind::System => write!(f, "api/system"),
+            ApiKind::Auth => write!(f, "api/auth"),
             ApiKind::Payment => write!(f, "api/payment"),
             ApiKind::Service(name) => write!(f, "api/{}", name),
         }
