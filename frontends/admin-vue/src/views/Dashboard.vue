@@ -43,7 +43,7 @@
         :mapItemFunc="txItemMap"
       />
 
-      <AccountDetail :accountId="$route.params.id"/>
+      <AccountDetail v-if="$route.path.startsWith('/dashboard/accounts/')" :accountId="$route.params.id"/>
     </div>
 
     <notifications group="default" position="top center" classes="vue-notification" />
