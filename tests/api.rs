@@ -10,10 +10,11 @@ extern crate serde_json;
 use serde_json::Value as JsonValue;
 
 // use apf::api::SuccessReturn;
-use apf_testkit::{ApiKind, TestKitApi};
+use apf_testkit::{ApiHelper, ApiKind, TestHelper, TestKitApi};
 
 use apf::{
     api::payment::{Transfer, TxQuery},
+    crypto,
     crypto::SecretKey,
     models, util,
 };
@@ -55,8 +56,10 @@ fn test_register_account() {
     assert!(token.len() > 0);
 }
 
-#[test]
-fn test_credit_account_balance() {
+fn test_credit<F>(func: F)
+where
+    F: FnOnce(&ApiHelper, &TestHelper, &models::Account, &SecretKey),
+{
     let testkit = create_testkit();
     let h = testkit.helper();
     let ah = testkit.api_helper();
@@ -67,12 +70,53 @@ fn test_credit_account_balance() {
     let acc = h.get_account_by_id(acc.account.id).unwrap();
     assert_eq!(acc.balance, 0.0);
 
-    ah.credit_account_balance(acc.id, 10.0, sk);
-
-    let acc = h.get_account_by_id(acc.id).unwrap();
-    assert_eq!(acc.balance, 10.0);
+    func(&ah, &h, &acc, &sk);
 
     h.cleanup_account_by_id(acc.id);
+}
+
+#[test]
+#[should_panic(expected = "credit account: BadRequest(\"Invalid parameter: Invalid amount\")")]
+fn test_credit_account_balance_minus_amount() {
+    test_credit(|ah, h, acc, sk| {
+        ah.credit_account_balance(acc.id, -0.001, sk);
+
+        let acc = h.get_account_by_id(acc.id).unwrap();
+        assert_eq!(acc.balance, 10.0);
+    });
+}
+
+#[test]
+#[should_panic(expected = "credit account: BadRequest(\"Invalid parameter: Invalid amount\")")]
+fn test_credit_account_balance_over_amount() {
+    test_credit(|ah, h, acc, sk| {
+        ah.credit_account_balance(acc.id, 3_000_001f64, sk);
+
+        let acc = h.get_account_by_id(acc.id).unwrap();
+        assert_eq!(acc.balance, 10.0);
+    });
+}
+
+#[test]
+#[should_panic(expected = "credit account: BadRequest(\"Unauthorized\")")]
+fn test_credit_account_balance_invalid_key() {
+    test_credit(|ah, h, acc, _sk| {
+        let (_pk, sk) = crypto::gen_keypair();
+        ah.credit_account_balance(acc.id, 3_000_001f64, &sk);
+
+        let acc = h.get_account_by_id(acc.id).unwrap();
+        assert_eq!(acc.balance, 10.0);
+    });
+}
+
+#[test]
+fn test_credit_account_balance_valid() {
+    test_credit(|ah, h, acc, sk| {
+        ah.credit_account_balance(acc.id, 10.0, sk);
+
+        let acc = h.get_account_by_id(acc.id).unwrap();
+        assert_eq!(acc.balance, 10.0);
+    });
 }
 
 fn test_transfer<F>(func: F)
