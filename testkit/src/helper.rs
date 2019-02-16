@@ -60,6 +60,8 @@ impl TestHelper {
         schema.get_account(id)
     }
 
+    /// Menggenerasikan akses token langsung dari database,
+    /// Tidak melalui API endpoint `/authorize`.
     pub fn gen_access_token_for(&self, id: ID) -> Result<models::AccessToken> {
         let db = Self::get_db();
         let schema = auth::Schema::new(&db);

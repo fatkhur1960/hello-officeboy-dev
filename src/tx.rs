@@ -131,6 +131,13 @@ impl<'a> Schema<'a> {
     /// Meng-kredit akun sejumlah uang ke sebuah akun.
     /// Mengembalikan ID dari transaction histories `TransactionHistory`.
     pub fn credit(&self, account: &Account, amount: f64) -> Result<ID> {
+        if amount < 0.0f64 || amount > 3_000_000f64 {
+            Err(PaymentError::InvalidParameter("Invalid amount".to_string()))?
+        }
+        if !account.active {
+            Err(PaymentError::BadRequest("Account inactive".to_string()))?
+        }
+
         self.db.build_transaction().read_write().run(|| {
             {
                 use crate::schema::accounts::{self, dsl};
