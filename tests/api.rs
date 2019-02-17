@@ -1,3 +1,5 @@
+#![allow(unused_mut, unused_variables)]
+
 extern crate apf_testkit;
 extern crate env_logger;
 extern crate log;
@@ -304,3 +306,147 @@ fn test_transfer_valid() {
         },
     );
 }
+
+// ----- INVOICE RELATED TESTS -------
+//
+use apf::api::payment::InvoiceItem;
+
+const ID_REF: &'static str = "IV-001";
+
+macro_rules! test_publish_invoice {
+    ( $name:ident, |$ah:tt, $ac1:tt, $ac2:tt, $ac1key:tt, $ac2key:tt, $items:tt| $($op:tt)+ ) => {
+        #[test]
+        fn $name(){
+            let testkit = create_testkit();
+            let h = testkit.helper();
+            let $ah = testkit.api_helper();
+
+            let mut ac_wks = h.generate_accounts(2, true);
+
+            let acwk1 = ac_wks.pop().unwrap();
+            let acwk2 = ac_wks.pop().unwrap();
+
+            let $ac1 = acwk1.account.clone();
+            let $ac2 = acwk2.account.clone();
+
+            let $ac1key = acwk1.secret_key;
+            let $ac2key = acwk2.secret_key;
+
+            let mut $items = vec![InvoiceItem {
+                name: util::random_string(10),
+                price: util::random_number_f64(),
+                ..Default::default()
+            }];
+
+            $($op)+
+        }
+    };
+}
+
+test_publish_invoice!(
+    test_publish_invoice_bad_key,
+    |ah, ac1, ac2, _ac1key, ac2key, items| {
+        let rv = ah.publish_invoice(ID_REF, ac1.id, ac2.id, 5.0, 10.0, "none", items, &ac2key);
+        assert_eq!(rv.code, 3000);
+        assert_eq!(rv.result, None);
+    }
+);
+
+test_publish_invoice!(
+    test_publish_invoice_minus_amount,
+    |ah, ac1, ac2, ac1key, _ac2key, items| {
+        let rv = ah.publish_invoice(ID_REF, ac1.id, ac2.id, 5.0, -10.0, "none", items, &ac1key);
+        assert_eq!(rv.code, 7008);
+    }
+);
+
+test_publish_invoice!(
+    test_publish_invoice_max_amount,
+    |ah, ac1, ac2, ac1key, _ac2key, items| {
+        let rv = ah.publish_invoice(ID_REF, ac1.id, ac2.id, 5.0, 3_000_001.0, "none", items, &ac1key);
+        assert_eq!(rv.code, 7008);
+    }
+);
+
+test_publish_invoice!(
+    test_publish_invoice_issuer_and_to_same,
+    |ah, ac1, ac2, ac1key, _ac2key, items| {
+        let rv = ah.publish_invoice(ID_REF, ac1.id, ac1.id, 5.0, 10.0, "none", items, &ac1key);
+        assert_eq!(rv.code, 4005);
+    }
+);
+
+test_publish_invoice!(
+    test_publish_invoice_minus_discount,
+    |ah, ac1, ac2, ac1key, _ac2key, items| {
+        let rv = ah.publish_invoice(ID_REF, ac1.id, ac2.id, -5.0, 10.0, "none", items, &ac1key);
+        assert_eq!(rv.code, 7009);
+    }
+);
+
+test_publish_invoice!(
+    test_publish_invoice_bad_invoice_items_data,
+    |ah, ac1, ac2, ac1key, _ac2key, items| {
+        items.push(InvoiceItem {
+            name: util::random_string(10),
+            price: -util::random_number_f64(),
+            ..Default::default()
+        });
+        let rv = ah.publish_invoice(ID_REF, ac1.id, ac2.id, 5.0, 10.0, "none", items, &ac1key);
+        assert_eq!(rv.code, 7010);
+    }
+);
+
+test_publish_invoice!(
+    test_publish_invoice_valid,
+    |ah, ac1, ac2, ac1key, _ac2key, items| {
+        let rv = ah.publish_invoice(ID_REF, ac1.id, ac2.id, 5.0, 10.0, "none", items, &ac1key);
+
+        assert_eq!(rv.code, 0);
+        assert!(rv.result.unwrap() > 0);
+
+        // check for existence
+        let rv = ah.get_invocie(rv.result.unwrap(), ac2.id);
+        assert_eq!(rv.code, 0);
+        let invoice = rv.result.unwrap();
+        assert_eq!(invoice.id_ref, ID_REF);
+        assert_eq!(invoice.discount, 5.0);
+        assert_eq!(invoice.amount, 10.0);
+    }
+);
+
+// #[test]
+// fn test_publish_invoice_valid() {
+//     // let testkit = create_testkit();
+//     // let h = testkit.helper();
+//     // let ah = testkit.api_helper();
+
+//     // let mut ac_wks = h.generate_accounts(2, true);
+
+//     // let acwk1 = ac_wks.pop().unwrap();
+//     // let acwk2 = ac_wks.pop().unwrap();
+
+//     // let ac1 = acwk1.account.clone();
+//     // let ac2 = acwk2.account.clone();
+
+//     // let ac1key = acwk1.secret_key;
+
+//     // let items = vec![InvoiceItem {
+//     //     name: util::random_string(10),
+//     //     price: util::random_number_f64(),
+//     //     ..Default::default()
+//     // }];
+
+//     let rv = ah.publish_invoice(ID_REF, ac1.id, ac2.id, 5.0, 10.0, "none", items, &ac1key);
+
+//     assert_eq!(rv.code, 0);
+//     assert!(rv.result.unwrap() > 0);
+
+//     // check for existence
+//     let rv = ah.get_invocie(rv.result.unwrap(), ac2.id);
+//     assert_eq!(rv.code, 0);
+//     let invoice = rv.result.unwrap();
+//     assert_eq!(invoice.id_ref, ID_REF);
+//     assert_eq!(invoice.discount, 5.0);
+//     assert_eq!(invoice.amount, 10.0);
+// }

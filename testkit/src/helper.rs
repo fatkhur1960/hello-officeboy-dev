@@ -9,7 +9,10 @@ use apf::crypto::*;
 use apf::models;
 use apf::prelude::*;
 use apf::schema_op::*;
-use apf::util;
+use apf::{
+    api::payment::{IdQuery, InvoiceItem, PublishInvoice},
+    util,
+};
 use diesel::{connection::Connection, pg::PgConnection};
 use serde_json::Value as JsonValue;
 
@@ -210,5 +213,53 @@ impl<'a> ApiHelper<'a> {
             .query(&data)
             .post::<ApiResult<f64>>("v1/credit")
             .expect("credit account")
+    }
+
+    pub fn publish_invoice(
+        &self,
+        id_ref: &str,
+        issuer_id: ID,
+        to_id: ID,
+        discount: f64,
+        amount: f64,
+        notes: &str,
+        items: Vec<InvoiceItem>,
+        secret_key: &SecretKey,
+    ) -> ApiResult<ID> {
+        let mut api = self.testkit.api();
+
+        // login-kan
+        api.authorize(issuer_id);
+
+        let mut d = PublishInvoice::new();
+        d.set_id_ref(id_ref.to_owned());
+        d.set_issuer(issuer_id);
+        d.set_to(to_id);
+        d.set_discount(discount);
+        d.set_amount(amount);
+        d.set_notes(notes.to_owned());
+        let mut_items = d.mut_items();
+        for item in items {
+            mut_items.push(item);
+        }
+        d.set_timestamp(util::current_time_millis());
+        d.set_seed(util::random_number() as u64);
+
+        let data = TxQuery::new(d).sign(secret_key);
+
+        api.public(ApiKind::Payment)
+            .query(&data)
+            .post::<ApiResult<ID>>("v1/invoice/publish")
+            .expect("publish invoice")
+    }
+
+    pub fn get_invocie(&self, id: ID, auth_account_id: ID) -> ApiResult<models::Invoice> {
+        let mut api = self.testkit.api();
+        api.authorize(auth_account_id);
+
+        api.public(ApiKind::Payment)
+            .query(&IdQuery { id })
+            .get("v1/invoice")
+            .expect("get invoice")
     }
 }

@@ -40,6 +40,11 @@ pub struct QueryEntries {
     pub limit: i64,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct IdQuery {
+    pub id: ID,
+}
+
 // #[derive(Debug, Serialize, Deserialize)]
 // pub struct Credit {
 //     pub account: ID,
@@ -64,6 +69,27 @@ pub struct Debit {
 //     pub timestamp: u64,
 // }
 pub use crate::protos::Transfer;
+
+// #[derive(Serialize, Deserialize)]
+// pub struct PublishInvoice {
+//     pub id_ref: String,
+//     pub issuer: ID,
+//     pub to: ID,
+//     pub discount: f64,
+//     pub amount: f64,
+//     pub notes: String,
+//     pub items: Vec<InvoiceItem>,
+// }
+
+pub use crate::protos::PublishInvoice;
+
+// #[derive(Serialize, Deserialize)]
+// pub struct InvoiceItem {
+//     pub name: String,
+//     pub price: f64,
+// }
+
+pub use crate::protos::InvoiceItem;
 
 /// Query transaction untuk melakukan pembayaran
 #[derive(Debug, Serialize, Deserialize)]
@@ -182,23 +208,6 @@ impl AccountInfo {
     }
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct PublishInvoice {
-    pub id_ref: String,
-    pub issuer: ID,
-    pub to: ID,
-    pub discount: f64,
-    pub amount: f64,
-    pub notes: String,
-    pub items: Vec<InvoiceItem>,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct InvoiceItem {
-    pub name: String,
-    pub price: f64,
-}
-
 /// Model untuk keperluan tukar menukar data API
 /// bukan yang di database (crate::models).
 pub mod models {
@@ -260,6 +269,21 @@ use crate::models::AccessToken;
 pub struct PublicApi;
 
 impl PublicApi {
+    #[inline]
+    fn verify_tx<T>(query: &TxQuery<T>, schema: &Schema, current_account: &db::Account) -> api::Result<()>
+    where
+        T: Serialize + protobuf::Message + Clone,
+    {
+        // verifikasi digital signature
+        let acc_key = schema.get_account_key(current_account.id)?;
+        let secret_key = acc_key.secret_key.parse::<SecretKey>()?;
+        let public_key = acc_key.pub_key.parse::<PublicKey>()?;
+
+        query.verify(&public_key, &secret_key)?;
+
+        Ok(())
+    }
+
     /// Rest API endpoint untuk mendaftarkan akun baru.
     #[api_endpoint(path = "/account/register", mutable, auth = "none")]
     pub fn register_account(state: &mut AppState, query: RegisterAccount) -> ApiResult<String> {
@@ -304,10 +328,7 @@ impl PublicApi {
         let schema = Schema::new(state.db());
 
         // verifikasi digital signature
-        let acc_key = schema.get_account_key(current_account.id)?;
-        let secret_key = acc_key.secret_key.parse::<SecretKey>()?;
-        let public_key = acc_key.pub_key.parse::<PublicKey>()?;
-        query.verify(&public_key, &secret_key)?;
+        Self::verify_tx(&query, &schema, &current_account)?;
 
         schema.transfer(query.body.from, query.body.to, query.body.amount)?;
 
@@ -335,13 +356,13 @@ impl PublicApi {
     }
 
     /// API endpoint untuk mem-publish invoice (membuat invoice baru).
+    /// Mengembalikan ID dari invoice-nya.
     #[api_endpoint(path = "/invoice/publish", auth = "required", mutable)]
     pub fn publish_invoice(
         state: &mut AppState,
         query: TxQuery<PublishInvoice>,
         req: &ApiHttpRequest,
     ) -> ApiResult<ID> {
-        let schema = tx::Schema::new(state.db());
         let items = query
             .body
             .items
@@ -353,10 +374,12 @@ impl PublicApi {
             })
             .collect();
 
-        let to = {
-            let schema = schema_op::Schema::new(state.db());
-            schema.get_account(query.body.to)?
-        };
+        let schema = schema_op::Schema::new(state.db());
+
+        // verifikasi digital signature
+        Self::verify_tx(&query, &schema, &current_account)?;
+
+        let to = { schema.get_account(query.body.to)? };
 
         let new_invoice = tx::NewInvoice {
             id_ref: &query.body.id_ref,
@@ -367,10 +390,28 @@ impl PublicApi {
             notes: &query.body.notes,
         };
 
-        schema
+        let tx_schema = tx::Schema::new(state.db());
+
+        tx_schema
             .publish_invoice(new_invoice, items)
             .map_err(From::from)
             .map(ApiResult::success)
+    }
+
+    /// API endpoint untuk mendapatkan data invoice.
+    #[api_endpoint(path = "/invoice", auth = "required")]
+    pub fn get_invoice(query: IdQuery) -> ApiResult<db::Invoice> {
+        let tx_schema = tx::Schema::new(state.db());
+        let invoice = tx_schema.get_invoice(query.id)?;
+
+        if !(invoice.issuer_account == current_account.id || invoice.to_account == current_account.id) {
+            Err(ApiError::NotFound(
+                ErrorCode::TxInvoiceNotFound as i32,
+                "Invoice not found".to_string(),
+            ))?
+        }
+
+        Ok(ApiResult::success(invoice))
     }
 
     /// API endpoint untuk melakukan pembayaran.

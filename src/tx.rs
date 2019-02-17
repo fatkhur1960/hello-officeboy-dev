@@ -185,6 +185,36 @@ impl<'a> Schema<'a> {
         use crate::schema::invoices;
         use crate::schema::invoices::dsl;
 
+        if new_invoice.issuer_account == new_invoice.to_account {
+            Err(PaymentError::BadRequest(
+                ErrorCode::FromAndToTargetIsSame as i32,
+                "Invalid parameter".to_string(),
+            ))?;
+        }
+
+        if new_invoice.amount <= 0.0 || new_invoice.amount > 3_000_000f64 {
+            Err(PaymentError::BadRequest(
+                ErrorCode::TxBadAmount as i32,
+                "Invalid amount".to_string(),
+            ))?;
+        }
+
+        if new_invoice.discount <= 0.0 {
+            Err(PaymentError::BadRequest(
+                ErrorCode::TxBadInvoiceDiscount as i32,
+                "Invalid discount".to_string(),
+            ))?;
+        }
+
+        for item in &items {
+            if item.price < 0.0 || item.name.trim().is_empty() {
+                Err(PaymentError::BadRequest(
+                    ErrorCode::TxBadInvoiceItemData as i32,
+                    "Invalid data".to_string(),
+                ))?;
+            }
+        }
+
         self.db.build_transaction().read_write().run(|| {
             let id: ID = diesel::insert_into(invoices::table)
                 .values(&new_invoice)

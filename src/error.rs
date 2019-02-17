@@ -91,6 +91,14 @@ pub enum ErrorCode {
     TxAccountInactive = 7005,
     /// Apabila jumlah yang akan ditransaksikan tidak sesuai dengan yang diharapkan.
     TxAmountMismatch = 7006,
+    /// Error apabila invoice yang dimaksud tidak ditemukan/sesuai.
+    TxInvoiceNotFound = 7007,
+    /// Error yang berkaitan tidak validnya amount.
+    TxBadAmount = 7008,
+    /// Error yang berkaitan dengan tidak validnya diskon untuk invoice.
+    TxBadInvoiceDiscount = 7009,
+    /// Error yang muncul apabila item pada invoice tidak valid.
+    TxBadInvoiceItemData = 7010,
 }
 
 // semua error yang berasal dari diesel akan dipropagasi ke sistem error [Error::Storage]

@@ -41,6 +41,7 @@ impl Service for PaymentService {
             .endpoint("v1/me/info", PublicApi::me_info)
             .endpoint("v1/balance", PublicApi::balance)
             .endpoint_mut("v1/transfer", PublicApi::transfer)
+            .endpoint("v1/invoice", PublicApi::get_invoice)
             .endpoint_mut("v1/invoice/publish", PublicApi::publish_invoice)
             .endpoint_mut("v1/pay", PublicApi::pay)
             .endpoint_mut("v1/account/register", PublicApi::register_account)

@@ -98,7 +98,7 @@ pub struct AccountPashash {
 }
 
 #[doc(hidden)]
-#[derive(Queryable)]
+#[derive(Queryable, Serialize, Deserialize)]
 pub struct Invoice {
     pub id: ID,
     pub id_ref: String,

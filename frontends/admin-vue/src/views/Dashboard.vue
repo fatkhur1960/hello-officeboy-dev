@@ -37,7 +37,6 @@
         v-if="currentPage['/dashboard/transactions']"
         data-source-url="/payment/v1/transactions"
         :columns="['ID', 'Kind', 'Credit', 'Debit', 'Timestamp', 'Status']"
-        :itemMap="['id', 'aaa']"
         :searchable="false"
         :withActionButton="true"
         :mapItemFunc="txItemMap"

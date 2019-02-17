@@ -23,4 +23,4 @@ mod inner {
     include!(concat!(env!("OUT_DIR"), "/apf.rs"));
 }
 
-pub use self::inner::{Transfer, Credit, Debit};
+pub use self::inner::{Transfer, Credit, Debit, PublishInvoice, InvoiceItem};

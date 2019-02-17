@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package payment;
 
+// type ID int64;
+
 message Transfer {
     // ID pengirim
     int64 from = 1;
@@ -30,3 +32,19 @@ message Debit {
     uint64 seed = 4;
 }
 
+message PublishInvoice {
+    string id_ref = 1;
+    int64 issuer = 2;
+    int64 to = 3;
+    double discount = 4;
+    double amount = 5;
+    string notes = 6;
+    repeated InvoiceItem items = 7;
+    uint64 timestamp = 8;
+    uint64 seed = 9;
+}
+
+message InvoiceItem {
+    string name = 1;
+    double price = 2;
+}
