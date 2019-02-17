@@ -281,9 +281,11 @@ where
                 serde_json::from_str(&body).expect("Unable to deserialize body")
             }),
             StatusCode::FORBIDDEN => Err(api::Error::Unauthorized),
-            StatusCode::BAD_REQUEST => Err(api::Error::BadRequest(error(response))),
-            StatusCode::NOT_FOUND => Err(api::Error::NotFound(error(response))),
-            s if s.is_server_error() => Err(api::Error::InternalError(format_err!("{}", error(response)))),
+            StatusCode::BAD_REQUEST => Err(api::Error::BadRequest(400, error(response))),
+            StatusCode::NOT_FOUND => Err(api::Error::NotFound(404, error(response))),
+            s if s.is_server_error() => {
+                Err(api::Error::InternalError(500, format_err!("{}", error(response))))
+            }
             s => {
                 let body = response.text().expect("Unable to get response text");
                 eprintln!("error body: {}", body);

@@ -1,6 +1,9 @@
 use apf::api::payment::models::*;
-use apf::api::payment::{ActivateAccount, Credit, RegisterAccount, TxQuery};
-use apf::api::SuccessReturn;
+use apf::api::{
+    payment::{ActivateAccount, Credit, RegisterAccount, TxQuery},
+    ApiResult,
+};
+// use apf::api::SuccessReturn;
 use apf::auth;
 use apf::crypto::*;
 use apf::models;
@@ -8,6 +11,7 @@ use apf::prelude::*;
 use apf::schema_op::*;
 use apf::util;
 use diesel::{connection::Connection, pg::PgConnection};
+use serde_json::Value as JsonValue;
 
 use crate::{ApiKind, TestKit, TestKitApi};
 
@@ -151,7 +155,7 @@ impl<'a> ApiHelper<'a> {
 
     /// Register account
     /// Mengembalikan token untuk aktivasi.
-    pub fn register_account(&self, account_name: &str, email: &str, phone_number: &str) -> String {
+    pub fn register_account(&self, account_name: &str, email: &str, phone_number: &str) -> ApiResult<String> {
         let api = self.testkit.api();
 
         let data = RegisterAccount {
@@ -162,13 +166,12 @@ impl<'a> ApiHelper<'a> {
 
         api.public(ApiKind::Payment)
             .query(&data)
-            .post::<SuccessReturn<String>>("v1/account/register")
+            .post("v1/account/register")
             .expect("create account")
-            .result
     }
 
     /// Aktivasi akun menggunakan token yang telah didapat dari hasil register.
-    pub fn activate_account(&self, token: String, password: &str) -> Account {
+    pub fn activate_account(&self, token: String, password: &str) -> ApiResult<Account> {
         let api = self.testkit.api();
 
         let data = ActivateAccount {
@@ -178,13 +181,18 @@ impl<'a> ApiHelper<'a> {
 
         api.public(ApiKind::Payment)
             .query(&data)
-            .post::<Account>("v1/account/activate")
+            .post::<ApiResult<Account>>("v1/account/activate")
             .expect("activate account")
     }
 
     /// Mengkredit saldo akun
     /// Mengembalikan saldo terbaru setelah di-credit.
-    pub fn credit_account_balance(&self, account_id: ID, amount: f64, secret_key: &SecretKey) -> f64 {
+    pub fn credit_account_balance(
+        &self,
+        account_id: ID,
+        amount: f64,
+        secret_key: &SecretKey,
+    ) -> ApiResult<f64> {
         let mut api = self.testkit.api();
 
         // login-kan
@@ -200,8 +208,7 @@ impl<'a> ApiHelper<'a> {
 
         api.private(ApiKind::Payment)
             .query(&data)
-            .post::<api::SuccessReturn<f64>>("v1/credit")
+            .post::<ApiResult<f64>>("v1/credit")
             .expect("credit account")
-            .result
     }
 }

@@ -17,7 +17,7 @@ mod with;
 
 use self::with::{Immutable, ImmutableReq, Mutable, MutableReq, NamedWith, With};
 pub use self::{error::Error, with::Result};
-pub use crate::{auth, schema_op};
+pub use crate::{auth, error::ErrorCode, schema_op};
 
 use crate::{db, service::Service};
 
@@ -62,7 +62,7 @@ use serde::{de::DeserializeOwned, Serialize};
 
 /// Struktur data ketika pemanggilan api sukses.
 #[derive(Serialize, Deserialize)]
-pub struct ApiResult {
+pub struct ApiResult<T> {
     /// Error code untuk memberikan informasi hasil pengembalian,
     /// apabila tidak ada error terjadi maka code harus berisi 0.
     pub code: i32,
@@ -72,42 +72,54 @@ pub struct ApiResult {
 
     /// Deskripsi error apabila terjadi error.
     pub description: String,
+
+    /// Result data.
+    pub result: Option<T>,
 }
 
-impl ApiResult {
+impl<T: Serialize> ApiResult<T> {
     #[doc(hidden)]
-    pub fn new(code: i32, status: String, description: String) -> Self {
+    pub fn new(code: i32, status: String, description: String, result: Option<T>) -> Self {
         ApiResult {
             code,
             status,
             description,
+            result,
         }
     }
 
     /// Buat hasil sukses
-    pub fn success() -> Self {
-        Self::new(0, "success".to_owned(), "".to_owned())
+    pub fn success(result: T) -> Self {
+        Self::new(0, "success".to_owned(), "".to_owned(), Some(result))
     }
+}
 
+impl ApiResult<()> {
     /// Buat hasil error
-    pub fn error(code: i32, description: String) -> Self {
-        Self::new(code, "error".to_owned(), description)
+    pub fn error(code: i32, description: String) -> ApiResult<()> {
+        // Self::new(code, "error".to_owned(), description, None::<_>)
+        ApiResult {
+            code,
+            status: "error".to_owned(),
+            description,
+            result: None::<()>,
+        }
     }
 }
 
-/// Bentuk standar API respon apabila operasi sukses.
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
-pub struct SuccessReturn<T> {
-    #[doc(hidden)]
-    pub result: T,
-}
+// /// Bentuk standar API respon apabila operasi sukses.
+// #[derive(Debug, Serialize, Deserialize, PartialEq)]
+// pub struct SuccessReturn<T> {
+//     #[doc(hidden)]
+//     pub result: T,
+// }
 
-impl<T: Serialize> SuccessReturn<T> {
-    #[doc(hidden)]
-    pub fn new(result: T) -> Self {
-        Self { result }
-    }
-}
+// impl<T: Serialize> SuccessReturn<T> {
+//     #[doc(hidden)]
+//     pub fn new(result: T) -> Self {
+//         Self { result }
+//     }
+// }
 
 /// Defines an object that could be used as an API backend.
 ///
@@ -293,7 +305,12 @@ fn map_ok<I: Serialize>(value: I, request: &HttpRequest) -> HttpResponse {
                     .header(header::CONTENT_TYPE, "application/json")
                     .body(body)
             } else if body == "null" {
-                HttpResponse::Ok().json(ApiResult::success())
+                HttpResponse::Ok().json(ApiResult::<()>::new(
+                    ErrorCode::NoError as i32,
+                    "".to_string(),
+                    "".to_string(),
+                    None,
+                ))
             } else {
                 HttpResponse::Ok().body(body)
             }
@@ -314,12 +331,13 @@ where
     debug!("err_desc: {}", err_desc);
     let mut iter = re.captures_iter(&err_desc);
     if let Some(field) = iter.next() {
-        Err(actix_web::Error::from(Error::InvalidParameter(format!(
-            "No `{}` parameter",
-            &field[1]
-        ))))
+        Err(actix_web::Error::from(Error::InvalidParameter(
+            ErrorCode::InvalidParameter as i32,
+            format!("No `{}` parameter", &field[1]),
+        )))
     } else {
         Err(actix_web::Error::from(Error::InvalidParameter(
+            ErrorCode::SerializeDeserializeError as i32,
             "Invalid parameter data".to_owned(),
         )))
     }

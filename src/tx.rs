@@ -8,6 +8,7 @@ use failure;
 
 use crate::{
     error::Error as PaymentError,
+    error::ErrorCode,
     models::{Account, Invoice, InvoiceItem},
     result::Result,
     schema::{invoice_items, invoices, payment_history, transaction_histories},
@@ -135,7 +136,10 @@ impl<'a> Schema<'a> {
             Err(PaymentError::InvalidParameter("Invalid amount".to_string()))?
         }
         if !account.active {
-            Err(PaymentError::BadRequest("Account inactive".to_string()))?
+            Err(PaymentError::BadRequest(
+                ErrorCode::TxAccountInactive as i32,
+                "Account inactive".to_string(),
+            ))?
         }
 
         self.db.build_transaction().read_write().run(|| {
@@ -225,7 +229,10 @@ impl<'a> Schema<'a> {
         // if amount != invoice.amount { // tidak menggunakan strict unequality comparison pada floating point
         // kita gunakan epsilon dengan margin error
         if (amount - invoice.amount).abs() < 0.001 {
-            Err(PaymentError::BadRequest("Mismatch amount".to_owned()))?
+            Err(PaymentError::BadRequest(
+                ErrorCode::TxAmountMismatch as i32,
+                "Mismatch amount".to_owned(),
+            ))?
         }
 
         if invoice.paid {

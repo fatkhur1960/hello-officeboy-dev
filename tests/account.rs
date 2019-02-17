@@ -23,13 +23,16 @@ fn test_register_and_activate_account() {
     let name = helper.generate_full_name();
     let reg_token =
         api_helper.register_account(&name, &helper.generate_email(), &helper.generate_phone_num());
+    assert!(reg_token.code == ErrorCode::NoError as i32);
+    let reg_token = reg_token.result.unwrap();
     let account = api_helper.activate_account(reg_token, "123");
+    assert!(account.code == ErrorCode::NoError as i32);
+    let account = account.result.unwrap();
     assert_eq!(account.full_name, name);
     helper.cleanup_account(account);
 }
 
 #[test]
-#[should_panic(expected = "activate account: NotFound(\"Not found\")")]
 fn test_activate_account_invalid_token() {
     let testkit = create_testkit();
     let helper = testkit.helper();
@@ -37,58 +40,48 @@ fn test_activate_account_invalid_token() {
 
     let name = helper.generate_full_name();
 
-    let reg_token =
-        api_helper.register_account(&name, &helper.generate_email(), &helper.generate_phone_num());
-    // this should panic
-    let _ = api_helper.activate_account(reg_token + "invalid", "123");
+    let reg_token = api_helper
+        .register_account(&name, &helper.generate_email(), &helper.generate_phone_num())
+        .result
+        .unwrap();
+
+    let rv = api_helper.activate_account(reg_token + "invalid", "123");
+    assert_eq!(rv.code, ErrorCode::DatabaseRecordNotFoundError as i32)
 }
 
 macro_rules! test_register_empty_param {
-    ($name:ident, $error_msg:tt, (($helper:ident, $api_helper:ident)| $($rega:tt)* )  ) => {
+    ($name:ident, $error_code:tt, $error_msg:tt, (($helper:ident, $api_helper:ident)| $($rega:tt)* )  ) => {
         #[test]
-        #[should_panic(expected=$error_msg)]
         fn $name() {
             let testkit = create_testkit();
             let $helper = testkit.helper();
             let $api_helper = testkit.api_helper();
 
-            $($rega)*;
+            let rv = {$($rega)*};
+
+            assert_eq!(rv.code, $error_code);
+            assert_eq!(rv.description, format!("Invalid parameter: {}", $error_msg));
         }
     };
 }
 
 test_register_empty_param!(
     test_register_account_empty_name_param,
-    "create account: BadRequest(\"Invalid parameter: full name cannot be empty\")",
-        ((helper, apih)|
-            let _ = apih.register_account(
-                "",
-                &helper.generate_email(),
-                &helper.generate_phone_num(),
-            )
-        )
+    4002,
+    "full name cannot be empty",
+    ((helper, apih) | apih.register_account("", &helper.generate_email(), &helper.generate_phone_num(),))
 );
 
 test_register_empty_param!(
     test_register_account_empty_email_param,
-    "create account: BadRequest(\"Invalid parameter: email cannot be empty\")",
-        ((helper, apih)|
-            let _ = apih.register_account(
-                &helper.generate_full_name(),
-                "",
-                &helper.generate_phone_num(),
-            )
-        )
+    4002,
+    "email cannot be empty",
+    ((helper, apih) | apih.register_account(&helper.generate_full_name(), "", &helper.generate_phone_num(),))
 );
 
 test_register_empty_param!(
     test_register_account_empty_phone_num_param,
-    "create account: BadRequest(\"Invalid parameter: phone_num cannot be empty\")",
-        ((helper, apih)|
-            let _ = apih.register_account(
-                &helper.generate_full_name(),
-                &helper.generate_email(),
-                "",
-            )
-        )
+    4002,
+    "phone_num cannot be empty",
+    ((helper, apih) | apih.register_account(&helper.generate_full_name(), &helper.generate_email(), "",))
 );

@@ -9,7 +9,7 @@ use serde_json::Value as JsonValue;
 
 use crate::crypto::{self, SecretKey};
 use crate::{
-    api::{Error as ApiError, SuccessReturn},
+    api::{ApiResult, Error as ApiError, ErrorCode},
     auth, models,
     prelude::*,
     schema_op, tx,
@@ -67,7 +67,10 @@ impl PublicApi {
             } else if let Some(phone) = query.phone {
                 schema.get_account_by_phone_num(&phone)?
             } else {
-                Err(ApiError::InvalidParameter("No email/phone parameter".to_string()))?
+                Err(ApiError::InvalidParameter(
+                    ErrorCode::NoLoginInfo as i32,
+                    "No email/phone parameter".to_string(),
+                ))?
             }
         };
 
@@ -84,11 +87,11 @@ impl PublicApi {
     }
 
     #[api_endpoint(path = "/get_key", auth = "required")]
-    fn account_get_key(query: ()) -> SuccessReturn<JsonValue> {
+    fn account_get_key(query: ()) -> ApiResult<JsonValue> {
         let schema = Schema::new(state.db());
         let account_key = schema.get_account_key(current_account.id)?;
 
-        Ok(SuccessReturn::new(
+        Ok(ApiResult::success(
             json!({"pub_key": account_key.pub_key, "secret_key": account_key.secret_key}),
         ))
     }

@@ -7,15 +7,15 @@ use protobuf;
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 
-use crate::api::SuccessReturn;
+// use crate::api::SuccessReturn;
 use crate::crypto::{self, PublicKey, SecretKey, Signature};
 
 use crate::{
     api,
     api::payment::models::*,
-    api::{Error as ApiError, HttpRequest as ApiHttpRequest, Result as ApiResult},
+    api::{ApiResult, Error as ApiError, HttpRequest as ApiHttpRequest},
     auth,
-    error::Error,
+    error::{Error, ErrorCode},
     prelude::*,
     schema_op, tx,
 };
@@ -141,7 +141,10 @@ where
     /// Untuk memverifikasi signature pada body ini.
     pub fn verify(&self, public_key: &PublicKey, secret_key: &SecretKey) -> Result<()> {
         if self.signature.is_empty() {
-            Err(Error::BadRequest("message has no signature.".to_string()))?
+            Err(Error::BadRequest(
+                ErrorCode::MessageHasNoSign as i32,
+                "message has no signature.".to_string(),
+            ))?
         }
         let bytes = self.body.write_to_bytes().expect("Cannot write to bytes");
         let signature: Signature = self.signature.parse::<Signature>()?;
@@ -202,7 +205,7 @@ pub mod models {
 
     use chrono::NaiveDateTime;
 
-    use crate::models;
+    use crate::{api::ApiResult, models};
 
     use std::convert::From;
 
@@ -237,6 +240,18 @@ pub mod models {
         }
     }
 
+    impl From<models::Account> for ApiResult<Account> {
+        fn from(a: models::Account) -> Self {
+            ApiResult::success(Account {
+                id: a.id,
+                full_name: a.full_name,
+                email: a.email,
+                phone_num: a.phone_num,
+                register_time: a.register_time,
+            })
+        }
+    }
+
 }
 
 use crate::models::AccessToken;
@@ -247,19 +262,19 @@ pub struct PublicApi;
 impl PublicApi {
     /// Rest API endpoint untuk mendaftarkan akun baru.
     #[api_endpoint(path = "/account/register", mutable, auth = "none")]
-    pub fn register_account(state: &mut AppState, query: RegisterAccount) -> SuccessReturn<String> {
+    pub fn register_account(state: &mut AppState, query: RegisterAccount) -> ApiResult<String> {
         let schema = Schema::new(state.db());
 
         schema
             .register_account(&query.full_name, &query.email, &query.phone_num)
             .map_err(From::from)
-            .map(SuccessReturn::new)
+            .map(ApiResult::success)
     }
 
     /// Mengaktifkan user yang telah teregister.
     /// Ini nantinya dijadikan link yang akan dikirimkan ke email pendaftar.
     #[api_endpoint(path = "/account/activate", auth = "none", mutable)]
-    pub fn activate_account(query: ActivateAccount) -> Account {
+    pub fn activate_account(query: ActivateAccount) -> ApiResult<Account> {
         let schema = Schema::new(state.db());
         let account = schema.activate_registered_account(query.token, 0.0f64)?;
         schema.set_password(account.id, &query.password)?;
@@ -280,7 +295,10 @@ impl PublicApi {
             // batas maksimal transfer sementara dibatasi
             // untuk menghindari human error
             // sampai jelas mekanismenya
-            Err(ApiError::InvalidParameter("Max limit reached".to_string()))?
+            Err(ApiError::InvalidParameter(
+                ErrorCode::TxMaxAmountReached as i32,
+                "Max limit reached".to_string(),
+            ))?
         }
 
         let schema = Schema::new(state.db());
@@ -317,12 +335,12 @@ impl PublicApi {
     }
 
     /// API endpoint untuk mem-publish invoice (membuat invoice baru).
-    #[authorized_only(user)]
+    #[api_endpoint(path = "/invoice/publish", auth = "required", mutable)]
     pub fn publish_invoice(
         state: &mut AppState,
         query: TxQuery<PublishInvoice>,
         req: &ApiHttpRequest,
-    ) -> ApiResult<SuccessReturn<ID>> {
+    ) -> ApiResult<ID> {
         let schema = tx::Schema::new(state.db());
         let items = query
             .body
@@ -352,20 +370,26 @@ impl PublicApi {
         schema
             .publish_invoice(new_invoice, items)
             .map_err(From::from)
-            .map(SuccessReturn::new)
+            .map(ApiResult::success)
     }
 
     /// API endpoint untuk melakukan pembayaran.
     #[api_endpoint(path = "/pay", auth = "required", mutable)]
-    pub fn pay(query: TxQuery<Pay>) -> SuccessReturn<ID> {
+    pub fn pay(query: TxQuery<Pay>) -> ApiResult<ID> {
         let payer = {
             let schema = schema_op::Schema::new(state.db());
             let payer = schema.get_account(query.body.payer)?;
             if payer.id != current_account.id {
-                Err(ApiError::NotFound("Invalid account".to_owned()))?
+                Err(ApiError::NotFound(
+                    ErrorCode::TxCurrentAccountIsNotPayer as i32,
+                    "Invalid account".to_owned(),
+                ))?
             }
             if query.body.amount > payer.balance {
-                Err(ApiError::BadRequest("Insufficient balance".to_owned()))?
+                Err(ApiError::BadRequest(
+                    ErrorCode::TxInsufficientBalance as i32,
+                    "Insufficient balance".to_owned(),
+                ))?
             }
             payer
         };
@@ -374,7 +398,7 @@ impl PublicApi {
             schema
                 .pay_invoice(query.body.invoice, &payer, query.body.amount, &query.body.via)
                 .map_err(From::from)
-                .map(SuccessReturn::new)
+                .map(ApiResult::success)
         }
     }
 }
@@ -388,7 +412,7 @@ impl PrivateApi {
     /// Rest API endpoint for topup
     /// Mengembalikan jumlah balance akun setelah dikredit.
     #[api_endpoint(path = "/credit", auth = "required", mutable)]
-    pub fn credit(state: &mut AppState, query: TxQuery<Credit>, req: &ApiHttpRequest) -> SuccessReturn<f64> {
+    pub fn credit(state: &mut AppState, query: TxQuery<Credit>, req: &ApiHttpRequest) -> ApiResult<f64> {
         trace!("topup account: {:?}", query);
 
         let schema = Schema::new(state.db());
@@ -410,14 +434,15 @@ impl PrivateApi {
 
         let account = schema.get_account(query.body.account)?;
 
-        Ok(SuccessReturn::new(account.balance))
+        Ok(ApiResult::success(account.balance))
     }
 
     /// Rest API endpoint untuk debit
+    #[api_endpoint(path = "/debit", auth = "required", mutable)]
     pub fn debit(state: &mut AppState, query: TxQuery<Debit>, req: &ApiHttpRequest) -> ApiResult<()> {
         trace!("debit: {:?}", query);
         // @TODO(*): Code here
-        Ok(())
+        Ok(ApiResult::success(()))
     }
 
     /// Listing account
@@ -433,7 +458,7 @@ impl PrivateApi {
         Ok(EntriesResult { count, entries })
     }
 
-    /// Mencari akun berdasarkan kata kunci
+    /// Mencari akun berdasarkan kata kunci.
     #[api_endpoint(path = "/account/search", auth = "none")]
     pub fn search_accounts(query: ListAccount) -> EntriesResult<db::Account> {
         let schema = Schema::new(state.db());
@@ -451,34 +476,34 @@ impl PrivateApi {
         Ok(EntriesResult { count, entries })
     }
 
-    /// Mendapatkan jumlah akun secara keseluruhan
+    /// Mendapatkan jumlah akun secara keseluruhan.
     #[api_endpoint(path = "/account/count")]
-    pub fn account_count(state: &AppState, query: ()) -> SuccessReturn<i64> {
+    pub fn account_count(state: &AppState, query: ()) -> ApiResult<i64> {
         let schema = Schema::new(state.db());
 
         schema
             .get_account_count()
-            .map(SuccessReturn::new)
+            .map(ApiResult::success)
             .map_err(From::from)
     }
 
     /// Mendapatkan jumlah akun secara keseluruhan
     #[api_endpoint(path = "/account/info", auth = "required")]
-    pub fn account_info(query: AccountQuery) -> SuccessReturn<db::Account> {
+    pub fn account_info(query: AccountQuery) -> ApiResult<db::Account> {
         let schema = Schema::new(state.db());
 
         schema
             .get_account(query.id)
-            .map(SuccessReturn::new)
+            .map(ApiResult::success)
             .map_err(From::from)
     }
 
     #[api_endpoint(path = "/transactions", auth = "required", immutable)]
-    pub fn transactions(query: QueryEntries) -> EntriesResult<db::Transaction> {
+    pub fn transactions(query: QueryEntries) -> ApiResult<EntriesResult<db::Transaction>> {
         let schema = Schema::new(state.db());
 
         let entries = schema.get_transactions(query.page, query.limit)?;
 
-        Ok(EntriesResult { count: 0, entries })
+        Ok(ApiResult::success(EntriesResult { count: 0, entries }))
     }
 }

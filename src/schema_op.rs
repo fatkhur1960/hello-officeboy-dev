@@ -8,6 +8,7 @@ use failure;
 use crate::{
     crypto::{self, PublicKey, SecretKey},
     error::Error as PaymentError,
+    error::ErrorCode,
     models::*,
     result::Result,
     schema::*,
@@ -99,7 +100,10 @@ impl<'a> Schema<'a> {
         self.db.build_transaction().read_write().run(|| {
             // pengirim dan penerima tidak boleh sama
             if from == to {
-                Err(PaymentError::BadRequest("Invalid target".to_string()))?
+                Err(PaymentError::BadRequest(
+                    ErrorCode::FromAndToTargetIsSame as i32,
+                    "Invalid target".to_string(),
+                ))?
             }
 
             let from = self.get_account(from)?;
@@ -110,7 +114,10 @@ impl<'a> Schema<'a> {
             }
 
             if !from.active || !to.active {
-                Err(PaymentError::BadRequest("Account inactive".to_owned()))?
+                Err(PaymentError::BadRequest(
+                    ErrorCode::TxAccountInactive as i32,
+                    "Account inactive".to_owned(),
+                ))?
             }
 
             if amount <= 0.0f64 {

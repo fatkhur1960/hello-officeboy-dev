@@ -7,6 +7,7 @@ use apf_testkit::TestKit;
 pub mod prelude {
     //pub use actix_web::test::*;
     pub use super::{create_testkit, setup};
+    pub use apf::api::{ApiResult, ErrorCode};
     pub use apf_testkit::{TestHelper, TestKit, TestKitApi};
 }
 
