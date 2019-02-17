@@ -89,7 +89,7 @@ export default {
       .api()
       .privateApi.get(url)
       .then(resp => {
-        self.items = resp.data.entries.map(this.mapItemFunc);
+        self.items = resp.data.result.entries.map(this.mapItemFunc);
       });
   }
 

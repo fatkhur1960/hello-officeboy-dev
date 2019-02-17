@@ -447,7 +447,7 @@ impl PrivateApi {
 
     /// Listing account
     #[api_endpoint(path = "/accounts", auth = "none")]
-    pub fn list_account(query: ListAccount) -> EntriesResult<db::Account> {
+    pub fn list_account(query: ListAccount) -> ApiResult<EntriesResult<db::Account>> {
         let schema = Schema::new(state.db());
 
         let offset = query.page * query.limit;
@@ -455,12 +455,12 @@ impl PrivateApi {
         let entries = schema.get_accounts(offset, query.limit)?;
 
         let count = schema.get_account_count()?;
-        Ok(EntriesResult { count, entries })
+        Ok(ApiResult::success(EntriesResult { count, entries }))
     }
 
     /// Mencari akun berdasarkan kata kunci.
     #[api_endpoint(path = "/account/search", auth = "none")]
-    pub fn search_accounts(query: ListAccount) -> EntriesResult<db::Account> {
+    pub fn search_accounts(query: ListAccount) -> ApiResult<EntriesResult<db::Account>> {
         let schema = Schema::new(state.db());
 
         let offset = query.page * query.limit;
@@ -473,7 +473,7 @@ impl PrivateApi {
 
         let (entries, count) = schema.search_accounts(&keyword, offset, query.limit)?;
 
-        Ok(EntriesResult { count, entries })
+        Ok(ApiResult::success(EntriesResult { count, entries }))
     }
 
     /// Mendapatkan jumlah akun secara keseluruhan.
