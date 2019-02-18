@@ -414,39 +414,3 @@ test_publish_invoice!(
         assert_eq!(invoice.amount, 10.0);
     }
 );
-
-// #[test]
-// fn test_publish_invoice_valid() {
-//     // let testkit = create_testkit();
-//     // let h = testkit.helper();
-//     // let ah = testkit.api_helper();
-
-//     // let mut ac_wks = h.generate_accounts(2, true);
-
-//     // let acwk1 = ac_wks.pop().unwrap();
-//     // let acwk2 = ac_wks.pop().unwrap();
-
-//     // let ac1 = acwk1.account.clone();
-//     // let ac2 = acwk2.account.clone();
-
-//     // let ac1key = acwk1.secret_key;
-
-//     // let items = vec![InvoiceItem {
-//     //     name: util::random_string(10),
-//     //     price: util::random_number_f64(),
-//     //     ..Default::default()
-//     // }];
-
-//     let rv = ah.publish_invoice(ID_REF, ac1.id, ac2.id, 5.0, 10.0, "none", items, &ac1key);
-
-//     assert_eq!(rv.code, 0);
-//     assert!(rv.result.unwrap() > 0);
-
-//     // check for existence
-//     let rv = ah.get_invocie(rv.result.unwrap(), ac2.id);
-//     assert_eq!(rv.code, 0);
-//     let invoice = rv.result.unwrap();
-//     assert_eq!(invoice.id_ref, ID_REF);
-//     assert_eq!(invoice.discount, 5.0);
-//     assert_eq!(invoice.amount, 10.0);
-// }

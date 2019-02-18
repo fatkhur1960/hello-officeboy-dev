@@ -268,6 +268,7 @@ use crate::models::AccessToken;
 /// Holder untuk implementasi API endpoint publik.
 pub struct PublicApi;
 
+// #[api_group("payment", "public")]
 impl PublicApi {
     #[inline]
     fn verify_tx<T>(query: &TxQuery<T>, schema: &Schema, current_account: &db::Account) -> api::Result<()>
@@ -286,7 +287,7 @@ impl PublicApi {
 
     /// Rest API endpoint untuk mendaftarkan akun baru.
     #[api_endpoint(path = "/account/register", mutable, auth = "none")]
-    pub fn register_account(state: &mut AppState, query: RegisterAccount) -> ApiResult<String> {
+    pub fn register_account(query: RegisterAccount) -> ApiResult<String> {
         let schema = Schema::new(state.db());
 
         schema
@@ -449,6 +450,7 @@ use crate::models as db;
 /// Holder untuk implementasi API endpoint privat.
 pub struct PrivateApi;
 
+// #[api_group("payment", "private")]
 impl PrivateApi {
     /// Rest API endpoint for topup
     /// Mengembalikan jumlah balance akun setelah dikredit.
@@ -528,7 +530,7 @@ impl PrivateApi {
             .map_err(From::from)
     }
 
-    /// Mendapatkan jumlah akun secara keseluruhan
+    /// Mendapatkan data akun.
     #[api_endpoint(path = "/account/info", auth = "required")]
     pub fn account_info(query: AccountQuery) -> ApiResult<db::Account> {
         let schema = Schema::new(state.db());
