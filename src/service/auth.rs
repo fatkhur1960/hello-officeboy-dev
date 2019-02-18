@@ -35,11 +35,12 @@ impl Service for AuthService {
     }
 
     fn wire_api(&self, builder: &mut ServiceApiBuilder) {
-        builder.public_scope().load(Box::new(PublicApi));
+        builder.public_scope()
+            .load(PublicApi::new());
 
         builder
             .private_scope()
-            .endpoint_mut("v1/remove_access_token", PrivateApi::remove_access_token);
+            .load(PrivateApi::new());
     }
 }
 

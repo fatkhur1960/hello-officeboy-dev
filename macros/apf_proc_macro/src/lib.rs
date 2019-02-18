@@ -322,8 +322,14 @@ pub fn api_group(attr: proc_macro::TokenStream, item: proc_macro::TokenStream) -
         }
         let sases = TokenStream::from_iter(sas.into_iter());
         quote! {
+            impl #struct_name {
+                #[doc(hidden)]
+                pub fn new() -> Box<#struct_name> {
+                    Box::new(#struct_name{})
+                }
+            }
             impl crate::api::ApiEndpointDef for #struct_name {
-                fn wire(&self, sas: &mut api::ServiceApiScope) {
+                fn wire(&self, sas: &mut crate::api::ServiceApiScope) {
                     #sases
                 }
             }
