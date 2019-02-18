@@ -1,7 +1,7 @@
 <template>
   <div id="AccountDetail">
     <AnsTab>
-      <div class="ui grid" v-if="$route.path.startsWith('/dashboard/accounts/')">
+      <div class="ui grid">
         <div class="six wide column">
           <table class="ui celled table">
             <tbody>
@@ -75,7 +75,7 @@ export default {
     };
   },
   created() {
-    console.log("AccountDetail created.");
+    // console.log("AccountDetail created.");
     if (!this.accountId) return;
     this.$apf
       .api()

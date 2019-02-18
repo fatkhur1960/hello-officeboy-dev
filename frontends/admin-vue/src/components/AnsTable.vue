@@ -56,7 +56,7 @@ export default {
         .api()
         .privateApi.get(url)
         .then(resp => {
-          this.items = resp.data.entries.map(this.mapItemFunc);
+          this.items = resp.data.result.entries.map(this.mapItemFunc);
         });
     },
     showDetail(item){
