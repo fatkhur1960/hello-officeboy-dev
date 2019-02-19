@@ -8,3 +8,4 @@ node_modules
 GIT_MSG
 apf_server
 *.pyc
+*.raw.txt
