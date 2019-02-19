@@ -3,12 +3,9 @@
 
 extern crate proc_macro;
 
-// #[macro_use]
-// extern crate darling;
 #[macro_use]
 extern crate syn;
 
-// use crate::proc_macro;
 use proc_macro2::{Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenStream, TokenTree};
 use quote::quote;
 // use syn;
@@ -25,20 +22,35 @@ extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
 
+use serde_json::Value as JsonValue;
+
 use std::io::prelude::*;
 use std::{
     fs::{self, File, OpenOptions},
     io::LineWriter,
 };
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct ApiGroup {
+    pub elem: String,
+    pub title: String,
+    pub desc: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 struct ApiEndpoint {
+    pub elem: String,
     pub path: String,
     pub rel_path: String,
     pub title: String,
     pub desc: String,
     pub method: String,
     pub method_name: String,
+}
+
+enum DocElem {
+    Group(ApiGroup),
+    Endpoint(ApiEndpoint),
 }
 
 fn create_file(scope: &'static str) -> Arc<Mutex<File>> {
@@ -56,31 +68,43 @@ fn create_file(scope: &'static str) -> Arc<Mutex<File>> {
     ))
 }
 
+fn load_file(scope: &'static str) -> Vec<DocElem> {
+    use std::io::{BufRead, BufReader, Result};
+    let mut rv = vec![];
+    let file_name = format!("api-docs/{}-endpoints.raw.txt", scope);
+    if let Ok(file) = File::open(file_name) {
+        for line in BufReader::new(file).lines() {
+            let line = line.unwrap();
+            let json: JsonValue = serde_json::from_str(&line).unwrap();
+            match json.get("elem") {
+                Some(serde_json::Value::String(elem)) => match elem.as_str() {
+                    "Group" => rv.push(DocElem::Group(serde_json::from_str::<ApiGroup>(&line).unwrap())),
+                    "ApiEndpoint" => rv.push(DocElem::Endpoint(
+                        serde_json::from_str::<ApiEndpoint>(&line).unwrap(),
+                    )),
+                    _ => ()
+                },
+                _ => (),
+            }
+        }
+    }
+
+    rv
+}
+
 lazy_static! {
-    // static ref API_DOC_TREE: Arc<Mutex<Vec<ApiEndpoint>>> = Arc::new(Mutex::new(vec![]));
-    static ref FILE_PUBLIC:Arc<Mutex<File>> = {
-        create_file("public")
+    static ref FILE_PUBLIC: Arc<Mutex<File>> = { create_file("public") };
+    static ref FILE_PRIVATE: Arc<Mutex<File>> = { create_file("private") };
+    // static ref CURRENT_SCOPE: Arc<Mutex<String>> = Arc::new(Mutex::new(String::new()));
+    static ref CURRENT_DOCS_PUBLIC:Arc<Mutex<Vec<DocElem>>> = {
+        Arc::new(Mutex::new(load_file("public")))
     };
-    static ref FILE_PRIVATE:Arc<Mutex<File>> = {
-        create_file("private")
-    };
-    static ref CURRENT_SCOPE:Arc<Mutex<String>> = Arc::new(Mutex::new(String::new()));
 }
 
 fn get_lit_str(lit: &proc_macro2::Literal) -> String {
     let a = lit.to_string();
     a[1..a.len() - 1].trim().to_string()
 }
-
-// use darling::FromMeta;
-// use syn::{AttributeArgs, ItemFn};
-
-// #[derive(Debug, FromMeta)]
-// struct ApiMacroArgs {
-//     pub path:String,
-//     pub auth:String,
-//     pub mutable:bool
-// }
 
 fn gather_endpoint_info(stream: TokenStream, base: &str) -> ApiEndpoint {
     let mut path = String::new();
@@ -109,6 +133,7 @@ fn gather_endpoint_info(stream: TokenStream, base: &str) -> ApiEndpoint {
     }
 
     ApiEndpoint {
+        elem: "ApiEndpoint".to_string(),
         path: format!("{}{}", base, path),
         rel_path: path,
         title: Default::default(),
@@ -122,19 +147,46 @@ fn gather_endpoint_info(stream: TokenStream, base: &str) -> ApiEndpoint {
     }
 }
 
-fn write_doc(api_scope: &str, text: &str) {
+use std::fmt;
+
+impl fmt::Display for DocElem {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            DocElem::Group(api_group) => write!(f, "{}\n", serde_json::to_string(api_group).unwrap()),
+            DocElem::Endpoint(ae) => write!(f, "{}\n", serde_json::to_string(ae).unwrap()),
+        }
+    }
+}
+
+fn merge_doc(api_scope: &str, elem: &DocElem){
+    let its = CURRENT_DOCS_PUBLIC.lock().unwrap();
+    // for it in its.iter(){
+    //     match it {
+    //         DocElem::Group(api_group) => {
+    //             api_group.
+    //         }
+    //     }
+    // }
+    its.iter().map(|a| {
+        match a {
+            DocElem::Group(group) => {
+                a
+            },
+            DocElem::Endpoint(endp) => {
+                a
+            }
+        }
+    });
+}
+
+fn write_doc(api_scope: &str, elem: &DocElem) {
     let mut file = match api_scope {
         "public" => (*FILE_PUBLIC).lock().unwrap(),
         "private" => (*FILE_PRIVATE).lock().unwrap(),
         x => panic!("unknown scope: {}", x),
     };
-    let _ = file.write(text.as_bytes());
+    let _ = write!(file, "{}", elem);
 }
-
-// #[proc_macro_derive(ApiWire)]
-// pub fn api_wire(input:proc_macro::TokenStream) -> proc_macro::TokenStream {
-//     let tb =
-// }
 
 #[proc_macro_attribute]
 pub fn api_group(attr: proc_macro::TokenStream, item: proc_macro::TokenStream) -> proc_macro::TokenStream {
@@ -142,17 +194,26 @@ pub fn api_group(attr: proc_macro::TokenStream, item: proc_macro::TokenStream) -
 
     let mut group_name = String::new();
     let mut api_scope = String::new();
+    let mut api_doc = String::new();
     let mut base = String::new();
     let mut struct_name = String::new();
     let mut _void = String::new();
 
     // dbg!(&attr);
+    // dbg!(&item);
+
+    // {
+    //     let its = CURRENT_DOCS_PUBLIC.lock().unwrap();
+    //     for it in its.iter() {
+    //         println!("{}", it);
+    //     }
+    // }
 
     {
         let mut to_update = &mut _void;
         for item in attr {
             // dbg!(&item);
-            match item {
+            match &item {
                 TokenTree::Ident(ident) => match ident.to_string().as_str() {
                     "base" => to_update = &mut base,
                     _ => (),
@@ -172,7 +233,44 @@ pub fn api_group(attr: proc_macro::TokenStream, item: proc_macro::TokenStream) -
         }
     }
 
-    write_doc(&api_scope, &format!("## Group {}\n", group_name));
+    {
+        let items = proc_macro2::TokenStream::from(item.clone());
+        let mut in_doc = false;
+        let mut docs = vec![];
+
+        for item in items {
+            match &item {
+                TokenTree::Group(group) => {
+                    for st in group.stream().into_iter() {
+                        match &st {
+                            TokenTree::Ident(ident) if ident.to_string() == "doc" => {
+                                in_doc = true;
+                            }
+                            TokenTree::Literal(lit) if in_doc == true => {
+                                docs.push(get_lit_str(&lit));
+                            }
+                            _ => (),
+                        }
+                    }
+                    in_doc = false;
+                }
+                _ => (),
+            }
+        }
+
+        api_doc = docs.join("\n").to_string();
+    }
+
+    // dbg!(&api_doc);
+
+    write_doc(
+        &api_scope,
+        &DocElem::Group(ApiGroup {
+            elem: "Group".to_string(),
+            title: group_name,
+            desc: api_doc,
+        }),
+    );
 
     let mut api_endpoint_info = vec![];
 
@@ -246,10 +344,10 @@ pub fn api_group(attr: proc_macro::TokenStream, item: proc_macro::TokenStream) -
                                 }
                             }
                             TokenTree::Ident(ident) => {
-                                if tb[tb.len() - 1].to_string() == "fn" {
+                                if !tb.is_empty() && tb[tb.len() - 1].to_string() == "fn" {
                                     api_endpoint_info.last_mut().map(|info| {
                                         info.method_name = ident.to_string();
-                                        dbg!(&info);
+                                        // dbg!(&info);
                                     });
                                 }
                             }
@@ -264,11 +362,12 @@ pub fn api_group(attr: proc_macro::TokenStream, item: proc_macro::TokenStream) -
         }
 
         for aei in &api_endpoint_info {
-            let text = format!("{}\n", serde_json::to_string_pretty(&aei).unwrap());
-            write_doc(&api_scope, &text);
+            // let text = format!("{}\n", serde_json::to_string(&aei).unwrap());
+            merge_doc(&api_scope, &DocElem::Endpoint(aei.clone()));
         }
     }
 
+    // buatkan auto wire interface function
     let tts = {
         let struct_name = Ident::new(&struct_name, Span::call_site());
         let mut sas = vec![];

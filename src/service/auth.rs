@@ -67,6 +67,7 @@ impl PrivateApi {
 
 struct PublicApi;
 
+/// API endpoint untuk keperluan otorisasi.
 #[api_group("Authorization", "public", base = "/auth/v1")]
 impl PublicApi {
     /// Meng-otorisasi akun yang telah teregister
