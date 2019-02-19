@@ -408,11 +408,11 @@ where
 /// Just type alias for complex type
 pub type ResourceFunc = Arc<Box<Fn(Scope) -> Scope + Sync + Send + 'static>>;
 
-/// Trait untuk di-add-kan ke setiap struct API endpoint holder.
-pub trait ApiEndpointDef {
-    /// Wiring API.
-    fn wire(&self, sas: &mut ServiceApiScope) {}
-}
+// /// Trait untuk di-add-kan ke setiap struct API endpoint holder.
+// pub trait ApiEndpointDef {
+//     /// Wiring API.
+//     fn wire(&self, sas: &mut ServiceApiScope) {}
+// }
 
 /// Scope API
 #[derive(Default, Clone)]
@@ -427,9 +427,12 @@ impl ServiceApiScope {
         Self::default()
     }
 
-    /// Load API endpoints dari API endpoint holder.
-    pub fn load(&mut self, d: Box<dyn ApiEndpointDef>) {
-        d.wire(self)
+    /// Menghubungkan API endpoints dari API endpoint holder.
+    pub fn link<F>(&mut self, wire_func: F)
+    where
+        F: FnOnce(&mut ServiceApiScope) -> (),
+    {
+        wire_func(self)
     }
 
     fn endpoint_internal<Q, I, R, F, E, K>(&mut self, name: &'static str, endpoint: E) -> &mut Self

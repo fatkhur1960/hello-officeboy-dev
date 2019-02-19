@@ -268,7 +268,7 @@ use crate::models::AccessToken;
 /// Holder untuk implementasi API endpoint publik.
 pub struct PublicApi;
 
-// #[api_group("payment", "public")]
+#[api_group("Transactions", "public", base = "/payment/v1")]
 impl PublicApi {
     #[inline]
     fn verify_tx<T>(query: &TxQuery<T>, schema: &Schema, current_account: &db::Account) -> api::Result<()>
@@ -450,7 +450,7 @@ use crate::models as db;
 /// Holder untuk implementasi API endpoint privat.
 pub struct PrivateApi;
 
-// #[api_group("payment", "private")]
+#[api_group("Transactions", "private", base = "/payment/v1")]
 impl PrivateApi {
     /// Rest API endpoint for topup
     /// Mengembalikan jumlah balance akun setelah dikredit.

@@ -172,20 +172,7 @@ pub fn api_group(attr: proc_macro::TokenStream, item: proc_macro::TokenStream) -
         }
     }
 
-    // dbg!(&attr);
-
-    // {
-    //     let mut file = match api_scope.as_str() {
-    //         "public" => (*FILE_PUBLIC).lock().unwrap(),
-    //         "private" => (*FILE_PRIVATE).lock().unwrap(),
-    //         x => panic!("unknown scope: {}", x)
-    //     };
-    //     let _ = file.write(format!("## Group {}\n", group_name).as_bytes());
-    // }
     write_doc(&api_scope, &format!("## Group {}\n", group_name));
-    // let _ = file.write(format!("## Group {}\n", group_name).to_bytes());
-
-    // *(*CURRENT_SCOPE).lock().unwrap() = api_scope;
 
     let mut api_endpoint_info = vec![];
 
@@ -260,7 +247,6 @@ pub fn api_group(attr: proc_macro::TokenStream, item: proc_macro::TokenStream) -
                             }
                             TokenTree::Ident(ident) => {
                                 if tb[tb.len() - 1].to_string() == "fn" {
-                                    println!("after fn");
                                     api_endpoint_info.last_mut().map(|info| {
                                         info.method_name = ident.to_string();
                                         dbg!(&info);
@@ -277,24 +263,7 @@ pub fn api_group(attr: proc_macro::TokenStream, item: proc_macro::TokenStream) -
             }
         }
 
-        // let api_endp_json = json!({
-        //     "path": path,
-        //     "title": "",
-        //     "desc": docs.join(", "),
-        //     "method": if is_mutable { "POST" }else{ "GET" }
-        // });
-
-        // let current_scope = (*(*CURRENT_SCOPE).lock().unwrap()).clone();
-
-        // let mut file = match api_scope.as_str() {
-        //     "public" => (*FILE_PUBLIC).lock().unwrap(),
-        //     "private" => (*FILE_PRIVATE).lock().unwrap(),
-        //     x => panic!("unknown scope: {}", x)
-        // };
-
         for aei in &api_endpoint_info {
-            // let _ = file.write(serde_json::to_string_pretty(&aei).unwrap().as_bytes());
-            // let _ = file.write(b"\n");
             let text = format!("{}\n", serde_json::to_string_pretty(&aei).unwrap());
             write_doc(&api_scope, &text);
         }
@@ -324,24 +293,16 @@ pub fn api_group(attr: proc_macro::TokenStream, item: proc_macro::TokenStream) -
         quote! {
             impl #struct_name {
                 #[doc(hidden)]
-                pub fn new() -> Box<#struct_name> {
-                    Box::new(#struct_name{})
-                }
-            }
-            impl crate::api::ApiEndpointDef for #struct_name {
-                fn wire(&self, sas: &mut crate::api::ServiceApiScope) {
+                pub fn wire(sas: &mut crate::api::ServiceApiScope){
                     #sases
                 }
             }
         }
     };
 
-    // item.extend(tts);
-
     let mut item = proc_macro2::TokenStream::from(item);
     item.extend(tts);
 
-    // item
     proc_macro::TokenStream::from(item)
 }
 

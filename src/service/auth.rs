@@ -35,12 +35,8 @@ impl Service for AuthService {
     }
 
     fn wire_api(&self, builder: &mut ServiceApiBuilder) {
-        builder.public_scope()
-            .load(PublicApi::new());
-
-        builder
-            .private_scope()
-            .load(PrivateApi::new());
+        builder.public_scope().link(PublicApi::wire);
+        builder.private_scope().link(PrivateApi::wire);
     }
 }
 
@@ -58,7 +54,7 @@ pub struct AccessTokenQuery {
     pub token: String,
 }
 
-struct PrivateApi {}
+struct PrivateApi;
 
 #[api_group("Authorization", "private", base = "/auth/v1")]
 impl PrivateApi {
