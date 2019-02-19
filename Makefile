@@ -3,6 +3,7 @@ PROJ_DIR=$(shell pwd)
 
 PUBLIC_API_DOC_OUTPUT=$(PROJ_DIR)/target/api-docs/public-api.html
 LIBRARY_DOC_OUTPUT=$(PROJ_DIR)/target/doc/apf/index.html
+DATABASE_TEST_URL=postgresql://postgres@localhost/apf_test
 
 docs: prepare lib-docs api-docs
 
@@ -26,11 +27,11 @@ fmt:
 
 test:
 	@@echo Testing...
-	@@DATABASE_URL=postgresql://localhost/apf_test?sslmode=disable cargo test
+	@@DATABASE_URL=$(DATABASE_TEST_URL) cargo test
 
 test-dev:
 	@@echo Testing...
-	@@DATABASE_URL=postgresql://localhost/apf_test?sslmode=disable cargo test -- --nocapture
+	@@DATABASE_URL=$(DATABASE_TEST_URL) cargo test -- --nocapture
 
 lint:
 	@@echo Linting...
@@ -60,8 +61,6 @@ release-linux:
 					-v /tmp:/root/.cargo/registry \
 					anvie/rust-musl-build:latest \
 					cargo build --release --target=x86_64-unknown-linux-musl
-
-DATABASE_TEST_URL=postgresql://localhost/apf_test?sslmode=disable
 
 test-env:
 	diesel database reset --database-url $(DATABASE_TEST_URL)
