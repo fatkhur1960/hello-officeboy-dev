@@ -15,7 +15,7 @@ use crate::{
     schema_op, tx,
 };
 
-use crate::api::payment::{PrivateApi, PublicApi};
+use crate::api::payment::{PrivateApi, PublicApi, PublicApiAccount};
 
 /// Core basis service apf.
 /// Service ini yang men-serve beberapa endpoint transaksional seperti:
@@ -36,6 +36,7 @@ impl Service for PaymentService {
 
     fn wire_api(&self, builder: &mut ServiceApiBuilder) {
         builder.public_scope().link(PublicApi::wire);
+        builder.public_scope().link(PublicApiAccount::wire);
         builder.private_scope().link(PrivateApi::wire);
     }
 }

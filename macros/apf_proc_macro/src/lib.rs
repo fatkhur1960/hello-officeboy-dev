@@ -33,6 +33,7 @@ use std::{
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ApiGroup {
     pub elem: String,
+    pub group:String,
     pub title: String,
     pub desc: String,
 }
@@ -40,6 +41,7 @@ struct ApiGroup {
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 struct ApiEndpoint {
     pub elem: String,
+    pub group:String,
     pub path: String,
     pub rel_path: String,
     pub title: String,
@@ -110,7 +112,7 @@ fn get_lit_str(lit: &proc_macro2::Literal) -> String {
     a[1..a.len() - 1].trim().to_string()
 }
 
-fn gather_endpoint_info(stream: TokenStream, base: &str) -> ApiEndpoint {
+fn gather_endpoint_info(stream: TokenStream, base: &str, group:&str) -> ApiEndpoint {
     let mut path = String::new();
     let mut mutable = false;
 
@@ -138,6 +140,7 @@ fn gather_endpoint_info(stream: TokenStream, base: &str) -> ApiEndpoint {
 
     ApiEndpoint {
         elem: "ApiEndpoint".to_string(),
+        group: group.to_string(),
         path: format!("{}{}", base, path),
         rel_path: path,
         title: Default::default(),
@@ -204,7 +207,7 @@ fn merge_doc(api_scope: &str, elem: &DocElem) {
         Some(item) => match item {
             DocElem::Group(group) => {
                 if let DocElem::Endpoint(r_group) = elem {
-                    group.desc = r_group.desc;
+                    group.desc = r_group.desc.clone();
                 }
             }
             DocElem::Endpoint(endp) => {
@@ -227,20 +230,9 @@ fn write_doc() {
     let mut file = create_file("public");
 
     for elem in elems.iter() {
-        // println!("{}", elem);
-        // write_doc_elem("public", elem);
         let _ = write!(file, "{}", elem);
     }
 }
-
-// fn write_doc_elem(api_scope: &str, elem: &DocElem) {
-//     let mut file = match api_scope {
-//         "public" => (*FILE_PUBLIC).lock().unwrap(),
-//         "private" => (*FILE_PRIVATE).lock().unwrap(),
-//         x => panic!("unknown scope: {}", x),
-//     };
-//     let _ = write!(file, "{}", elem);
-// }
 
 #[proc_macro_attribute]
 pub fn api_group(attr: proc_macro::TokenStream, item: proc_macro::TokenStream) -> proc_macro::TokenStream {
@@ -321,7 +313,8 @@ pub fn api_group(attr: proc_macro::TokenStream, item: proc_macro::TokenStream) -
         &api_scope,
         &DocElem::Group(ApiGroup {
             elem: "Group".to_string(),
-            title: group_name,
+            group: group_name.clone(),
+            title: group_name.clone(),
             desc: api_doc,
         }),
     );
@@ -376,7 +369,7 @@ pub fn api_group(attr: proc_macro::TokenStream, item: proc_macro::TokenStream) -
                                             docs.push(get_lit_str(&lit));
                                         }
                                         TokenTree::Group(group) if begin_api_endpoint == true => {
-                                            let mut info = gather_endpoint_info(group.stream(), &base);
+                                            let mut info = gather_endpoint_info(group.stream(), &base, &group_name);
 
                                             info.desc = docs.join("\n");
                                             docs = vec![];

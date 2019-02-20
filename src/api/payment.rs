@@ -265,25 +265,12 @@ pub mod models {
 
 use crate::models::AccessToken;
 
-/// Holder untuk implementasi API endpoint publik.
-pub struct PublicApi;
 
-#[api_group("Transactions", "public", base = "/payment/v1")]
-impl PublicApi {
-    #[inline]
-    fn verify_tx<T>(query: &TxQuery<T>, schema: &Schema, current_account: &db::Account) -> api::Result<()>
-    where
-        T: Serialize + protobuf::Message + Clone,
-    {
-        // verifikasi digital signature
-        let acc_key = schema.get_account_key(current_account.id)?;
-        let secret_key = acc_key.secret_key.parse::<SecretKey>()?;
-        let public_key = acc_key.pub_key.parse::<PublicKey>()?;
+/// Holder untuk implementasi API endpoint publik untuk account.
+pub struct PublicApiAccount;
 
-        query.verify(&public_key, &secret_key)?;
-
-        Ok(())
-    }
+#[api_group("Account", "public", base="/payment/v1")]
+impl PublicApiAccount {
 
     /// Rest API endpoint untuk mendaftarkan akun baru.
     #[api_endpoint(path = "/account/register", mutable, auth = "none")]
@@ -305,6 +292,28 @@ impl PublicApi {
         schema.set_password(account.id, &query.password)?;
         Ok(account.into())
     }
+}
+
+/// Holder untuk implementasi API endpoint publik.
+pub struct PublicApi;
+
+#[api_group("Transactions", "public", base = "/payment/v1")]
+impl PublicApi {
+    #[inline]
+    fn verify_tx<T>(query: &TxQuery<T>, schema: &Schema, current_account: &db::Account) -> api::Result<()>
+    where
+        T: Serialize + protobuf::Message + Clone,
+    {
+        // verifikasi digital signature
+        let acc_key = schema.get_account_key(current_account.id)?;
+        let secret_key = acc_key.secret_key.parse::<SecretKey>()?;
+        let public_key = acc_key.pub_key.parse::<PublicKey>()?;
+
+        query.verify(&public_key, &secret_key)?;
+
+        Ok(())
+    }
+
 
     /// Rest API endpoint untuk transfer
     #[api_endpoint(path = "/transfer", auth = "required", mutable)]

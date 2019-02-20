@@ -12,6 +12,18 @@ import apf
 def get_path(path):
     return os.path.join(os.path.dirname(__file__), "..", "..", path)
 
+def ident_4(json_text):
+    lines = json_text.split("\n")
+    rv = []
+    for line in lines:
+        rv.append("        " + line)
+    return "\n".join(rv)
+
+def json_print(text):
+    parsed = json.loads(text)
+    json_text = json.dumps(parsed, indent=4, sort_keys=False)
+    return ident_4(json_text)
+
 def gen_doc(scope, in_path, out_path):
     with open(out_path, "w") as fout:
         fout.write("FORMAT: 1A\n\n")
@@ -20,37 +32,37 @@ def gen_doc(scope, in_path, out_path):
         fout.write("# APF rest API documentation\n\n")
         fout.write("Dokumentasi rest API\n\n")
 
+        sorted_lines = []
+
         with open(in_path) as f:
             lines = f.readlines()
             for line in lines:
-                process_line(line, fout)
+                j = json.loads(line)
+                sorted_lines.append(j)
+            
+        def sorter(a, b):
+            # if a['elem'] == "Group" or b['elem'] == "Group":
+            #     return 0
+            return cmp(a['group'], b['group'])
 
-def ident_4(json_text):
-    lines = json_text.split("\n")
-    rv = []
-    for line in lines:
-        rv.append("        " + line)
-    return "\n".join(rv)
+        sorted_lines = sorted(sorted_lines, cmp=sorter)
 
+        for j in sorted_lines:
+            process_line(j, fout)
 
-def json_print(text):
-    parsed = json.loads(text)
-    json_text = json.dumps(parsed, indent=4, sort_keys=False)
-    return ident_4(json_text)
-
-def process_line(line, fout):
-    j = json.loads(line)
+def process_line(j, fout):
     if j["elem"] == "Group":
         fout.write("## Group %s\n" % j["title"].strip())
         if j["desc"] and j["desc"] != "":
             fout.write("\n%s\n\n" % j["desc"].strip())
         else:
-            fout.write("\n");
+            fout.write("\n")
     elif j["elem"] == "ApiEndpoint":
         title = j['title']
         if not title or title == "":
-            s = j['path'].split('/')
-            title = s[-1].title()
+            # s = j['path'].split('/')
+            # title = s[-1].title()
+            title = j['method_name'].replace('_', ' ').title()
         fout.write("### %s [%s %s]\n\n" % (title, j['method'], j['path']))
         fout.write("%s\n\n" % j['desc'])
         if j['request_json'] and j['request_json'] != "":

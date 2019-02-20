@@ -17,6 +17,7 @@ lib-docs:
 
 api-docs: prepare api-docs/public-api.md
 	@@echo generating API documentation...
+	@@python $(PROJ_DIR)/etc/script/gen_api_docs.py
 	@@cd api-docs && aglio -i public-api-gen.md -o $(PUBLIC_API_DOC_OUTPUT)
 	@@echo generated: $(PUBLIC_API_DOC_OUTPUT)
 
