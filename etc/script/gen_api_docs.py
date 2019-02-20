@@ -208,7 +208,6 @@ def gen_doc(scope, in_path, out_path):
     with open(out_path + ".tmp~", "w") as fout:
         fout.write("FORMAT: 1A\n\n")
         
-        # @TODO(robin): 2 lines di bawah ini dibuat agar configurable (tidak hardcoded)
         fout.write("# %s\n\n" % get_main_title(parsed_docs))
         fout.write("%s\n" % get_main_desc(parsed_docs))
 
