@@ -41,14 +41,17 @@ def gen_doc(scope, in_path, out_path):
                 sorted_lines.append(j)
             
         def sorter(a, b):
-            # if a['elem'] == "Group" or b['elem'] == "Group":
-            #     return 0
             return cmp(a['group'], b['group'])
 
         sorted_lines = sorted(sorted_lines, cmp=sorter)
+        groups = filter(lambda a: a["elem"] == "Group", sorted_lines)
+        endpoints = sorted(filter(lambda a: a["elem"] == "ApiEndpoint", sorted_lines), lambda a,b: cmp(a['method_name'], b['method_name']))
 
-        for j in sorted_lines:
-            process_line(j, fout)
+        for group in groups:
+            process_line(group, fout)
+            for endpoint in endpoints:
+                if endpoint['group'] == group['group']:
+                    process_line(endpoint, fout)
 
 def process_line(j, fout):
     if j["elem"] == "Group":

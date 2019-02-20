@@ -8,7 +8,7 @@ DATABASE_TEST_URL=postgresql://postgres@localhost/apf_test
 docs: prepare lib-docs api-docs
 
 prepare:
-	mkdir -p target/api-docs
+	@@mkdir -p target/api-docs
 
 lib-docs:
 	@@echo generating library documentation...
