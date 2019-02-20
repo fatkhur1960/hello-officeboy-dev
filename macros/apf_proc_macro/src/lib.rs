@@ -48,6 +48,7 @@ struct ApiEndpoint {
     pub desc: String,
     pub method: String,
     pub method_name: String,
+    pub request_param: String,
     pub request_json: String,
     pub response_ok: String,
 }
@@ -72,7 +73,7 @@ lazy_static! {
 
 fn create_file(scope: &str) -> File {
     let file_name = format!("api-docs/{}-endpoints.raw.txt", scope);
-    println!("creating {} file", file_name);
+    // println!("creating {} file", file_name);
     if fs::metadata(&file_name).is_ok() {
         fs::remove_file(&file_name).unwrap_or_else(|_| panic!("Cannot remove file {}", file_name));
     }

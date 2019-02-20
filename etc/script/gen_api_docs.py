@@ -45,6 +45,7 @@ def load_doc(scope, in_path):
         in_title = False
         in_group = False
         in_api_endpoint = False
+        in_api_endpoint_parameters = False
         in_api_endpoint_request = False
         in_api_endpoint_response = False
         current_group = ""
@@ -98,9 +99,11 @@ def load_doc(scope, in_path):
                             'title': title, 
                             'desc': "",
                             'method_name': method_name,
+                            'request_param': "",
                             'request_json': "",
                             'response_ok': ""})
 
+                        in_api_endpoint_parameters = False
                         in_api_endpoint_request = False
                         in_api_endpoint_response = False
                         continue
@@ -112,13 +115,25 @@ def load_doc(scope, in_path):
                         if in_api_endpoint:
                             if line.startswith('+ Request'):
                                 in_api_endpoint_request = True
+                                in_api_endpoint_parameters = False
                                 in_api_endpoint_response = False
+                                continue
+                            elif line.startswith('+ Parameters'):
+                                # print("::: " + line)
+                                in_api_endpoint_parameters = True
+                                in_api_endpoint_response = False
+                                in_api_endpoint_request = False
                                 continue
                             elif line.startswith('+ Response'):
                                 # print("::: " + line)
                                 in_api_endpoint_response = True
                                 in_api_endpoint_request = False
+                                in_api_endpoint_parameters = False
                                 continue
+                            elif in_api_endpoint_parameters:
+                                in_api_endpoint_parameters = not line.startswith("+") and not line.startswith("#")
+                                if in_api_endpoint_parameters:
+                                    docs[-1]['request_param'] = (docs[-1]['request_param'] + '\n' + line).strip()
                             elif in_api_endpoint_request:
                                 in_api_endpoint_request = not line.startswith("+") and not line.startswith("#")
                                 if in_api_endpoint_request:
@@ -218,6 +233,21 @@ def gen_doc(scope, in_path, out_path):
     
     os.rename(out_path + '.tmp~', out_path)
 
+BP_PARAM_RE = re.compile(r"\+ (.*?):\s*([0-9]*).*?\-s*(.*)")
+
+def parse_query_params(param_str):
+    rv = []
+    for line in param_str.split('\n'):
+        line = line.strip()
+        rs = BP_PARAM_RE.match(line)
+        if rs:
+            # print(rs.groups())
+            key = rs.group(1).strip()
+            value = rs.group(2).strip()
+            desc = rs.group(3).strip()
+            rv.append(dict(key=key, value=value, description=desc))
+    return rv
+
 
 def gen_postman(api_scope, input_path, out_path):
     parsed_docs = load_doc(api_scope, input_path)
@@ -231,14 +261,16 @@ def gen_postman(api_scope, input_path, out_path):
     }
 
     for m in parsed_docs:
-        # print(m)
         if m['elem'] == "MainTitle":
-            d['info']['name'] = m['value']
+            d['info']['name'] = m['value'] + " (" + api_scope + ")"
         elif m['elem'] == "Group":
             d['item'].append({'name': m['title'], 'item': []})
         elif m['elem'] == "ApiEndpoint":
             if type(d['item'][-1]['item']) is not list:
                 raise Exception("prev element not `Group`")
+            
+            query_params = parse_query_params(m['request_param'])
+
             d['item'][-1]['item'].append({
                 'name': m['title'],
                 'request': {
@@ -261,7 +293,8 @@ def gen_postman(api_scope, input_path, out_path):
                     "url": {
                         "raw": "{{base_url}}/%s" % m['path'],
                         "host": ["{{base_url}}"],
-                        "path": list(filter(lambda a: len(a.strip()) > 0, m["path"].split("/")))
+                        "path": list(filter(lambda a: len(a.strip()) > 0, m["path"].split("/"))),
+                        "query": query_params
                     }
                 },
                 'response': [
@@ -300,7 +333,13 @@ def process_line(j, fout):
             title = j['method_name'].replace('_', ' ').title()
         fout.write("### %s [%s %s]\n\n" % (title, j['method'], j['path']))
         fout.write("%s\n\n" % j['desc'])
-        if j['request_json'] and j['request_json'] != "":
+        if j['request_param'] and j['request_param'] != "":
+            fout.write("+ Parameters\n\n")
+            request_param = j['request_param']
+            
+            fout.write("    %s\n\n" % request_param)
+
+        elif j['request_json'] and j['request_json'] != "":
             fout.write("+ Request JSON (application/json)\n\n")
             
             try:
@@ -323,14 +362,14 @@ def main():
     private_input_path = get_path("api-docs/private-endpoints.raw.txt")
     
     public_blp = get_path("api-docs/public-api.md")
-    private_output_path = get_path("api-docs/private-api.md")
+    private_blp = get_path("api-docs/private-api.md")
 
     
     gen_doc("public", public_input_path, public_blp)
-    # gen_doc("private", private_input_path, private_output_path)
+    gen_doc("private", private_input_path, private_blp)
 
     gen_postman("public", public_blp, get_path("target/public-api.postman"))
-    gen_postman("private", public_blp, get_path("target/private-api.postman"))
+    gen_postman("private", private_blp, get_path("target/private-api.postman"))
 
 
 if __name__ == "__main__":

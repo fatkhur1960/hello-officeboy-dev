@@ -2,6 +2,7 @@
 PROJ_DIR=$(shell pwd)
 
 PUBLIC_API_DOC_OUTPUT=$(PROJ_DIR)/target/api-docs/public-api.html
+PRIVATE_API_DOC_OUTPUT=$(PROJ_DIR)/target/api-docs/private-api.html
 LIBRARY_DOC_OUTPUT=$(PROJ_DIR)/target/doc/apf/index.html
 DATABASE_TEST_URL=postgresql://postgres@localhost/apf_test
 
@@ -19,7 +20,9 @@ api-docs: prepare api-docs/public-api.md
 	@@echo generating API documentation...
 	@@python $(PROJ_DIR)/etc/script/gen_api_docs.py
 	@@cd api-docs && aglio -i public-api.md -o $(PUBLIC_API_DOC_OUTPUT)
+	@@cd api-docs && aglio -i private-api.md -o $(PRIVATE_API_DOC_OUTPUT)
 	@@echo generated: $(PUBLIC_API_DOC_OUTPUT)
+	@@echo generated: $(PRIVATE_API_DOC_OUTPUT)
 
 fmt:
 	cd testkit && cargo fmt
