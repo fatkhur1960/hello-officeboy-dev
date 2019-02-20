@@ -1,51 +1,75 @@
 FORMAT: 1A
-HOST: http://localhost:9090/
 
 # APF rest API documentation
 
 Dokumentasi rest API publik untuk sistem payment Ansvia.
 
-Dokumen ini berisi spesifikasi setiap endpoint untuk beroperasi dengan akun. 
-Beberapa operasi berupa CRUD operation seperti mendaftarkan akun baru, mengaktifkan, dan menonaktifkan.
+## Group Authorization
 
-## Group Account
+### Remove Access Token [POST /auth/v1/remove_access_token]
 
-### Mendapatkan Daftar Akun [GET /api/payment/v1/accounts]
-
-Mendapatkan daftar akun yang telah teregister dan teraktivasi di dalam sistem payment.
+Menghapus akses token
 
 + Response 200 (application/json)
 
-        {
-            "count": 1,
-            "entries": [
-                {
-                "id":123,
-                "full_name": "Robin",
-                "email": "robin@email.com",
-                "phone_num": "+62123123"
-                }
-            ]
-        }
+        {}
 
-### Hapus Akun [POST /api/payment/v1/account/delete]
+## Group Transactions
 
-Menghapus akun berdasarkan ID.
+### Account Count [GET /payment/v1/account/count]
 
-::: warning
-#### <i class="fa fa-warning"></i> Perhatian
-Operasi ini tidak dapat dikembalikan.
-:::
-
-+ Requset JSON (application/json)
-
-        { "body": {"account_id": 1}, "signature": "ad5e669ef12339eddad5e669ef12339ead5e669ef12339eddad5e669ef12339e" }
+Mendapatkan jumlah akun secara keseluruhan.
 
 + Response 200 (application/json)
 
-        {
-            "code": 0,
-            "status": "success",
-            "description": ""
-        }
+        {}
+
+### Account Info [GET /payment/v1/account/info]
+
+Mendapatkan data akun.
+
++ Response 200 (application/json)
+
+        {}
+
+### Credit [POST /payment/v1/credit]
+
+Rest API endpoint for topup
+Mengembalikan jumlah balance akun setelah dikredit.
+
++ Response 200 (application/json)
+
+        {}
+
+### Debit [POST /payment/v1/debit]
+
+Rest API endpoint untuk debit
+
++ Response 200 (application/json)
+
+        {}
+
+### List Account [GET /payment/v1/accounts]
+
+Listing account
+
++ Response 200 (application/json)
+
+        {}
+
+### Search Accounts [GET /payment/v1/account/search]
+
+Mencari akun berdasarkan kata kunci.
+
++ Response 200 (application/json)
+
+        {}
+
+### Transactions [GET /payment/v1/transactions]
+
+
+
++ Response 200 (application/json)
+
+        {}
 

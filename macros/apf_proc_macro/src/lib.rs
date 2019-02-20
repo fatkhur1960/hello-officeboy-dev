@@ -70,7 +70,7 @@ lazy_static! {
     };
 }
 
-fn create_file(scope: &'static str) -> File {
+fn create_file(scope: &str) -> File {
     let file_name = format!("api-docs/{}-endpoints.raw.txt", scope);
     println!("creating {} file", file_name);
     if fs::metadata(&file_name).is_ok() {
@@ -224,10 +224,14 @@ fn merge_doc(api_scope: &str, elem: &DocElem) {
     }
 }
 
-fn write_doc() {
-    let elems = CURRENT_DOCS_PUBLIC.lock().unwrap();
+fn write_doc(api_scope: &str) {
+    let elems = match api_scope {
+        "public" => CURRENT_DOCS_PUBLIC.lock().unwrap(),
+        "private" => CURRENT_DOCS_PRIVATE.lock().unwrap(),
+        _ => panic!("unknown scope: {}", api_scope)
+    };
 
-    let mut file = create_file("public");
+    let mut file = create_file(api_scope);
 
     for elem in elems.iter() {
         let _ = write!(file, "{}", elem);
@@ -405,7 +409,7 @@ pub fn api_group(attr: proc_macro::TokenStream, item: proc_macro::TokenStream) -
         }
     }
 
-    write_doc();
+    write_doc(&api_scope);
 
     // buatkan auto wire interface function
     let tts = {

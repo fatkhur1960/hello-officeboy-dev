@@ -273,6 +273,8 @@ pub struct PublicApiAccount;
 impl PublicApiAccount {
 
     /// Rest API endpoint untuk mendaftarkan akun baru.
+    /// Setelah register akun tidak langsung aktif, perlu melakukan
+    /// aktifasi menggunakan endpoint `/account/activate`.
     #[api_endpoint(path = "/account/register", mutable, auth = "none")]
     pub fn register_account(query: RegisterAccount) -> ApiResult<String> {
         let schema = Schema::new(state.db());
