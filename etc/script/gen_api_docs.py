@@ -8,16 +8,22 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "libs", "apf
 
 import apf
 
-USER_NAME = "Zufar"
-USER_EMAIL = "zufar@mail.com"
-USER_PHONE = "+6285774931332"
-USER_PASSHASH = "c4f79e6453e740fadae0e333a48888529f5cc10e7769491430fdcddff94d2f8f"
 
-def collect_resp(resp):
-    # print(resp.text)
-    parsed = json.loads(resp.text)
-    json_text = json.dumps(parsed, indent=4, sort_keys=False)
-    return json_text
+def get_path(path):
+    return os.path.join(os.path.dirname(__file__), "..", "..", path)
+
+def gen_doc(scope, in_path, out_path):
+    with open(out_path, "w") as fout:
+        fout.write("FORMAT: 1A\n\n")
+        
+        # @TODO(robin): 2 lines di bawah ini dibuat agar configurable (tidak hardcoded)
+        fout.write("# APF rest API documentation\n\n")
+        fout.write("Dokumentasi rest API\n\n")
+
+        with open(in_path) as f:
+            lines = f.readlines()
+            for line in lines:
+                process_line(line, fout)
 
 def ident_4(json_text):
     lines = json_text.split("\n")
@@ -26,45 +32,48 @@ def ident_4(json_text):
         rv.append("        " + line)
     return "\n".join(rv)
 
-def auth_authorize():
-    global USER_NAME, USER_EMAIL, USER_PHONE, USER_PASSHASH
-    return collect_resp(apf.authorize(USER_EMAIL, USER_PHONE, USER_PASSHASH))
 
-def auth_get_key():
-    return collect_resp(apf.get_key())
+def json_print(text):
+    parsed = json.loads(text)
+    json_text = json.dumps(parsed, indent=4, sort_keys=False)
+    return ident_4(json_text)
 
-API_ENDPOINTS = {
-    "group": {
-        "name": "Authorization",
-        "desc": "Endpoint berkaitan dengan otorisasi.",
-        "endpoints": [
-            {
-                "path": "/auth/v1/authorize",
-                "title": "Melakukan Otorisasi",
-                "desc": "Biasanya digunakan untuk login.",
-                "method": "POST",
-                "func": auth_authorize
-            }
-        ]
-    }
-}
+def process_line(line, fout):
+    j = json.loads(line)
+    if j["elem"] == "Group":
+        fout.write("## Group %s\n" % j["title"].strip())
+        if j["desc"] and j["desc"] != "":
+            fout.write("\n%s\n\n" % j["desc"].strip())
+        else:
+            fout.write("\n");
+    elif j["elem"] == "ApiEndpoint":
+        title = j['title']
+        if not title or title == "":
+            s = j['path'].split('/')
+            title = s[-1].title()
+        fout.write("### %s [%s %s]\n\n" % (title, j['method'], j['path']))
+        fout.write("%s\n\n" % j['desc'])
+        if j['request_json'] and j['request_json'] != "":
+            fout.write("+ Request JSON (application/json)\n\n")
+            fout.write("%s\n" % json_print(j['request_json']))
+        fout.write("+ Response 200 (application/json)\n\n")
+        if j['response_ok'] and j['response_ok'] != "":
+            fout.write("%s\n\n" % json_print(j['response_ok']))
+        else:
+            fout.write("%s\n\n" % ident_4("{}"))
 
 def main():
-    global API_ENDPOINTS
+    public_input_path = get_path("api-docs/public-endpoints.raw.txt")
+    private_file_name = get_path("api-docs/private-endpoints.raw.txt")
+    
+    public_output_path = get_path("api-docs/public-api-gen.md")
+    private_output_path = get_path("api-docs/private-api-gen.md")
 
-    for k, group in API_ENDPOINTS.iteritems():
-        print("## Group %s" % group["name"])
-        print("")
-        print("%s" % group["desc"])
-        print("")
-        for endp in group["endpoints"]:
-            # (path, title, desc, method, func) = endp
-            print("### %s [%s %s]" % (endp["title"], endp["method"], endp["path"]))
-            print("")
-            print(endp["desc"])
-            print("")
-            print(ident_4(endp["func"]()))
-        
+    
+    gen_doc("public", public_input_path, public_output_path)
+    
+
+
 
 if __name__ == "__main__":
     main()

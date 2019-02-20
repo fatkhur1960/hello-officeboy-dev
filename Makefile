@@ -17,7 +17,7 @@ lib-docs:
 
 api-docs: prepare api-docs/public-api.md
 	@@echo generating API documentation...
-	@@cd api-docs && aglio -i public-api.md -o $(PUBLIC_API_DOC_OUTPUT)
+	@@cd api-docs && aglio -i public-api-gen.md -o $(PUBLIC_API_DOC_OUTPUT)
 	@@echo generated: $(PUBLIC_API_DOC_OUTPUT)
 
 fmt:

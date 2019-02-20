@@ -37,7 +37,7 @@ struct ApiGroup {
     pub desc: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 struct ApiEndpoint {
     pub elem: String,
     pub path: String,
@@ -46,26 +46,40 @@ struct ApiEndpoint {
     pub desc: String,
     pub method: String,
     pub method_name: String,
+    pub request_json: String,
+    pub response_ok: String,
 }
 
+#[derive(Clone)]
 enum DocElem {
     Group(ApiGroup),
     Endpoint(ApiEndpoint),
 }
 
-fn create_file(scope: &'static str) -> Arc<Mutex<File>> {
+lazy_static! {
+    // static ref FILE_PUBLIC: Arc<Mutex<File>> = { create_file("public") };
+    // static ref FILE_PRIVATE: Arc<Mutex<File>> = { create_file("private") };
+    // static ref CURRENT_SCOPE: Arc<Mutex<String>> = Arc::new(Mutex::new(String::new()));
+    static ref CURRENT_DOCS_PUBLIC:Arc<Mutex<Vec<DocElem>>> = {
+        Arc::new(Mutex::new(load_file("public")))
+    };
+    static ref CURRENT_DOCS_PRIVATE:Arc<Mutex<Vec<DocElem>>> = {
+        Arc::new(Mutex::new(load_file("private")))
+    };
+}
+
+fn create_file(scope: &'static str) -> File {
     let file_name = format!("api-docs/{}-endpoints.raw.txt", scope);
     println!("creating {} file", file_name);
     if fs::metadata(&file_name).is_ok() {
         fs::remove_file(&file_name).unwrap_or_else(|_| panic!("Cannot remove file {}", file_name));
     }
-    Arc::new(Mutex::new(
-        OpenOptions::new()
-            .create_new(true)
-            .append(true)
-            .open(&file_name)
-            .expect("Cannot write api-docs.raw.txt"),
-    ))
+    OpenOptions::new()
+        .create_new(true)
+        .write(true)
+        // .append(true)
+        .open(&file_name)
+        .expect("Cannot write api-docs.raw.txt")
 }
 
 fn load_file(scope: &'static str) -> Vec<DocElem> {
@@ -82,23 +96,13 @@ fn load_file(scope: &'static str) -> Vec<DocElem> {
                     "ApiEndpoint" => rv.push(DocElem::Endpoint(
                         serde_json::from_str::<ApiEndpoint>(&line).unwrap(),
                     )),
-                    _ => ()
+                    _ => (),
                 },
                 _ => (),
             }
         }
     }
-
     rv
-}
-
-lazy_static! {
-    static ref FILE_PUBLIC: Arc<Mutex<File>> = { create_file("public") };
-    static ref FILE_PRIVATE: Arc<Mutex<File>> = { create_file("private") };
-    // static ref CURRENT_SCOPE: Arc<Mutex<String>> = Arc::new(Mutex::new(String::new()));
-    static ref CURRENT_DOCS_PUBLIC:Arc<Mutex<Vec<DocElem>>> = {
-        Arc::new(Mutex::new(load_file("public")))
-    };
 }
 
 fn get_lit_str(lit: &proc_macro2::Literal) -> String {
@@ -144,10 +148,41 @@ fn gather_endpoint_info(stream: TokenStream, base: &str) -> ApiEndpoint {
             "GET".to_string()
         },
         method_name: Default::default(),
+        ..Default::default()
     }
 }
 
-use std::fmt;
+impl ApiEndpoint {
+    pub fn update(&mut self, right: &ApiEndpoint) {
+        self.rel_path = right.path.clone();
+        self.title = right.title.clone();
+        self.desc = right.desc.clone();
+        self.method = right.method.clone();
+        self.method_name = right.method_name.clone();
+    }
+}
+
+use std::{cmp::PartialEq, fmt};
+
+impl PartialEq for DocElem {
+    fn eq(&self, other: &DocElem) -> bool {
+        match self {
+            DocElem::Group(left) => {
+                if let DocElem::Group(right) = other {
+                    // dbg!((&left.title, &right.title, left.title == right.title));
+                    return left.title == right.title;
+                }
+            }
+            DocElem::Endpoint(left) => {
+                if let DocElem::Endpoint(right) = other {
+                    // dbg!((&left.path, &right.path, left.path == right.path));
+                    return left.path == right.path;
+                }
+            }
+        }
+        false
+    }
+}
 
 impl fmt::Display for DocElem {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -158,35 +193,54 @@ impl fmt::Display for DocElem {
     }
 }
 
-fn merge_doc(api_scope: &str, elem: &DocElem){
-    let its = CURRENT_DOCS_PUBLIC.lock().unwrap();
-    // for it in its.iter(){
-    //     match it {
-    //         DocElem::Group(api_group) => {
-    //             api_group.
-    //         }
-    //     }
-    // }
-    its.iter().map(|a| {
-        match a {
+fn merge_doc(api_scope: &str, elem: &DocElem) {
+    let mut its = if api_scope == "public" {
+        CURRENT_DOCS_PUBLIC.lock().unwrap()
+    } else {
+        CURRENT_DOCS_PRIVATE.lock().unwrap()
+    };
+
+    match its.iter_mut().find(|item| *item == elem) {
+        Some(item) => match item {
             DocElem::Group(group) => {
-                a
-            },
-            DocElem::Endpoint(endp) => {
-                a
+                if let DocElem::Endpoint(r_group) = elem {
+                    group.desc = r_group.desc;
+                }
             }
+            DocElem::Endpoint(endp) => {
+                if let DocElem::Endpoint(r_endp) = elem {
+                    if r_endp.path == endp.path {
+                        endp.update(r_endp);
+                    }
+                }
+            }
+        },
+        None => {
+            its.push(elem.clone());
         }
-    });
+    }
 }
 
-fn write_doc(api_scope: &str, elem: &DocElem) {
-    let mut file = match api_scope {
-        "public" => (*FILE_PUBLIC).lock().unwrap(),
-        "private" => (*FILE_PRIVATE).lock().unwrap(),
-        x => panic!("unknown scope: {}", x),
-    };
-    let _ = write!(file, "{}", elem);
+fn write_doc() {
+    let elems = CURRENT_DOCS_PUBLIC.lock().unwrap();
+
+    let mut file = create_file("public");
+
+    for elem in elems.iter() {
+        // println!("{}", elem);
+        // write_doc_elem("public", elem);
+        let _ = write!(file, "{}", elem);
+    }
 }
+
+// fn write_doc_elem(api_scope: &str, elem: &DocElem) {
+//     let mut file = match api_scope {
+//         "public" => (*FILE_PUBLIC).lock().unwrap(),
+//         "private" => (*FILE_PRIVATE).lock().unwrap(),
+//         x => panic!("unknown scope: {}", x),
+//     };
+//     let _ = write!(file, "{}", elem);
+// }
 
 #[proc_macro_attribute]
 pub fn api_group(attr: proc_macro::TokenStream, item: proc_macro::TokenStream) -> proc_macro::TokenStream {
@@ -205,7 +259,7 @@ pub fn api_group(attr: proc_macro::TokenStream, item: proc_macro::TokenStream) -
     // {
     //     let its = CURRENT_DOCS_PUBLIC.lock().unwrap();
     //     for it in its.iter() {
-    //         println!("{}", it);
+    //         print!("{}", it);
     //     }
     // }
 
@@ -263,7 +317,7 @@ pub fn api_group(attr: proc_macro::TokenStream, item: proc_macro::TokenStream) -
 
     // dbg!(&api_doc);
 
-    write_doc(
+    merge_doc(
         &api_scope,
         &DocElem::Group(ApiGroup {
             elem: "Group".to_string(),
@@ -306,15 +360,6 @@ pub fn api_group(attr: proc_macro::TokenStream, item: proc_macro::TokenStream) -
                                 for item in items {
                                     // dbg!(&item);
                                     match &item {
-                                        // TokenTree::Ident(ident) => {
-                                        //     dbg!(&ident);
-                                        //     match ident.to_string().as_ref() {
-                                        //         "doc" => {
-                                        //             begin_doc = true;
-                                        //         }
-                                        //         _ => (),
-                                        //     }
-                                        // }
                                         TokenTree::Ident(ident) => {
                                             // dbg!(&ident);
                                             match ident.to_string().as_ref() {
@@ -366,6 +411,8 @@ pub fn api_group(attr: proc_macro::TokenStream, item: proc_macro::TokenStream) -
             merge_doc(&api_scope, &DocElem::Endpoint(aei.clone()));
         }
     }
+
+    write_doc();
 
     // buatkan auto wire interface function
     let tts = {
