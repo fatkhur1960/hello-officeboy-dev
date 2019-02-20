@@ -1,51 +1,171 @@
 FORMAT: 1A
-HOST: http://localhost:9090/
 
 # APF rest API documentation
 
-Dokumentasi rest API publik untuk sistem payment Ansvia.
+Dokumentasi rest API privat untuk Mainframe.
 
-Dokumen ini berisi spesifikasi setiap endpoint untuk beroperasi dengan akun. 
-Beberapa operasi berupa CRUD operation seperti mendaftarkan akun baru, mengaktifkan, dan menonaktifkan.
+## Group Authorization
 
-## Group Account
+### Remove Access Token [POST /auth/v1/remove_access_token]
 
-### Mendapatkan Daftar Akun [GET /api/payment/v1/accounts]
+Menghapus akses token
 
-Mendapatkan daftar akun yang telah teregister dan teraktivasi di dalam sistem payment.
++ Response 200 (application/json)
+
+        {}
+
+## Group Transactions
+
+### Account Count [GET /payment/v1/account/count]
+
+Mendapatkan jumlah akun secara keseluruhan.
+
++ Response 200 (application/json)
+
+        {}
+
+### Account Info [GET /payment/v1/account/info]
+
+Mendapatkan data akun.
+
++ Response 200 (application/json)
+
+        {}
+
+### Credit [POST /payment/v1/credit]
+
+Rest API endpoint for topup
+Mengembalikan jumlah balance akun setelah dikredit.
+
++ Request JSON (application/json)
+
+        {
+            "body": {
+                "timestamp": 1550663774000, 
+                "account": 1, 
+                "amount": 100
+            }, 
+            "signature": "2757cbf03fa4b89a685254e0daf8e8bb63e6197682bf2dd20b77e3163a18c322"
+        }
+
++ Response 200 (application/json)
+
+        {}
+
+### Debit [POST /payment/v1/debit]
+
+Rest API endpoint untuk debit
+
++ Response 200 (application/json)
+
+        {}
+
+### List Account [GET /payment/v1/accounts?{page,limit}]
+
+Listing account
+
++ Parameters
+
+    + page: 0 (number) - Mirip seperti offset.
+    + limit: 10 (number) - Membatasi pengembalian daftar akun.
 
 + Response 200 (application/json)
 
         {
-            "count": 1,
-            "entries": [
-                {
-                "id":123,
-                "full_name": "Robin",
-                "email": "robin@email.com",
-                "phone_num": "+62123123"
-                }
-            ]
+            "status": "success", 
+            "code": 0, 
+            "description": "", 
+            "result": {
+                "count": 8, 
+                "entries": [
+                    {
+                        "phone_num": "+628123123", 
+                        "register_time": "2019-02-18T14:24:12.512695", 
+                        "id": 1, 
+                        "full_name": "Zufar", 
+                        "active": true, 
+                        "balance": 0, 
+                        "email": "zufar@mail.com"
+                    }, 
+                    {
+                        "phone_num": "+628123124", 
+                        "register_time": "2019-02-18T14:24:12.524275", 
+                        "id": 2, 
+                        "full_name": "Akmal", 
+                        "active": true, 
+                        "balance": 0, 
+                        "email": "akmal@mail.com"
+                    }, 
+                    {
+                        "phone_num": "+628123125", 
+                        "register_time": "2019-02-18T14:24:12.533736", 
+                        "id": 3, 
+                        "full_name": "Anto", 
+                        "active": true, 
+                        "balance": 0, 
+                        "email": "anto@mail.com"
+                    }, 
+                    {
+                        "phone_num": "+628123126", 
+                        "register_time": "2019-02-18T14:24:12.542059", 
+                        "id": 4, 
+                        "full_name": "Hanky", 
+                        "active": true, 
+                        "balance": 0, 
+                        "email": "hanky@mail.com"
+                    }, 
+                    {
+                        "phone_num": "+628123127", 
+                        "register_time": "2019-02-18T14:24:12.550564", 
+                        "id": 5, 
+                        "full_name": "Andrie", 
+                        "active": true, 
+                        "balance": 0, 
+                        "email": "andrie@mail.com"
+                    }, 
+                    {
+                        "phone_num": "+628123128", 
+                        "register_time": "2019-02-18T14:24:12.559816", 
+                        "id": 6, 
+                        "full_name": "Ubai", 
+                        "active": true, 
+                        "balance": 0, 
+                        "email": "ubai@mail.com"
+                    }, 
+                    {
+                        "phone_num": "+6285828382211", 
+                        "register_time": "2019-02-20T11:00:06.258401", 
+                        "id": 7, 
+                        "full_name": "Alice", 
+                        "active": true, 
+                        "balance": 0, 
+                        "email": "alice@email.com"
+                    }
+                ]
+            }
         }
 
-### Hapus Akun [POST /api/payment/v1/account/delete]
+### List Account [GET /payment/v1/accounts]
 
-Menghapus akun berdasarkan ID.
-
-::: warning
-#### <i class="fa fa-warning"></i> Perhatian
-Operasi ini tidak dapat dikembalikan.
-:::
-
-+ Requset JSON (application/json)
-
-        { "body": {"account_id": 1}, "signature": "ad5e669ef12339eddad5e669ef12339ead5e669ef12339eddad5e669ef12339e" }
+Listing account
 
 + Response 200 (application/json)
 
-        {
-            "code": 0,
-            "status": "success",
-            "description": ""
-        }
+        {}
+
+### Search Accounts [GET /payment/v1/account/search]
+
+Mencari akun berdasarkan kata kunci.
+
++ Response 200 (application/json)
+
+        {}
+
+### Transactions [GET /payment/v1/transactions]
+
+
+
++ Response 200 (application/json)
+
+        {}
 

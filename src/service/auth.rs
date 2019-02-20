@@ -35,12 +35,8 @@ impl Service for AuthService {
     }
 
     fn wire_api(&self, builder: &mut ServiceApiBuilder) {
-        builder
-            .public_scope()
-            .endpoint_mut("v1/authorize", PublicApi::authorize)
-            .endpoint("v1/get_key", PublicApi::account_get_key);
-
-        builder.private_scope();
+        builder.public_scope().link(PublicApi::wire);
+        builder.private_scope().link(PrivateApi::wire);
     }
 }
 
@@ -53,13 +49,31 @@ pub struct Authorize {
     pub passhash: String,
 }
 
-struct PublicApi {}
+#[derive(Serialize, Deserialize)]
+pub struct AccessTokenQuery {
+    pub token: String,
+}
 
+struct PrivateApi;
+
+#[api_group("Authorization", "private", base = "/auth/v1")]
+impl PrivateApi {
+    /// Menghapus akses token
+    #[api_endpoint(path = "/remove_access_token", auth = "required", mutable)]
+    pub fn remove_access_token(query: AccessTokenQuery) -> ApiResult<()> {
+        unimplemented!();
+    }
+}
+
+struct PublicApi;
+
+/// API endpoint untuk keperluan otorisasi.
+#[api_group("Authorization", "public", base = "/auth/v1")]
 impl PublicApi {
     /// Meng-otorisasi akun yang telah teregister
     /// User bisa melakukan otorisasi menggunakan email / nomor telp.
     #[api_endpoint(path = "/authorize", auth = "none", mutable)]
-    pub fn authorize(state: &mut AppState, query: Authorize) -> AccessToken {
+    pub fn authorize(state: &mut AppState, query: Authorize) -> ApiResult<AccessToken> {
         let account = {
             let schema = Schema::new(state.db());
             if let Some(email) = query.email {
@@ -82,10 +96,14 @@ impl PublicApi {
                 Err(ApiError::Unauthorized)?
             }
 
-            schema.generate_access_token(account.id).map_err(From::from)
+            schema
+                .generate_access_token(account.id)
+                .map_err(From::from)
+                .map(ApiResult::success)
         }
     }
 
+    /// Mendapatkan keypair dari account.
     #[api_endpoint(path = "/get_key", auth = "required")]
     fn account_get_key(query: ()) -> ApiResult<JsonValue> {
         let schema = Schema::new(state.db());

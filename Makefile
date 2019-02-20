@@ -2,12 +2,14 @@
 PROJ_DIR=$(shell pwd)
 
 PUBLIC_API_DOC_OUTPUT=$(PROJ_DIR)/target/api-docs/public-api.html
+PRIVATE_API_DOC_OUTPUT=$(PROJ_DIR)/target/api-docs/private-api.html
 LIBRARY_DOC_OUTPUT=$(PROJ_DIR)/target/doc/apf/index.html
+DATABASE_TEST_URL=postgresql://postgres@localhost/apf_test
 
 docs: prepare lib-docs api-docs
 
 prepare:
-	mkdir -p target/api-docs
+	@@mkdir -p target/api-docs
 
 lib-docs:
 	@@echo generating library documentation...
@@ -16,8 +18,11 @@ lib-docs:
 
 api-docs: prepare api-docs/public-api.md
 	@@echo generating API documentation...
+	@@python $(PROJ_DIR)/etc/script/gen_api_docs.py
 	@@cd api-docs && aglio -i public-api.md -o $(PUBLIC_API_DOC_OUTPUT)
+	@@cd api-docs && aglio -i private-api.md -o $(PRIVATE_API_DOC_OUTPUT)
 	@@echo generated: $(PUBLIC_API_DOC_OUTPUT)
+	@@echo generated: $(PRIVATE_API_DOC_OUTPUT)
 
 fmt:
 	cd testkit && cargo fmt
@@ -26,11 +31,11 @@ fmt:
 
 test:
 	@@echo Testing...
-	@@DATABASE_URL=postgresql://localhost/apf_test?sslmode=disable cargo test
+	@@DATABASE_URL=$(DATABASE_TEST_URL) cargo test
 
 test-dev:
 	@@echo Testing...
-	@@DATABASE_URL=postgresql://localhost/apf_test?sslmode=disable cargo test -- --nocapture
+	@@DATABASE_URL=$(DATABASE_TEST_URL) cargo test -- --nocapture
 
 lint:
 	@@echo Linting...
@@ -60,8 +65,6 @@ release-linux:
 					-v /tmp:/root/.cargo/registry \
 					anvie/rust-musl-build:latest \
 					cargo build --release --target=x86_64-unknown-linux-musl
-
-DATABASE_TEST_URL=postgresql://localhost/apf_test?sslmode=disable
 
 test-env:
 	diesel database reset --database-url $(DATABASE_TEST_URL)

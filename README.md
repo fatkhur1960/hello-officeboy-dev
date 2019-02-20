@@ -179,9 +179,11 @@ Ketika sedang compile/test gagal dengan error kurang lebih seperti ini:
 
 Itu artinya table schema mu yang digunakan untuk test belum up-to-date dengan schema terbaru, maka perlu dilakukan migration untuk apply patch-nya:
 
-*Fix (ubuntu 16.04)*
-   
     $ diesel migration run --database-url postgresql://localhost/apf_test?sslmode=disable
+
+Atau reset database untuk test-nya agar di-rebuild schema-nya dari pertama:
+
+    $ make test-env
 
 
 ----

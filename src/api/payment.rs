@@ -265,28 +265,18 @@ pub mod models {
 
 use crate::models::AccessToken;
 
-/// Holder untuk implementasi API endpoint publik.
-pub struct PublicApi;
 
-impl PublicApi {
-    #[inline]
-    fn verify_tx<T>(query: &TxQuery<T>, schema: &Schema, current_account: &db::Account) -> api::Result<()>
-    where
-        T: Serialize + protobuf::Message + Clone,
-    {
-        // verifikasi digital signature
-        let acc_key = schema.get_account_key(current_account.id)?;
-        let secret_key = acc_key.secret_key.parse::<SecretKey>()?;
-        let public_key = acc_key.pub_key.parse::<PublicKey>()?;
+/// Holder untuk implementasi API endpoint publik untuk account.
+pub struct PublicApiAccount;
 
-        query.verify(&public_key, &secret_key)?;
-
-        Ok(())
-    }
+#[api_group("Account", "public", base="/payment/v1")]
+impl PublicApiAccount {
 
     /// Rest API endpoint untuk mendaftarkan akun baru.
+    /// Setelah register akun tidak langsung aktif, perlu melakukan
+    /// aktifasi menggunakan endpoint `/account/activate`.
     #[api_endpoint(path = "/account/register", mutable, auth = "none")]
-    pub fn register_account(state: &mut AppState, query: RegisterAccount) -> ApiResult<String> {
+    pub fn register_account(query: RegisterAccount) -> ApiResult<String> {
         let schema = Schema::new(state.db());
 
         schema
@@ -304,6 +294,28 @@ impl PublicApi {
         schema.set_password(account.id, &query.password)?;
         Ok(account.into())
     }
+}
+
+/// Holder untuk implementasi API endpoint publik.
+pub struct PublicApi;
+
+#[api_group("Transactions", "public", base = "/payment/v1")]
+impl PublicApi {
+    #[inline]
+    fn verify_tx<T>(query: &TxQuery<T>, schema: &Schema, current_account: &db::Account) -> api::Result<()>
+    where
+        T: Serialize + protobuf::Message + Clone,
+    {
+        // verifikasi digital signature
+        let acc_key = schema.get_account_key(current_account.id)?;
+        let secret_key = acc_key.secret_key.parse::<SecretKey>()?;
+        let public_key = acc_key.pub_key.parse::<PublicKey>()?;
+
+        query.verify(&public_key, &secret_key)?;
+
+        Ok(())
+    }
+
 
     /// Rest API endpoint untuk transfer
     #[api_endpoint(path = "/transfer", auth = "required", mutable)]
@@ -449,12 +461,13 @@ use crate::models as db;
 /// Holder untuk implementasi API endpoint privat.
 pub struct PrivateApi;
 
+#[api_group("Transactions", "private", base = "/payment/v1")]
 impl PrivateApi {
     /// Rest API endpoint for topup
     /// Mengembalikan jumlah balance akun setelah dikredit.
     #[api_endpoint(path = "/credit", auth = "required", mutable)]
     pub fn credit(state: &mut AppState, query: TxQuery<Credit>, req: &ApiHttpRequest) -> ApiResult<f64> {
-        trace!("topup account: {:?}", query);
+        trace!("credit account: {:?}", query);
 
         let schema = Schema::new(state.db());
 
@@ -528,7 +541,7 @@ impl PrivateApi {
             .map_err(From::from)
     }
 
-    /// Mendapatkan jumlah akun secara keseluruhan
+    /// Mendapatkan data akun.
     #[api_endpoint(path = "/account/info", auth = "required")]
     pub fn account_info(query: AccountQuery) -> ApiResult<db::Account> {
         let schema = Schema::new(state.db());
