@@ -2,7 +2,7 @@ FORMAT: 1A
 
 # APF rest API documentation
 
-Dokumentasi rest API publik untuk sistem payment Ansvia.
+Dokumentasi rest API privat untuk Mainframe.
 
 ## Group Authorization
 
@@ -36,6 +36,17 @@ Mendapatkan data akun.
 
 Rest API endpoint for topup
 Mengembalikan jumlah balance akun setelah dikredit.
+
++ Request JSON (application/json)
+
+        {
+            "body": {
+                "timestamp": 1550663774000, 
+                "account": 1, 
+                "amount": 100
+            }, 
+            "signature": "2757cbf03fa4b89a685254e0daf8e8bb63e6197682bf2dd20b77e3163a18c322"
+        }
 
 + Response 200 (application/json)
 

@@ -25,8 +25,8 @@ Ini nantinya dijadikan link yang akan dikirimkan ke email pendaftar.
             "code": 0, 
             "description": "", 
             "result": {
-                "register_time": "2019-02-20T11:00:06.258401", 
                 "phone_num": "+6285828382211", 
+                "register_time": "2019-02-20T11:00:06.258401", 
                 "id": 7, 
                 "full_name": "Alice", 
                 "email": "alice@email.com"

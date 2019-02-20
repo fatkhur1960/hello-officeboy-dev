@@ -467,7 +467,7 @@ impl PrivateApi {
     /// Mengembalikan jumlah balance akun setelah dikredit.
     #[api_endpoint(path = "/credit", auth = "required", mutable)]
     pub fn credit(state: &mut AppState, query: TxQuery<Credit>, req: &ApiHttpRequest) -> ApiResult<f64> {
-        trace!("topup account: {:?}", query);
+        trace!("credit account: {:?}", query);
 
         let schema = Schema::new(state.db());
 
