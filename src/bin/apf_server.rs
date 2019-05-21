@@ -1,4 +1,4 @@
-// extern crate apf;
+extern crate apf;
 
 #[macro_use]
 extern crate log;
