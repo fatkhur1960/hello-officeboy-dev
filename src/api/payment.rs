@@ -230,6 +230,9 @@ pub mod models {
         /// Alamat email kun.
         pub email: String,
 
+        /// Balance akun
+        pub balance: f64,
+
         /// Nomor telpon akun.
         pub phone_num: String,
 
@@ -243,6 +246,7 @@ pub mod models {
                 id: a.id,
                 full_name: a.full_name,
                 email: a.email,
+                balance: a.balance,
                 phone_num: a.phone_num,
                 register_time: a.register_time,
             }
@@ -255,6 +259,7 @@ pub mod models {
                 id: a.id,
                 full_name: a.full_name,
                 email: a.email,
+                balance: a.balance,
                 phone_num: a.phone_num,
                 register_time: a.register_time,
             })

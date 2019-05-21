@@ -8,4 +8,6 @@ node_modules
 GIT_MSG
 apf_server
 *.pyc
-*.raw.txt
+*.raw.txttestkit/target/
+macros/apf_proc_macro/target
+testkit/target/
