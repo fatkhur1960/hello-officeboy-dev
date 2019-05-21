@@ -14,27 +14,27 @@ fn main() {
     dotenv::dotenv().ok();
     env_logger::init();
 
-    println!(
-        r#"
+//     println!(
+//         r#"
 
-____________    __      ____________,
-\_____     /   /_ \     \     _____/
- \_____    \____/__\____/    _____/
-  \_____      | APF |       _____/
-     \________\__|__/_________/
-               /___\
-            ._//___\\_.
-    "#
-    );
+// ____________    __      ____________,
+// \_____     /   /_ \     \     _____/
+//  \_____    \____/__\____/    _____/
+//   \_____      | APF |       _____/
+//      \________\__|__/_________/
+//                /___\
+//             ._//___\\_.
+//     "#
+//     );
 
     println!(
-        "\nAPF server {}\n_______________________________________\n{}\ngit: {}\n",
+        "\nHello Officeboy server {}\n_______________________________________\n{}\ngit: {}\n",
         env!("CARGO_PKG_VERSION"),
         env!("BUILD_INFO"),
         env!("GIT_REV")
     );
 
-    trace!("starting up...");
+    trace!("Starting up the server...");
 
     let auth_service = AuthService::new();
     let payment_service = PaymentService::new();
