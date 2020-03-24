@@ -44,10 +44,24 @@ pub fn generate_token() -> String {
     hex::encode(&crypto::sha256_hash_raw(wtr.as_slice()))
 }
 
+/// Menggenerasikan kode aktifasi yang biasa digunakan untuk register user baru.
+pub fn generate_activation_code() -> String {
+    format!("{}", thread_rng().gen_range(100_000, 999_999))
+}
+
 #[cfg(test)]
 mod tests {
     use hex;
     use std::collections::HashMap;
+
+    #[test]
+    fn test_generate_activation_code() {
+        let codes = (0..100).map(|_| super::generate_activation_code());
+        for code in codes {
+            assert_eq!(code.len(), 6);
+        }
+        // assert_eq! (super::generate_activation_code(), "test");
+    }
 
     #[test]
     fn test_generate_access_token() {

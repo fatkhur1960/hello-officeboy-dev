@@ -3,7 +3,7 @@
 use actix_web::{
     actix::System,
     http::{header, Method},
-    middleware::{self, cors::Cors},
+    middleware::{self, cors::Cors, Logger},
     server::{self, HttpServer},
     AsyncResponder, FromRequest, HttpMessage, HttpResponse, Query,
 };
@@ -17,7 +17,7 @@ mod with;
 
 use self::with::{Immutable, ImmutableReq, Mutable, MutableReq, NamedWith, With};
 pub use self::{error::Error, with::Result};
-pub use crate::{auth, schema_op};
+pub use crate::{auth, error::ErrorCode, schema_op};
 
 use crate::{db, service::Service};
 
@@ -60,44 +60,66 @@ impl fmt::Display for ApiAccess {
 
 use serde::{de::DeserializeOwned, Serialize};
 
+/// Struktur data ketika pemanggilan api sukses.
 #[derive(Serialize, Deserialize)]
-pub(crate) struct ApiResult {
-    code: i32,
-    status: String,
-    description: String,
+pub struct ApiResult<T> {
+    /// Error code untuk memberikan informasi hasil pengembalian,
+    /// apabila tidak ada error terjadi maka code harus berisi 0.
+    pub code: i32,
+
+    /// Status bisa berisi: "success" atau "error".
+    pub status: String,
+
+    /// Deskripsi error apabila terjadi error.
+    pub description: String,
+
+    /// Result data.
+    pub result: Option<T>,
 }
 
-impl ApiResult {
-    pub fn new(code: i32, status: String, description: String) -> Self {
+impl<T: Serialize> ApiResult<T> {
+    #[doc(hidden)]
+    pub fn new(code: i32, status: String, description: String, result: Option<T>) -> Self {
         ApiResult {
             code,
             status,
             description,
+            result,
         }
     }
 
-    pub fn success() -> Self {
-        Self::new(0, "success".to_owned(), "".to_owned())
-    }
-
-    pub fn error(code: i32, description: String) -> Self {
-        Self::new(code, "error".to_owned(), description)
+    /// Buat hasil sukses
+    pub fn success(result: T) -> Self {
+        Self::new(0, "success".to_owned(), "".to_owned(), Some(result))
     }
 }
 
-/// Bentuk standar API respon apabila operasi sukses.
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
-pub struct SuccessReturn<T> {
-    #[doc(hidden)]
-    pub result: T,
-}
-
-impl<T: Serialize> SuccessReturn<T> {
-    #[doc(hidden)]
-    pub fn new(result: T) -> Self {
-        Self { result }
+impl ApiResult<()> {
+    /// Buat hasil error
+    pub fn error(code: i32, description: String) -> ApiResult<()> {
+        // Self::new(code, "error".to_owned(), description, None::<_>)
+        ApiResult {
+            code,
+            status: "error".to_owned(),
+            description,
+            result: None::<()>,
+        }
     }
 }
+
+// /// Bentuk standar API respon apabila operasi sukses.
+// #[derive(Debug, Serialize, Deserialize, PartialEq)]
+// pub struct SuccessReturn<T> {
+//     #[doc(hidden)]
+//     pub result: T,
+// }
+
+// impl<T: Serialize> SuccessReturn<T> {
+//     #[doc(hidden)]
+//     pub fn new(result: T) -> Self {
+//         Self { result }
+//     }
+// }
 
 /// Defines an object that could be used as an API backend.
 ///
@@ -283,7 +305,12 @@ fn map_ok<I: Serialize>(value: I, request: &HttpRequest) -> HttpResponse {
                     .header(header::CONTENT_TYPE, "application/json")
                     .body(body)
             } else if body == "null" {
-                HttpResponse::Ok().json(ApiResult::success())
+                HttpResponse::Ok().json(ApiResult::<()>::new(
+                    ErrorCode::NoError as i32,
+                    "".to_string(),
+                    "".to_string(),
+                    None,
+                ))
             } else {
                 HttpResponse::Ok().body(body)
             }
@@ -301,14 +328,16 @@ where
     // @TODO(*): Regex ini mungkin perlu dibuat lazy_static?
     let re = Regex::new(r"missing field `(.*?)`").unwrap();
     let err_desc = format!("{}", e);
+    debug!("err_desc: {}", err_desc);
     let mut iter = re.captures_iter(&err_desc);
     if let Some(field) = iter.next() {
-        Err(actix_web::Error::from(Error::InvalidParameter(format!(
-            "No `{}` parameter",
-            &field[1]
-        ))))
+        Err(actix_web::Error::from(Error::InvalidParameter(
+            ErrorCode::InvalidParameter as i32,
+            format!("No `{}` parameter", &field[1]),
+        )))
     } else {
         Err(actix_web::Error::from(Error::InvalidParameter(
+            ErrorCode::SerializeDeserializeError as i32,
             "Invalid parameter data".to_owned(),
         )))
     }
@@ -379,6 +408,12 @@ where
 /// Just type alias for complex type
 pub type ResourceFunc = Arc<Box<Fn(Scope) -> Scope + Sync + Send + 'static>>;
 
+// /// Trait untuk di-add-kan ke setiap struct API endpoint holder.
+// pub trait ApiEndpointDef {
+//     /// Wiring API.
+//     fn wire(&self, sas: &mut ServiceApiScope) {}
+// }
+
 /// Scope API
 #[derive(Default, Clone)]
 pub struct ServiceApiScope {
@@ -390,6 +425,14 @@ impl ServiceApiScope {
     #[doc(hidden)]
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Menghubungkan API endpoints dari API endpoint holder.
+    pub fn link<F>(&mut self, wire_func: F)
+    where
+        F: FnOnce(&mut ServiceApiScope) -> (),
+    {
+        wire_func(self)
     }
 
     fn endpoint_internal<Q, I, R, F, E, K>(&mut self, name: &'static str, endpoint: E) -> &mut Self
@@ -528,13 +571,22 @@ impl ApiAggregator {
 
         inner.insert("system".to_owned(), Self::system_api());
 
+        let mut service_names: Vec<String> = vec![];
+
         inner.extend(services.iter().map(|service| {
-            let prefix = service.name();
+            let prefix = service.name().to_string();
+
+            if service_names.contains(&prefix) {
+                panic!("Service with name `{}` already exists.", prefix);
+            }
+
             let mut builder = ServiceApiBuilder::new();
 
             service.wire_api(&mut builder);
 
-            (prefix.to_string(), builder)
+            service_names.push(prefix.to_owned());
+
+            (prefix, builder)
         }));
 
         Self { inner }
@@ -622,7 +674,9 @@ pub fn create_app(agg: &ApiAggregator, access: ApiAccess) -> App {
     let state = AppState::new();
     let mut app = App::with_state(state)
         .middleware(middleware::DefaultHeaders::new().header("Access-Control-Allow-Origin", "*"))
-        .middleware(Cors::default());
+        .middleware(Cors::default())
+        .middleware(Logger::default())
+        .middleware(Logger::new("%a %{User-Agent}i"));
     app = app.scope("api", |scope: Scope| agg.extend(access, scope));
     app
 }

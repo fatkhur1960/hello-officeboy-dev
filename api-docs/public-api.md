@@ -1,90 +1,144 @@
 FORMAT: 1A
-HOST: http://localhost:8081/
 
 # APF rest API documentation
 
-Dokumentasi rest API publik untuk sistem payment Ansvia.
-
-Dokumen ini berisi spesifikasi setiap endpoint untuk beroperasi dengan akun. 
-Beberapa operasi berupa CRUD operation seperti mendaftarkan akun baru, mengaktifkan, dan menonaktifkan.
+Dokumentasi rest API publik Mainframe.
 
 ## Group Account
 
-### Mendapatkan Daftar Akun [GET /api/payment/v1/accounts]
+### Activate Account [POST /payment/v1/account/activate]
 
-Mendapatkan daftar akun yang telah teregister dan teraktivasi di dalam sistem payment.
+Mengaktifkan user yang telah teregister.
+Ini nantinya dijadikan link yang akan dikirimkan ke email pendaftar.
 
-+ Response 200 (application/json)
-
-        {
-            "count": 1,
-            "entries": [
-                {
-                "id":123,
-                "full_name": "Robin",
-                "email": "robin@email.com",
-                "phone_num": "+62123123"
-                }
-            ]
-        }
-
-### Register New Account [POST /api/payment/v1/account/register]
-
-Meregister akun baru. Perlu diketahui bahwa akun yang telah teregister tidak
-serta merta aktif, perlu mengaktifkan menggunakan endpoint `/account/activate`.
-
-+ Response 200 (application/json)
++ Request JSON (application/json)
 
         {
-            "code": 0,
-            "status": "success",
-            "description": ""
-        }
-
-### Activate New Account [POST /api/payment/v1/account/activate]
-
-Mengaktifkan akun yang telah teregister.
-
-+ Request JSON message (application/json)
-
-        {
-            "body": {
-                "account_id": 1,
-                "initial_balance": 1000.0
-            },
-            "signature": "ad5e669ef12339eddad5e669ef12339ead5e669ef12339eddad5e669ef12339e"
+            "token": "8dfa985e73eed236d5ca211854783a7a01fbe5d3e7b59d002d205c3631a167ec", 
+            "password": "mymagicpassword"
         }
 
 + Response 200 (application/json)
 
         {
-            "id": 1,
-            "full_name": "Agus Pramono",
-            "balance": 10.0,
-            "email": "agus@pramono.com",
-            "phone_num": "+628576393485",
-            "active": true,
-            "register_time": "2019-02-01T17:55:32.378872"
+            "status": "success", 
+            "code": 0, 
+            "description": "", 
+            "result": {
+                "register_time": "2019-02-20T11:00:06.258401", 
+                "phone_num": "+6285828382211", 
+                "id": 7, 
+                "full_name": "Alice", 
+                "email": "alice@email.com"
+            }
         }
 
-### Hapus Akun [POST /api/payment/v1/account/delete]
+### Register Account [POST /payment/v1/account/register]
 
-Menghapus akun berdasarkan ID.
+Rest API endpoint untuk mendaftarkan akun baru.
+Setelah register akun tidak langsung aktif, perlu melakukan
+aktifasi menggunakan endpoint `/account/activate`.
 
-::: warning
-#### <i class="fa fa-warning"></i> Perhatian
-Operasi ini tidak dapat dikembalikan.
-:::
++ Request JSON (application/json)
 
-+ Requset JSON (application/json)
-
-        { "body": {"account_id": 1}, "signature": "ad5e669ef12339eddad5e669ef12339ead5e669ef12339eddad5e669ef12339e" }
+        {
+            "phone_num": "+6285828382211", 
+            "email": "alice@email.com", 
+            "full_name": "Alice"
+        }
 
 + Response 200 (application/json)
 
         {
-            "code": 0,
-            "status": "success",
-            "description": ""
+            "status": "success", 
+            "code": 0, 
+            "description": "", 
+            "result": "8dfa985e73eed236d5ca211854783a7a01fbe5d3e7b59d002d205c3631a167ec"
         }
+
+## Group Authorization
+
+### Account Get Key [GET /auth/v1/get_key]
+
+Mendapatkan keypair dari account.
+
++ Response 200 (application/json)
+
+        {}
+
+### Authorize [POST /auth/v1/authorize]
+
+Meng-otorisasi akun yang telah teregister
+User bisa melakukan otorisasi menggunakan email / nomor telp.
+
++ Request JSON (application/json)
+
+        {
+            "phone": "+62857180212", 
+            "email": "agus@mail.com", 
+            "passhash": "95f24de5d8f717263a07fe4dafacb6d9bc6c0163ffc162800fb026bc46c8c59c"
+        }
+
++ Response 200 (application/json)
+
+        {}
+
+## Group Transactions
+
+### Balance [GET /payment/v1/balance]
+
+Rest API endpoint untuk mendapatkan informasi balance pada akun.
+
++ Response 200 (application/json)
+
+        {}
+
+### Get Invoice [GET /payment/v1/invoice]
+
+API endpoint untuk mendapatkan data invoice.
+
++ Response 200 (application/json)
+
+        {}
+
+### Info [GET /payment/v1/info]
+
+Hanya digunakan untuk testing sahaja.
+
++ Response 200 (application/json)
+
+        {}
+
+### Me Info [GET /payment/v1/me/info]
+
+Mendapatkan informasi current account.
+
++ Response 200 (application/json)
+
+        {}
+
+### Pay [POST /payment/v1/pay]
+
+API endpoint untuk melakukan pembayaran.
+
++ Response 200 (application/json)
+
+        {}
+
+### Publish Invoice [POST /payment/v1/invoice/publish]
+
+API endpoint untuk mem-publish invoice (membuat invoice baru).
+Mengembalikan ID dari invoice-nya.
+
++ Response 200 (application/json)
+
+        {}
+
+### Transfer [POST /payment/v1/transfer]
+
+Rest API endpoint untuk transfer
+
++ Response 200 (application/json)
+
+        {}
 

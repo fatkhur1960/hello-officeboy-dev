@@ -1,7 +1,7 @@
-Ansvia Payment Framework
+Ansvia Project Framework
 ============================
 
-[![pipeline status](https://gitlab.com/anvie/payment/badges/master/pipeline.svg)](https://gitlab.com/anvie/payment/commits/master)
+[![pipeline status](https://gitlab.com/anvie/apf/badges/master/pipeline.svg)](https://gitlab.com/anvie/apf/commits/master)
 
 Merupakan full stack framework untuk membuat aplikasi. Ini bisa digunakan sebagai library atau juga digunakan sebagai base project template. 
 APF telah dipersiapkan dengan komponen-komponen penting dalam membangun aplikasi full stack dari A-Z.
@@ -70,24 +70,46 @@ dan mempersiapkan environment-nya, ini hanya perlu dijalankan sekali, ketikkan:
 
 **CATATAN**: Perintah `test-env` akan membuat database baru dengan nama `apf_test` dimana database ini akan digunakan
 sebagai storage ketika proses testing terjadi.
+Perintah `make test-env` ini juga perlu dijalankan ulang apabila ada perubahan schema untuk memastikan schema
+dalam database selalu up-to-date.
 
 Untuk melakukan test ketikkan:
 
     $ make test
 
+Menjalankan
+-------------
+
+Untuk menjalankan service apf perlu dipastikan service PostgreSQL sudah jalan terlebih dahulu, dan telah disetup database-nya,, 
+untuk men-setup database bisa menggunakan perintah:
+
+    $ make reset-db
+
+Selanjutkan jalankan APF servernya:
+
+    $ cargo run --bin apf_server
+
+
 Frontend
 ------------
 
-Stack frontend kita menggunakan React, base ada di direktori `/frontends`.
+Stack frontend kita bisa menggunakan React atau Vue.js, base ada di direktori `/frontends`.
 
-Apabila ingin mencoba menjalankannya bisa check frontend untuk admin:
+Apabila ingin mencoba menjalankannya bisa check frontend untuk admin-react:
 
-    $ cd frontends/admin
+    $ cd frontends/admin-react
     $ npm install
     $ npm start
 
 Buka http://localhost:3000/
 
+Untuk Vue.js ada di `/frontends/admin-vue`:
+
+    $ cd frontends/admin-vue
+    $ yarn install
+    $ yarn serve
+
+**CATATAN**: Kamu bisa menggunakan npm maupun yarn, tapi direkomendasikan menggunakan yarn.
 
 Dokumentasi
 -------------
@@ -121,5 +143,49 @@ Sebelum melakukan commit harus:
 * Memastikan kodenya telah aman dari dependensi yang bermasalah dengan menjalankan perintah: `make audit`.
 * Menggunakan tata bahasa yang mudah dipahami dan menjelaskan perubahan mendasar pada commit message-nya.
 
+
+Troubleshooting
+-----------------
+
+*Case*
+
+    $ docker-compose up
+    ERROR: Version in "./docker-compose.yml" is unsupported.
+
+Itu artinya versi `docker-compose` yang ada di sistem mu tidak support, maka perlu dilakukan install manual:
+
+*Fix (ubuntu 16.04)* 
+
+    $ sudo curl -L sudo curl -L "https://github.com/docker/compose/releases/download/1.22.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    $ sudo chmod +x /usr/local/bin/docker-compose
+
+*Case*
+ 
+Ketika install diesel muncul error seperti berikut:
+
+    $ cargo install diesel_cli --no-default-features --features postgres 
+     Error : cannot find lpg
+
+Itu artinya library postgres-devel belum diinstall, maka perlu intsall dulu libpq:
+
+*Fix (ubuntu 16.04)* 
+    sudo apt install libpq-dev   
+
+*Case*
+
+Ketika sedang compile/test gagal dengan error kurang lebih seperti ini:
+    
+    ERROR apf::api::error] error: "relation \"transactions\" does not exist"
+
+Itu artinya table schema mu yang digunakan untuk test belum up-to-date dengan schema terbaru, maka perlu dilakukan migration untuk apply patch-nya:
+
+    $ diesel migration run --database-url postgresql://localhost/apf_test?sslmode=disable
+
+Atau reset database untuk test-nya agar di-rebuild schema-nya dari pertama:
+
+    $ make test-env
+
+
 ----
 Apabila ada yang perlu ditanyakan contact: r@ansvia.com
+

@@ -18,8 +18,8 @@ pub enum Error {
     Io(#[cause] io::Error),
 
     /// Bad request. This error occurs when the request contains invalid syntax.
-    #[fail(display = "Bad request: {}", _0)]
-    BadRequest(String),
+    #[fail(display = "Bad request: {}", _1)]
+    BadRequest(i32, String),
 
     /// Not found. This error occurs when the server cannot locate the requested
     /// resource.
@@ -53,9 +53,66 @@ pub enum Error {
     Unauthorized,
 }
 
+/// Definisi kode kesalahan
+pub enum ErrorCode {
+    /// Sukses atau tidak terjadi error.
+    NoError = 0,
+    /// Unauthorized
+    Unauthorized = 3000,
+
+    /// Kegagalan yang berkaitan dengan proses serialize/deserialize data.
+    SerializeDeserializeError = 4001,
+    /// Parameter tidak lengkap/kurang.
+    InvalidParameter = 4002,
+    /// Message tidak ada signature-nya, dibutuhkan untuk verifikasi menggunakan public key.
+    MessageHasNoSign = 4003,
+    /// Tidak ada informasi login.
+    NoLoginInfo = 4004,
+    /// Pengirim dan penerima alamatnya sama.
+    FromAndToTargetIsSame = 4005,
+
+    /// Kegagalan yang tidak diketahui penyebabnya.
+    UnknownError = 5001,
+
+    /// Kegagalan pada database internal apabila terjadi error.
+    DatabaseError = 6001,
+    /// Kegagalan pada database yang berkaitan dengan
+    /// ketidakditemukannya record/data di dalam database.
+    DatabaseRecordNotFoundError = 6002,
+
+    /// Transaction related error
+    TxMaxAmountReached = 7001,
+    /// Kegagalan yang disebabkan oleh pembayar bukan current account yang
+    /// ter authentikasi.
+    TxCurrentAccountIsNotPayer = 7002,
+    /// Saldo tidak cukup.
+    TxInsufficientBalance = 7003,
+    /// Apabila salah satu akun yang ber-transaksi ada yang tidak aktif.
+    TxAccountInactive = 7005,
+    /// Apabila jumlah yang akan ditransaksikan tidak sesuai dengan yang diharapkan.
+    TxAmountMismatch = 7006,
+    /// Error apabila invoice yang dimaksud tidak ditemukan/sesuai.
+    TxInvoiceNotFound = 7007,
+    /// Error yang berkaitan tidak validnya amount.
+    TxBadAmount = 7008,
+    /// Error yang berkaitan dengan tidak validnya diskon untuk invoice.
+    TxBadInvoiceDiscount = 7009,
+    /// Error yang muncul apabila item pada invoice tidak valid.
+    TxBadInvoiceItemData = 7010,
+}
+
 // semua error yang berasal dari diesel akan dipropagasi ke sistem error [Error::Storage]
 impl From<diesel::result::Error> for Error {
     fn from(e: diesel::result::Error) -> Self {
         Error::Storage(e)
+    }
+}
+
+impl From<hex::FromHexError> for Error {
+    fn from(e: hex::FromHexError) -> Self {
+        Error::BadRequest(
+            ErrorCode::SerializeDeserializeError as i32,
+            "Invalid data".to_string(),
+        )
     }
 }

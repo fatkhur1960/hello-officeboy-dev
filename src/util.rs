@@ -1,5 +1,5 @@
-//! Utilitas yang berkaitan dengan waktu,
-//! di sini kita bisa mendapatkan waktu terkini dalam milidetik dll.
+//! Utilitas yang berisi fungsi-fungsi kecil yang sering digunakan.
+//! Contoh di sini kita bisa mendapatkan waktu terkini dalam milidetik dll.
 
 use chrono::{NaiveDateTime, Utc};
 use rand::{self, distributions::Alphanumeric, Rng};

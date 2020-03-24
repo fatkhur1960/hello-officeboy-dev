@@ -26,6 +26,9 @@
 </template>
 
 <script>
+const initialState = {
+  items: []
+};
 export default {
   name: "AnsTable",
   props: {
@@ -33,6 +36,7 @@ export default {
     columns: Array,
     searchable: Boolean,
     withActionButton: Boolean,
+    mapItemFunc: Function,
     itemMap: {
       type: Array,
       default: () => {
@@ -41,10 +45,7 @@ export default {
     }
   },
   data() {
-    return {
-      items: this.items,
-      // searchable: false
-    };
+    return initialState;
   },
   methods: {
     doSearch() {
@@ -55,16 +56,19 @@ export default {
         .api()
         .privateApi.get(url)
         .then(resp => {
-          this.items = resp.data.entries.map(this.mapItem);
+          this.items = resp.data.result.entries.map(this.mapItemFunc);
         });
     },
-    mapItem(item){
-      delete item['balance'];
-      return item;
+    showDetail(item){
+      this.$router.push("/dashboard/accounts/" + item.id);
     }
+    // mapItem(item){
+    //   return this.mapItemFunc(item);
+    //   // return item;
+    // }
   },
   created() {
-    console.log("created");
+    // console.log("AnsTable created: " + this.$route.path);
     this.items = [];
     this.page = 0;
     this.limit = 5;
@@ -85,7 +89,7 @@ export default {
       .api()
       .privateApi.get(url)
       .then(resp => {
-        self.items = resp.data.entries.map(this.mapItem);
+        self.items = resp.data.result.entries.map(this.mapItemFunc);
       });
   }
 

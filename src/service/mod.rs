@@ -1,8 +1,9 @@
 //! Modular & extendable Service interface
 
+mod auth;
 mod payment;
 
-pub use self::payment::PaymentService;
+pub use self::{auth::AuthService, payment::PaymentService};
 
 use crate::api;
 use crate::api::*;

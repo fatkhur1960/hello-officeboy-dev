@@ -76,6 +76,7 @@ pub struct RegisterAccount {
     pub email: String,
     pub phone_num: String,
     pub register_time: NaiveDateTime,
+    pub code: String,
 }
 
 #[doc(hidden)]
@@ -97,7 +98,7 @@ pub struct AccountPashash {
 }
 
 #[doc(hidden)]
-#[derive(Queryable)]
+#[derive(Queryable, Serialize, Deserialize)]
 pub struct Invoice {
     pub id: ID,
     pub id_ref: String,
@@ -140,6 +141,24 @@ pub struct AccountKey {
     pub secret_key: String,
     pub created: NaiveDateTime,
     pub active: bool,
+}
+
+#[doc(hidden)]
+#[derive(Queryable, Serialize)]
+pub struct Transaction {
+    pub id: ID,
+    pub dbcr_flag: i32,
+    pub ttype: i32,
+    // pub subtype: i32,
+    pub amount: f64,
+    pub status: i32,
+    pub created: NaiveDateTime,
+    pub last_updated: NaiveDateTime,
+    pub invoice_id: Option<ID>,
+    pub from_account: Option<ID>,
+    pub to_account: Option<ID>,
+    pub merchant_id: Option<ID>,
+    pub notes: Option<String>,
 }
 
 impl fmt::Display for Account {

@@ -1,7 +1,7 @@
 import _axios from 'axios';
 
 
-export default class ApiClient { 
+export class ApiClient { 
   constructor(publicApiBaseUrl, privateApiBaseUrl) {
     this.headers = {'Content-Type':'application/json'};
 

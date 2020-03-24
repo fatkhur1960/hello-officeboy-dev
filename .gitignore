@@ -6,3 +6,8 @@ node_modules
 .env
 .project
 GIT_MSG
+apf_server
+*.pyc
+*.raw.txttestkit/target/
+macros/apf_proc_macro/target
+testkit/target/

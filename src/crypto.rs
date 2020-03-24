@@ -13,7 +13,7 @@ use sha2::{Digest, Sha256, Sha512};
 /// Number of bytes in a public key.
 pub const PUBLIC_KEY_LENGTH: usize = ed25519_dalek::PUBLIC_KEY_LENGTH;
 /// Number of bytes in a secret key.
-pub const SECRET_KEY_LENGTH: usize = ed25519_dalek::SECRET_KEY_LENGTH; //ds::SECRETKEYBYTES;
+pub const SECRET_KEY_LENGTH: usize = ed25519_dalek::EXPANDED_SECRET_KEY_LENGTH; //ds::SECRETKEYBYTES;
 /// Number of bytes in a `Hash`.
 pub const HASH_SIZE: usize = 32; //sha256::DIGESTBYTES;
 /// Number of bytes in a signature.
@@ -26,7 +26,7 @@ implement_crypto_wrapper!(
     struct PublicKey, ed25519_dalek::PublicKey, PublicKey, PUBLIC_KEY_LENGTH
 );
 implement_crypto_wrapper!(
-    struct SecretKey, ed25519_dalek::SecretKey, SecretKey, SECRET_KEY_LENGTH
+    struct SecretKey, ed25519_dalek::ExpandedSecretKey, ExpandedSecretKey, SECRET_KEY_LENGTH
 );
 implement_crypto_wrapper!(
     struct Signature, ed25519_dalek::Signature, Signature, SIGNATURE_LENGTH
@@ -85,7 +85,7 @@ pub fn gen_keypair() -> (PublicKey, SecretKey) {
 
     (
         PublicKey::new(keypair.public.to_bytes()),
-        SecretKey::new(keypair.secret.to_bytes()),
+        SecretKey::new(keypair.secret.expand::<Sha512>().to_bytes()),
     )
 }
 
@@ -129,19 +129,24 @@ pub fn sha512_hash_raw(bytes: &[u8]) -> [u8; 64] {
 
 /// Sign a data in bytes, return Signature.
 pub fn sign(bytes: &[u8], secret_key: &SecretKey) -> Signature {
-    let keypair = get_raw_keypair_from_secret(secret_key);
-    let raw_signature = keypair.sign::<Sha512>(bytes);
+    let (pub_key, secret_key) = get_raw_keypair_from_secret(secret_key);
+    // let raw_signature = keypair.sign::<Sha512>(bytes);
+    let raw_signature = secret_key.sign::<Sha512>(bytes, &pub_key);
 
     Signature(raw_signature.to_bytes())
 }
 
-fn get_raw_keypair_from_secret(secret_key: &SecretKey) -> ed25519_dalek::Keypair {
-    let raw_secret_key = ed25519_dalek::SecretKey::from_bytes(&secret_key.0).expect("to raw secret key");
-    let public_key = ed25519_dalek::PublicKey::from_secret::<Sha512>(&raw_secret_key);
-    ed25519_dalek::Keypair {
-        secret: raw_secret_key,
-        public: public_key,
-    }
+fn get_raw_keypair_from_secret(
+    secret_key: &SecretKey,
+) -> (ed25519_dalek::PublicKey, ed25519_dalek::ExpandedSecretKey) {
+    let raw_secret_key =
+        ed25519_dalek::ExpandedSecretKey::from_bytes(&secret_key.0).expect("to raw secret key");
+    let public_key = ed25519_dalek::PublicKey::from_expanded_secret(&raw_secret_key);
+    // ed25519_dalek::Keypair {
+    //     secret: raw_secret_key,
+    //     public: public_key,
+    // }
+    (public_key, raw_secret_key)
 }
 
 /// Memverifikasi digital signature apakah cocok dengan data dan public key-nya.
@@ -186,10 +191,11 @@ mod tests {
 
     fn get_preset_keypair() -> (PublicKey, SecretKey) {
         (
-            "db70a045a13645e1c0e227f0c4097e58880d5c4b227fb4d5ff448425ebf7b90d"
+            "7eb68ec11925cb0ac8b1d1e142492b2e496cdafa06e09eca72dd1846a47d2985"
                 .parse::<PublicKey>()
                 .unwrap(),
-            "fa1c6ed8bd8d3e88a84561fc60ae3f205a3c6538f9d2883597524a374f1aa969"
+            "20041a200036f4b24fd7fe49f809f4dcd90e37fbea3a46bf8524d06c46c66b6b\
+             4c3ddc41b2573731f130d5d29d27b609d505ac97902af952ae74fc97b996bbb7"
                 .parse::<SecretKey>()
                 .unwrap(),
         )
@@ -206,8 +212,10 @@ mod tests {
 
         println!("signature: {}", signature.to_hex());
 
-        assert_eq!(signature.to_hex(), "e5628fac8dfd4d61da9bdca8c63e1ba81447d6151d0017daee4b35146df688f1\
-                                        889f7ee7b06fe87bb1a385bbe1f6437aa3463566fbf32d31c267e1f6717c7f0d");
+        assert_eq!(
+            signature.to_hex(),
+            "8d136e468e3c24ac61518641c01b6dffc79bf4951c3a02c22cab855119bc7f34d0765a3922af7f423390befe2e7e1e0b6e8b6e066d893c352a0b0b5f0f39e902"
+        );
     }
 
     #[test]

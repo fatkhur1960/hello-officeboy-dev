@@ -1,6 +1,6 @@
 CREATE TABLE access_tokens (
     token TEXT PRIMARY KEY,
-    account_id BIGINT NOT NULL REFERENCES accounts (id),
+    account_id BIGINT NOT NULL REFERENCES accounts (id) ON DELETE CASCADE,
     created TIMESTAMP NOT NULL,
     valid_thru TIMESTAMP NOT NULL
 );

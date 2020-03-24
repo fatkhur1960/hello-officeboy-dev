@@ -8,6 +8,7 @@ use failure;
 use crate::{
     crypto::{self, PublicKey, SecretKey},
     error::Error as PaymentError,
+    error::ErrorCode,
     models::*,
     result::Result,
     schema::*,
@@ -25,6 +26,7 @@ pub struct NewRegisterAccount<'a> {
     pub email: &'a str,
     pub phone_num: &'a str,
     pub register_time: NaiveDateTime,
+    pub code: &'a str,
 }
 
 #[derive(Insertable)]
@@ -90,11 +92,20 @@ impl<'a> Schema<'a> {
             .map_err(From::from)
     }
 
+    // @TODO(*): ini perlu pindah ke tx schema.
     /// Mentransfer sejumlah uang dari satu akun ke akun lainnya.
     pub fn transfer(&self, from: ID, to: ID, amount: f64) -> Result<()> {
         use crate::schema::accounts::{self, dsl};
 
         self.db.build_transaction().read_write().run(|| {
+            // pengirim dan penerima tidak boleh sama
+            if from == to {
+                Err(PaymentError::BadRequest(
+                    ErrorCode::FromAndToTargetIsSame as i32,
+                    "Invalid target".to_string(),
+                ))?
+            }
+
             let from = self.get_account(from)?;
             let to = self.get_account(to)?;
 
@@ -103,7 +114,14 @@ impl<'a> Schema<'a> {
             }
 
             if !from.active || !to.active {
-                Err(PaymentError::BadRequest("Account inactive".to_owned()))?
+                Err(PaymentError::BadRequest(
+                    ErrorCode::TxAccountInactive as i32,
+                    "Account inactive".to_owned(),
+                ))?
+            }
+
+            if amount <= 0.0f64 {
+                Err(PaymentError::InvalidParameter("Invalid amount".to_string()))?
             }
 
             debug!("transfer {} -> {} amount of {}", from, to, amount);
@@ -221,6 +239,7 @@ impl<'a> Schema<'a> {
             email,
             phone_num,
             register_time: Utc::now().naive_utc(),
+            code: &token::generate_activation_code(),
         };
 
         diesel::insert_into(register_accounts::table)
@@ -277,6 +296,17 @@ impl<'a> Schema<'a> {
         })
     }
 
+    /// Mendapatkan informasi key untuk akun.
+    pub fn get_account_key(&self, account_id: ID) -> Result<AccountKey> {
+        use crate::schema::account_keys::{self, dsl as ak_dsl};
+        use crate::schema::accounts;
+
+        ak_dsl::account_keys
+            .filter(ak_dsl::account_id.eq(account_id))
+            .first(self.db)
+            .map_err(From::from)
+    }
+
     /// Buat akun baru secara langsung.
     pub fn create_account(&self, new_account: &NewAccount) -> Result<(Account, (PublicKey, SecretKey))> {
         use crate::schema::account_keys::{self, dsl as ak_dsl};
@@ -320,6 +350,18 @@ impl<'a> Schema<'a> {
 
         dsl::accounts
             .filter(dsl::id.ne(0))
+            .offset(offset)
+            .limit(limit)
+            .load(self.db)
+            .map_err(From::from)
+    }
+
+    /// Get list of transactions
+    pub fn get_transactions(&self, offset: i64, limit: i64) -> Result<Vec<Transaction>> {
+        use crate::schema::transaction_histories;
+        use crate::schema::transaction_histories::dsl;
+
+        dsl::transaction_histories
             .offset(offset)
             .limit(limit)
             .load(self.db)
@@ -382,6 +424,7 @@ impl<'a> TestSchema<'a> {
 
     /// Menghapus akun secara batch
     pub fn cleanup_accounts(&self, account_ids: Vec<ID>) {
+        use crate::schema::account_passhash::dsl as acp_dsl;
         use crate::schema::accounts;
         use crate::schema::accounts::dsl;
 
@@ -391,6 +434,8 @@ impl<'a> TestSchema<'a> {
             .read_write()
             .run::<(), diesel::result::Error, _>(|| {
                 for id in account_ids {
+                    diesel::delete(acp_dsl::account_passhash.filter(acp_dsl::account_id.eq(id)))
+                        .execute(self.db)?;
                     diesel::delete(dsl::accounts.filter(dsl::id.eq(id))).execute(self.db)?;
                 }
                 Ok(())
